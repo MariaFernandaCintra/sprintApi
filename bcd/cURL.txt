@@ -1,0 +1,159 @@
+
+ - CADASTRO:
+
+curl --location 'http://localhost:5000/reservas/v1/cadastro' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "nome": "Gustavo Almeida",
+    "email":"gustavo.almeida@example.com",
+    "NIF":"5439871",
+    "senha":"senha123"
+}'
+
+--------------------------------------------------------------------
+
+ - LOGIN:
+
+curl --location 'http://localhost:5000/reservas/v1/login' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "email":"gustavo.almeida@example.com",
+    "senha":"senha123"
+}'
+
+--------------------------------------------------------------------
+
+ - GET:
+
+curl --location 'http://localhost:5000/reservas/v1/login' \
+--header 'Content-Type: application/json'
+
+-------------------------------------------------------------------------------
+
+ - PUT:
+
+curl --location --request PUT 'http://localhost:5000/reservas/v1/usuario/1' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "nome": "Renata Souza",
+    "email":"renata.souza@example.com",
+    "senha":"senha456"
+}'
+
+-------------------------------------------------------------------------------
+
+ - DELETE:
+
+curl --location --request DELETE 'http://localhost:5000/reservas/v1/usuario/1' \
+--header 'Content-Type: application/json' \
+--data ''
+
+-------------------------------------------------------------------------------
+
+ - RESERVA - POST:
+
+curl --location --request POST 'http://localhost:5000/reservas/v1/reserva' \
+--header 'Content-Type: application/json' \
+--data '{
+    "fk_id_usuario":"1",
+    "fk_id_sala":"1", 
+    "datahora_inicio":"2024-12-31 07:00:00", 
+    "datahora_fim":"2024-12-31 07:50:00"
+}'
+
+-------------------------------------------------------------------------------
+
+ - RESERVA - GET:
+
+curl --location 'http://localhost:5000/reservas/v1/reservas'
+
+-------------------------------------------------------------------------------
+
+ - RESERVA - PUT:
+
+curl --location --request PUT 'http://localhost:5000/reservas/v1/reserva/1' \
+--header 'Content-Type: application/json' \
+--data '{ 
+    "datahora_inicio":"2024-12-31 07:50:00", 
+    "datahora_fim":"2024-12-31 08:40:00"
+}'
+
+
+-------------------------------------------------------------------------------
+
+ - RESERVA - DELETE:
+
+curl --location --request DELETE 'http://localhost:5000/reservas/v1/reserva/1' \
+--header 'Content-Type: application/json' \
+--data ''
+
+-------------------------------------------------------------------------------
+
+ - SALA - POST:
+
+curl --location 'http://localhost:5000/reservas/v1/sala' \
+--header 'Content-Type: application/json' \
+--data '{
+    "nome":"SALA TESTE",
+    "descricao":"DESCRICAO",
+    "bloco":"A",
+    "tipo":"OFICINA",
+    "capacidade":"20"
+}'
+
+-------------------------------------------------------------------------------
+
+ - SALA - GET:
+
+curl --location 'http://localhost:5000/reservas/v1/sala' \
+--data ''
+
+-------------------------------------------------------------------------------
+
+ - SALA - PUT:	
+
+curl --location --request PUT 'http://localhost:5000/reservas/v1/sala/1' \
+--header 'Content-Type: application/json' \
+--data '{
+    "nome":"SALA TESTE 2",
+    "descricao":"DESCRICAO 2",
+    "bloco":"B",
+    "tipo":"OFICINA",
+    "capacidade":"25"
+}'
+
+-------------------------------------------------------------------------------
+
+ - SALA - DELETE:	
+
+curl --location --request DELETE 'http://localhost:5000/reservas/v1/sala/1' \
+--data ''
+
+-------------------------------------------------------------------------------
+
+ - SALAS HORARIO -GET
+
+curl --location --request GET 'http://localhost:5000/reservas/v1/salasdisponivelhorario' \
+--header 'Content-Type: application/json' \
+--data '{
+    "data_inicio":"2024-12-28 08:00:00",
+    "data_fim":"2024-12-31 09:00:00"
+}'
+
+-------------------------------------------------------------------------------
+
+ - SALAS DIAS - GET
+
+curl --location --request GET 'http://localhost:5000/reservas/v1/salasdisponiveldata' \
+--header 'Content-Type: application/json' \
+--data '{
+    "data_inicio":"2024-12-28 08:00:00",
+    "data_fim":"2024-12-31 09:00:00"
+}'
+
+-------------------------------------------------------------------------------
+
+ - SALAS DISPONIVEIS - GET
+
+curl --location 'http://localhost:5000/reservas/v1/salasdisponiveis' \
+--data ''

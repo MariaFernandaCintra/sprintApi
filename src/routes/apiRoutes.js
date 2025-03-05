@@ -6,7 +6,7 @@ const salaController = require("../controllers/salaController");
 
 router.post("/cadastro", usuarioController.createUsuarios);
 router.post("/login", usuarioController.loginUsuario);
-router.get("/login", usuarioController.getAllUsuarios);
+router.get("/usuarios", usuarioController.getAllUsuarios);
 router.put("/usuario/:id_usuario", usuarioController.updateUsuario);
 router.delete("/usuario/:id_usuario", usuarioController.deleteUsuario);
 
@@ -20,7 +20,7 @@ router.put("/reserva/:id_reserva", reservaController.updateReserva);
 router.delete("/reserva/:id_reserva", reservaController.deleteReserva);
 
 router.post("/sala", salaController.createSalas);
-router.get("/sala", salaController.getAllSalasTabela);
+router.get("/salas", salaController.getAllSalasTabela);
 router.put("/sala/:id_sala", salaController.updateSala);
 router.delete("/sala/:id_sala", salaController.deleteSala);
 

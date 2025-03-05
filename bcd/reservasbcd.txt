@@ -1,0 +1,100 @@
+\connect alunods@localhost:3306
+ password: senai@604
+
+CREATE DATABASE rs; 
+USE rs;
+
+CREATE TABLE usuario(
+     id_usuario int primary key auto_increment,
+     nome varchar(255) not null, 
+     email varchar(255) unique not null,
+     NIF char(7) unique not null,
+     senha varchar(255) not null
+ );
+
+CREATE TABLE sala(
+     id_sala int primary key auto_increment,
+     nome varchar(255) unique not null,
+     descricao text, 
+     bloco varchar(255) not null, 
+     tipo varchar(255) not null,
+     capacidade int not null
+ );
+
+CREATE TABLE reserva(
+     id_reserva int primary key auto_increment,
+     fk_id_sala int not null,
+     fk_id_usuario int not null,
+     datahora_inicio datetime not null, 
+     datahora_fim datetime not null,
+     foreign key (fk_id_sala) references sala(id_sala),
+     foreign key (fk_id_usuario) references usuario(id_usuario)
+ );
+
+INSERT INTO usuario (nome, email, senha, NIF) VALUES
+('João Silva', 'joao.silva@example.com', 'senha123', '3456789'),
+('Maria Oliveira', 'maria.oliveira@example.com', 'senha123', '7654321'),
+('Carlos Pereira', 'carlos.pereira@example.com', 'senha123', '3987456'),
+('Ana Souza', 'ana.souza@example.com', 'senha123', '6123789'),
+('Pedro Costa', 'pedro.costa@example.com', 'senha123', '9123456'),
+('Laura Lima', 'laura.lima@example.com', 'senha123', '1654987'),
+('Lucas Alves', 'lucas.alves@example.com', 'senha123', '4321987'),
+('Fernanda Rocha', 'fernanda.rocha@example.com', 'senha123', '1852963'),
+('Rafael Martins', 'rafael.martins@example.com', 'senha123', '9258147'),
+('Juliana Nunes', 'juliana.nunes@example.com', 'senha123', '8147369'),
+('Paulo Araujo', 'paulo.araujo@example.com', 'senha123', '9753486'),
+('Beatriz Melo', 'beatriz.melo@example.com', 'senha123', '6159753'),
+('Renato Dias', 'renato.dias@example.com', 'senha123', '3486159'),
+('Camila Ribeiro', 'camila.ribeiro@example.com', 'senha123', '3852741'),
+('Thiago Teixeira', 'thiago.teixeira@example.com', 'senha123', '2741963'),
+('Patrícia Fernandes', 'patricia.fernandes@example.com', 'senha123', '1963852'),
+('Rodrigo Gomes', 'rodrigo.gomes@example.com', 'senha123', '3741852'),
+('Mariana Batista', 'mariana.batista@example.com', 'senha123', '7258369'),
+('Fábio Freitas', 'fabio.freitas@example.com', 'senha123', '9147258'),
+('Isabela Cardoso', 'isabela.cardoso@example.com', 'senha123', '8369147');
+
+INSERT INTO sala (nome, descricao, bloco, tipo, capacidade) VALUES
+('AMA - Automotiva', 'Alta Mogiana Automotiva', 'A', 'Oficina', 16),
+('AMS - Desenvolvimento', 'Alta Mogiana Desenvolvimento de Sistema', 'A', 'Sala', 16),
+('AME - Eletroeletrônica', 'Alta Mogiana Eletroeletrônica', 'A', 'Laboratório', 16),
+('AMM - Manutenção', 'Alta Mogiana Manutenção', 'A', 'Oficina', 16),
+('A2 - ELETRÔNICA', 'Laboratório de Eletrônica', 'A', 'Laboratório', 16),
+('A3 - CLP', 'Controladores Lógicos Programáveis', 'A', 'Laboratório', 16),
+('A4 - AUTOMAÇÃO', 'Sistemas de Automação', 'A', 'Laboratório', 20),
+('A5 - METROLOGIA', 'Instrumentos de Medição', 'A', 'Laboratório', 16),
+('A6 - PNEUMÁTICA', 'Equipamentos Pneumáticos e Hidráulicos', 'A', 'Laboratório', 20),
+('B2 - AULA', 'Sala de Aula', 'B', 'Sala', 32),
+('B3 - AULA', 'Sala de Aula', 'B', 'Sala', 32),
+('B5 - AULA', 'Sala de Aula', 'B', 'Sala', 40),
+('B6 - AULA', 'Sala de Aula', 'B', 'Sala', 32),
+('B7 - AULA', 'Sala de Aula', 'B', 'Sala', 32),
+('B8 - INFORMÁTICA', 'Laboratório de Informática', 'B', 'Laboratório', 20),
+('B9 - INFORMÁTICA', 'Estação de Trabalho', 'B', 'Laboratório', 16),
+('B10 - INFORMÁTICA', 'Computadores Programáveis', 'B', 'Laboratório', 16),
+('B11 - INFORMÁTICA', 'Equipamentos de Rede', 'B', 'Laboratório', 40),
+('B12 - INFORMÁTICA', 'Laboratório de TI', 'B', 'Laboratório', 40),
+('CA - Colorado A1', 'Sala Multimídia', 'C', 'Sala', 16),
+('COF - Colorado Oficina', 'Ferramentas Manuais', 'C', 'Oficina', 16),
+('C1 - AULA (ALP)', 'Sala de Aula (ALP)', 'C', 'Sala', 24),
+('C2 - INFORMATICA', 'Software Educacional', 'C', 'Laboratório', 32),
+('C3 - MODELAGEM', 'Máquinas de Costura', 'C', 'Oficina', 20),
+('C4 - MODELAGEM', 'Equipamentos de Modelagem', 'C', 'Oficina', 20),
+('C5 - AULA', 'Materiais Didáticos', 'C', 'Sala', 16),
+('D1 - MODELAGEM', 'Ferramentas de Modelagem', 'D', 'Oficina', 16),
+('D2 - MODELAGEM', 'Estações de Trabalho de Modelagem', 'D', 'Oficina', 20),
+('D3 - AULA', 'Quadro e Projetor', 'D', 'Sala', 16),
+('D4 - CRIAÇÃO', 'Materiais de Artesanato', 'D', 'Oficina', 18),
+('LAB - ALIMENTOS', 'Equipamentos de Cozinha', 'Lab', 'Laboratório', 16),
+('OFI - AJUSTAGEM/FRESAGEM', 'Máquinas de Fresagem', 'Oficina', 'Oficina', 16),
+('OFI - COMANDOS ELÉTRICOS', 'Circuitos Elétricos', 'Oficina', 'Oficina', 16),
+('OFI - TORNEARIA', 'Torno Mecânico', 'Oficina', 'Oficina', 20),
+('OFI - SOLDAGEM', 'Equipamentos de Solda', 'Oficina', 'Oficina', 16),
+('OFI - MARCENARIA', 'Ferramentas de Marcenaria', 'Oficina', 'Oficina', 16),
+('OFI - LIXAMENTO', 'Lixadeiras e Polidoras', 'Oficina', 'Oficina', 16);
+
+INSERT INTO reserva (datahora_inicio, datahora_fim, fk_id_usuario, fk_id_sala) VALUES
+('2024-11-13 09:00:00', '2024-11-13 12:00:00', 1, 12),
+('2024-11-13 14:00:00', '2024-11-13 18:00:00', 2, 19),
+('2024-11-13 08:00:00', '2024-11-13 12:00:00', 3, 30),
+('2024-11-13 13:00:00', '2024-11-13 17:00:00', 4, 21),
+('2024-11-13 09:00:00', '2024-11-13 13:00:00', 5, 29);
