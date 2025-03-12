@@ -1,60 +1,55 @@
 const connect = require("../db/connect");
+const usuarioValidator = require("../services/validateUsuario");
 
 module.exports = class usuarioController {
   static async createUsuarios(req, res) {
     const { NIF, email, senha, nome } = req.body;
 
-    if (!NIF || !email || !senha || !nome) {
-      return res
-        .status(400)
-        .json({ error: "Todos os campos devem ser preenchidos" });
+    const userValidationError = usuarioValidator.validateUsuario(req.body);
+    if (userValidationError) {
+      return res.status(400).json(userValidationError);
     }
-
-    if (isNaN(NIF) || NIF.length !== 7) {
-      return res.status(400).json({
-        error: "NIF inválido. Deve conter exatamente 7 dígitos numéricos",
-      });
-    }
-
-    if (!email.includes("@")) {
-      return res.status(400).json({ error: "Email inválido. Deve conter @" });
-    }
-
-    const queryInsert = `INSERT INTO usuario (nome, email, NIF, senha) VALUES (?, ?, ?, ?)`;
-    const valuesInsert = [nome, email, NIF, senha];
 
     try {
-      connect.query(queryInsert, valuesInsert, function (err) {
+      const nifEmailValidationError = await usuarioValidator.validateNifEmail(
+        NIF,
+        email
+      );
+      if (nifEmailValidationError && nifEmailValidationError.error) {
+        return res.status(400).json(nifEmailValidationError);
+      }
+
+      const queryInsert = `INSERT INTO usuario (nome, email, NIF, senha) VALUES (?, ?, ?, ?)`;
+      const valuesInsert = [nome, email, NIF, senha];
+
+      await new Promise((resolve, reject) => {
+        connect.query(queryInsert, valuesInsert, (err) => {
+          if (err) {
+            console.error(err);
+            return reject({ error: "Erro Interno do Servidor" });
+          }
+          resolve();
+        });
+      });
+
+      const querySelect = `SELECT * FROM usuario WHERE email = ?`;
+      connect.query(querySelect, [email], function (err, results) {
         if (err) {
           console.error(err);
-          if (err.code === "ER_DUP_ENTRY") {
-            return res.status(400).json({
-              error: "O NIF ou email já está vinculado a outro usuário",
-            });
-          }
           return res.status(500).json({ error: "Erro Interno do Servidor" });
         }
 
-        // Após inserir o usuário, buscar os dados inseridos para enviar na resposta
-        const querySelect = `SELECT * FROM usuario WHERE email = ?`;
-        connect.query(querySelect, [email], function (err, results) {
-          if (err) {
-            console.error(err);
-            return res.status(500).json({ error: "Erro Interno do Servidor" });
-          }
+        if (results.length === 0) {
+          return res.status(404).json({ error: "Usuário não encontrado" });
+        }
 
-          if (results.length === 0) {
-            return res.status(404).json({ error: "Usuário não encontrado" });
-          }
-
-          const usuario = results[0];
-          return res.status(200).json({
-            usuario: {
-              id_usuario: usuario.id_usuario,
-              email: usuario.email,
-            },
-            message: "Cadastro bem-sucedido",
-          });
+        const usuario = results[0];
+        return res.status(200).json({
+          usuario: {
+            id_usuario: usuario.id_usuario,
+            email: usuario.email,
+          },
+          message: "Cadastro bem-sucedido",
         });
       });
     } catch (error) {
@@ -66,14 +61,11 @@ module.exports = class usuarioController {
   static async loginUsuario(req, res) {
     const { senha, email } = req.body;
 
-    // Valida se todos os campos obrigatórios estão devidamente preenchidos
-    if (!senha || !email) {
-      return res
-        .status(400)
-        .json({ error: "Todos os campos devem ser preenchidos" });
+    const loginValidationError = usuarioValidator.validateLogin(req.body);
+    if (loginValidationError) {
+      return res.status(400).json(loginValidationError);
     }
 
-    // Consulta para verificar se o email existe no banco de dados
     const query = `SELECT * FROM usuario WHERE email = ?`;
     const values = [email];
 
@@ -84,14 +76,12 @@ module.exports = class usuarioController {
           return res.status(500).json({ error: "Erro Interno do Servidor" });
         }
 
-        // Verifica se o usuário foi encontrado
         if (results.length === 0) {
           return res.status(404).json({ error: "Usuário não encontrado" });
         }
 
         const usuario = results[0];
 
-        // Verifica se a senha está correta
         if (usuario.senha === senha) {
           return res.status(200).json({
             message: "Login realizado com sucesso!",
