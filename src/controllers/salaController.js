@@ -1,6 +1,16 @@
 const connect = require("../db/connect");
 const validateSala = require("../services/validateSala");
 
+// Função auxiliar para executar queries e retornar uma Promise
+const queryAsync = (query, values = []) => {
+  return new Promise((resolve, reject) => {
+    connect.query(query, values, (err, results) => {
+      if (err) return reject(err);
+      resolve(results);
+    });
+  });
+};
+
 module.exports = class salaController {
   static async createSalas(req, res) {
     const { nome, descricao, bloco, tipo, capacidade } = req.body;
@@ -20,12 +30,7 @@ module.exports = class salaController {
     const values = [nome, descricao, bloco, tipo, capacidade];
 
     try {
-      await new Promise((resolve, reject) => {
-        connect.query(query, values, (err, results) => {
-          if (err) return reject(err);
-          resolve(results);
-        });
-      });
+      await queryAsync(query, values);
       return res.status(201).json({ message: "Sala Criada com Sucesso!" });
     } catch (error) {
       console.error(error);
@@ -39,12 +44,7 @@ module.exports = class salaController {
   static async getAllSalasTabela(req, res) {
     const query = `SELECT * FROM sala`;
     try {
-      const results = await new Promise((resolve, reject) => {
-        connect.query(query, (err, results) => {
-          if (err) return reject(err);
-          resolve(results);
-        });
-      });
+      const results = await queryAsync(query);
       return res
         .status(200)
         .json({ message: "Obtendo todas as salas", salas: results });
@@ -82,16 +82,9 @@ module.exports = class salaController {
     `;
 
     try {
-      // Obtém todas as salas
-      const salasDisponiveis = await new Promise((resolve, reject) => {
-        connect.query(querySalasDisponiveis, (err, results) => {
-          if (err) return reject(err);
-          resolve(results);
-        });
-      });
-
+      const salasDisponiveis = await queryAsync(querySalasDisponiveis);
       const salasDisponiveisFinal = [];
-      // Para cada sala, verifica se há conflito de horário
+
       for (const sala of salasDisponiveis) {
         const valuesHorario = [
           sala.id_sala,
@@ -104,12 +97,7 @@ module.exports = class salaController {
           datahora_inicio,
           datahora_fim,
         ];
-        const conflito = await new Promise((resolve, reject) => {
-          connect.query(queryHorarioConflito, valuesHorario, (err, results) => {
-            if (err) return reject(err);
-            resolve(results);
-          });
-        });
+        const conflito = await queryAsync(queryHorarioConflito, valuesHorario);
         if (conflito.length === 0) {
           salasDisponiveisFinal.push(sala);
         }
@@ -159,14 +147,9 @@ module.exports = class salaController {
     `;
 
     try {
-      const salasDisponiveis = await new Promise((resolve, reject) => {
-        connect.query(querySalasDisponiveis, (err, results) => {
-          if (err) return reject(err);
-          resolve(results);
-        });
-      });
-
+      const salasDisponiveis = await queryAsync(querySalasDisponiveis);
       const salasDisponiveisFinal = [];
+
       for (const sala of salasDisponiveis) {
         const valuesConflito = [
           sala.id_sala,
@@ -179,16 +162,7 @@ module.exports = class salaController {
           data_inicio,
           data_fim,
         ];
-        const conflito = await new Promise((resolve, reject) => {
-          connect.query(
-            queryConflitoReserva,
-            valuesConflito,
-            (err, results) => {
-              if (err) return reject(err);
-              resolve(results);
-            }
-          );
-        });
+        const conflito = await queryAsync(queryConflitoReserva, valuesConflito);
         if (conflito.length === 0) {
           salasDisponiveisFinal.push(sala);
         }
@@ -214,18 +188,8 @@ module.exports = class salaController {
     const queryReserva = `SELECT fk_id_sala FROM reserva`;
     const querySala = `SELECT id_sala FROM sala`;
     try {
-      const salasDisponiveisRows = await new Promise((resolve, reject) => {
-        connect.query(querySala, (err, results) => {
-          if (err) return reject(err);
-          resolve(results);
-        });
-      });
-      const salasReservadasRows = await new Promise((resolve, reject) => {
-        connect.query(queryReserva, (err, results) => {
-          if (err) return reject(err);
-          resolve(results);
-        });
-      });
+      const salasDisponiveisRows = await queryAsync(querySala);
+      const salasReservadasRows = await queryAsync(queryReserva);
 
       const salasDisponiveis = salasDisponiveisRows.map((row) => row.id_sala);
       const salasReservadas = salasReservadasRows.map((row) => row.fk_id_sala);
@@ -260,12 +224,7 @@ module.exports = class salaController {
     const values = [nome, descricao, bloco, tipo, capacidade, salaId];
 
     try {
-      const results = await new Promise((resolve, reject) => {
-        connect.query(query, values, (err, results) => {
-          if (err) return reject(err);
-          resolve(results);
-        });
-      });
+      const results = await queryAsync(query, values);
       if (results.affectedRows === 0) {
         return res.status(404).json({ error: "Sala não encontrada" });
       }
@@ -283,12 +242,7 @@ module.exports = class salaController {
     const salaId = req.params.id_sala;
     const query = `DELETE FROM sala WHERE id_sala = ?`;
     try {
-      const results = await new Promise((resolve, reject) => {
-        connect.query(query, [salaId], (err, results) => {
-          if (err) return reject(err);
-          resolve(results);
-        });
-      });
+      const results = await queryAsync(query, [salaId]);
       if (results.affectedRows === 0) {
         return res.status(404).json({ error: "Sala não encontrada" });
       }
