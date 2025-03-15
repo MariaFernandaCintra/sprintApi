@@ -7,16 +7,14 @@ module.exports = {
     }
 
     if (isNaN(NIF) || NIF.length !== 7) {
-      return {
-        error: "NIF inválido. Deve conter exatamente 7 dígitos numéricos",
-      };
+      return { error: "NIF inválido. Deve conter exatamente 7 dígitos numéricos" };
     }
 
     if (!email.includes("@")) {
       return { error: "Email inválido. Deve conter @" };
     }
 
-    return null; // Retorna null se não houver erro
+    return null;
   },
 
   validateNifEmail: async function (NIF, email) {
@@ -28,15 +26,14 @@ module.exports = {
         if (err) {
           reject("Erro ao verificar NIF ou email");
         } else if (results.length > 0) {
-          resolve({
-            error: "O NIF ou email já está vinculado a outro usuário",
-          });
+          resolve({ error: "O NIF ou email já está vinculado a outro usuário" });
         } else {
           resolve(null);
         }
       });
     });
   },
+
   validateLogin: function ({ email, senha }) {
     if (!email || !senha) {
       return { error: "Todos os campos devem ser preenchidos" };
@@ -46,6 +43,23 @@ module.exports = {
       return { error: "Email inválido. Deve conter @" };
     }
 
+    return null;
+  },
+
+  validateUpdateUsuario: function ({ email, senha, nome }) {
+    if (!email || !senha || !nome) {
+      return { error: "Todos os campos devem ser preenchidos" };
+    }
+    if (!email.includes("@")) {
+      return { error: "Email inválido. Deve conter @" };
+    }
+    return null;
+  },
+
+  validateUsuarioId: function (id_usuario) {
+    if (!id_usuario) {
+      return { error: "ID do usuário é obrigatório" };
+    }
     return null;
   },
 };

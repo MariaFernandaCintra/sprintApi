@@ -5,16 +5,14 @@ module.exports = class usuarioController {
   static async createUsuarios(req, res) {
     const { NIF, email, senha, nome } = req.body;
 
+    // Valida todos os campos necessários para criação
     const userValidationError = usuarioValidator.validateUsuario(req.body);
     if (userValidationError) {
       return res.status(400).json(userValidationError);
     }
 
     try {
-      const nifEmailValidationError = await usuarioValidator.validateNifEmail(
-        NIF,
-        email
-      );
+      const nifEmailValidationError = await usuarioValidator.validateNifEmail(NIF, email);
       if (nifEmailValidationError && nifEmailValidationError.error) {
         return res.status(400).json(nifEmailValidationError);
       }
@@ -110,9 +108,7 @@ module.exports = class usuarioController {
           console.error(err);
           return res.status(500).json({ error: "Erro Interno do Servidor" });
         }
-        return res
-          .status(200)
-          .json({ message: "Obtendo todos os usuários", usuarios: results });
+        return res.status(200).json({ message: "Obtendo todos os usuários", usuarios: results });
       });
     } catch (error) {
       console.error(error);
@@ -124,19 +120,16 @@ module.exports = class usuarioController {
     const { email, senha, nome } = req.body;
     const usuarioId = req.params.id_usuario;
 
-    // Valida se todos os campos obrigatórios estão preenchidos
-    if (!email || !senha || !nome) {
-      return res
-        .status(400)
-        .json({ error: "Todos os campos devem ser preenchidos" });
+    // Valida os campos de atualização e o id do usuário
+    const updateValidationError = usuarioValidator.validateUpdateUsuario({ email, senha, nome });
+    if (updateValidationError) {
+      return res.status(400).json(updateValidationError);
+    }
+    const idValidationError = usuarioValidator.validateUsuarioId(usuarioId);
+    if (idValidationError) {
+      return res.status(400).json(idValidationError);
     }
 
-    // Valida se o email contém o caractere "@"
-    if (!email.includes("@")) {
-      return res.status(400).json({ error: "Email inválido. Deve conter @" });
-    }
-
-    // Query para atualizar os dados do usuário
     const query = `UPDATE usuario SET email = ?, senha = ?, nome = ? WHERE id_usuario = ?`;
     const values = [email, senha, nome, usuarioId];
 
@@ -152,13 +145,10 @@ module.exports = class usuarioController {
           return res.status(500).json({ error: "Erro interno no servidor" });
         }
 
-        // Verifica se o usuário foi encontrado e atualizado
         if (results.affectedRows === 0) {
           return res.status(404).json({ error: "Usuário não encontrado" });
         }
-        return res
-          .status(200)
-          .json({ message: "Usuário atualizado com sucesso" });
+        return res.status(200).json({ message: "Usuário atualizado com sucesso" });
       });
     } catch (error) {
       console.error(error);
@@ -168,6 +158,11 @@ module.exports = class usuarioController {
 
   static async deleteUsuario(req, res) {
     const usuarioId = req.params.id_usuario;
+    // Valida se o ID do usuário foi fornecido
+    const idValidationError = usuarioValidator.validateUsuarioId(usuarioId);
+    if (idValidationError) {
+      return res.status(400).json(idValidationError);
+    }
     const query = `DELETE FROM usuario WHERE id_usuario = ?`;
     const values = [usuarioId];
 
@@ -178,13 +173,10 @@ module.exports = class usuarioController {
           return res.status(500).json({ error: "Erro interno no servidor" });
         }
 
-        // Verifica se o usuário foi encontrado e excluído
         if (results.affectedRows === 0) {
-          return res.status(404).json({ error: "Usuario não encontrado" });
+          return res.status(404).json({ error: "Usuário não encontrado" });
         }
-        return res
-          .status(200)
-          .json({ message: "Usuario excluído com sucesso" });
+        return res.status(200).json({ message: "Usuário excluído com sucesso" });
       });
     } catch (error) {
       console.error(error);
@@ -193,56 +185,46 @@ module.exports = class usuarioController {
   }
 
   static async getUsuarioById(req, res) {
-    const id_usuario = req.params.id_usuario; // Obtém o ID do usuário a partir dos parâmetros da URL
-
+    const id_usuario = req.params.id_usuario;
     // Valida se o ID foi fornecido
-    if (!id_usuario) {
-      return res.status(400).json({ error: "ID do usuário é obrigatório" });
+    const idValidationError = usuarioValidator.validateUsuarioId(id_usuario);
+    if (idValidationError) {
+      return res.status(400).json(idValidationError);
     }
 
-    const query = `SELECT * FROM usuario WHERE id_usuario = ?`; // Consulta SQL para buscar o usuário pelo ID
+    const query = `SELECT * FROM usuario WHERE id_usuario = ?`;
 
     connect.query(query, [id_usuario], function (err, results) {
       if (err) {
-        console.error("Erro ao buscar usuário:", err); // Loga o erro no console para depuração
-        return res.status(500).json({ error: "Erro interno do servidor" }); // Retorna erro genérico ao cliente
+        console.error("Erro ao buscar usuário:", err);
+        return res.status(500).json({ error: "Erro interno do servidor" });
       }
 
-      // Verifica se o usuário foi encontrado
       if (results.length === 0) {
         return res.status(404).json({ error: "Usuário não encontrado" });
       }
 
-      // Obtém os dados do usuário encontrado
       const usuario = results[0];
-      const queryUsuario = `SELECT * FROM usuario WHERE id_usuario = ?`; // Consulta redundante, pode ser ajustada
-
-      connect.query(queryUsuario, [id_usuario], function (err) {
-        if (err) {
-          console.error("Erro ao buscar reservas:", err);
-          return res.status(500).json({
-            error: "Erro interno ao buscar reservas",
-          });
-        }
-
-        // Retorna os dados do usuário no formato JSON
-        return res.status(200).json({
-          usuario: {
-            id_usuario: usuario.id_usuario,
-            nome: usuario.nome,
-            email: usuario.email,
-            NIF: usuario.NIF,
-            senha: usuario.senha,
-          },
-        });
+      return res.status(200).json({
+        usuario: {
+          id_usuario: usuario.id_usuario,
+          nome: usuario.nome,
+          email: usuario.email,
+          NIF: usuario.NIF,
+          senha: usuario.senha,
+        },
       });
     });
   }
 
   static async getUsuarioReservas(req, res) {
-    const id_usuario = req.params.id_usuario; // Obtém o ID do usuário a partir dos parâmetros da URL
+    const id_usuario = req.params.id_usuario;
+    // Valida se o ID foi fornecido
+    const idValidationError = usuarioValidator.validateUsuarioId(id_usuario);
+    if (idValidationError) {
+      return res.status(400).json(idValidationError);
+    }
 
-    // Consulta SQL para buscar as reservas do usuário, incluindo informações da sala
     const queryReservas = `
       SELECT r.id_reserva, s.nome, r.datahora_inicio, r.datahora_fim
       FROM reserva r
@@ -251,23 +233,16 @@ module.exports = class usuarioController {
     `;
 
     try {
-      // Executa a consulta no banco de dados
       connect.query(queryReservas, [id_usuario], (err, results) => {
         if (err) {
-          console.error("Erro ao buscar reservas:", err); // Loga o erro no console
+          console.error("Erro ao buscar reservas:", err);
           return res.status(500).json({ error: "Erro ao buscar reservas" });
         }
 
-        // Verifica se há reservas encontradas
-        if (results.length === 0) {
-          return res.status(200).json({ reservas: [] }); // Retorna lista vazia se não houver reservas
-        }
-
-        // Retorna as reservas encontradas no formato JSON
         return res.status(200).json({ reservas: results });
       });
     } catch (error) {
-      console.error("Erro ao buscar reservas:", error); // Loga erros inesperados
+      console.error("Erro ao buscar reservas:", error);
       return res.status(500).json({ error: "Erro interno do servidor" });
     }
   }
