@@ -2,7 +2,12 @@ const connect = require("../db/connect");
 
 module.exports = {
   // Valida os campos obrigatórios e regras de negócio para criação de reserva
-  validateReserva: function ({ fk_id_usuario, fk_id_sala, datahora_inicio, datahora_fim }) {
+  validateReserva: function ({
+    fk_id_usuario,
+    fk_id_sala,
+    datahora_inicio,
+    datahora_fim,
+  }) {
     if (!fk_id_usuario || !fk_id_sala || !datahora_inicio || !datahora_fim) {
       return { error: "Todos os campos devem ser preenchidos" };
     }
@@ -16,7 +21,10 @@ module.exports = {
     const inicioHour = inicioDate.getHours();
     const fimHour = fimDate.getHours();
     if (inicioHour < 7 || inicioHour >= 21 || fimHour < 7 || fimHour >= 21) {
-      return { error: "A reserva deve ser feita no horário de funcionamento do SENAI. Entre 7:00 e 21:00" };
+      return {
+        error:
+          "A reserva deve ser feita no horário de funcionamento do SENAI. Entre 7:00 e 21:00",
+      };
     }
 
     const duration = fimDate - inicioDate;
@@ -40,13 +48,18 @@ module.exports = {
       return { error: "Data ou Horário inválidos" };
     }
     if (fimDate <= inicioDate) {
-      return { error: "A data/hora de fim deve ser após a data/hora de início" };
+      return {
+        error: "A data/hora de fim deve ser após a data/hora de início",
+      };
     }
 
     const inicioHour = inicioDate.getHours();
     const fimHour = fimDate.getHours();
     if (inicioHour < 7 || inicioHour >= 21 || fimHour < 7 || fimHour >= 21) {
-      return { error: "A reserva deve ser feita no horário de funcionamento do SENAI. Entre 7:00 e 21:00" };
+      return {
+        error:
+          "A reserva deve ser feita no horário de funcionamento do SENAI. Entre 7:00 e 21:00",
+      };
     }
 
     const duration = fimDate - inicioDate;
@@ -82,7 +95,11 @@ module.exports = {
   },
 
   // Verifica conflitos de horário para uma reserva na sala informada
-  checkConflitoHorario: async function (fk_id_sala, datahora_inicio, datahora_fim) {
+  checkConflitoHorario: async function (
+    fk_id_sala,
+    datahora_inicio,
+    datahora_fim
+  ) {
     const query = `
       SELECT datahora_inicio, datahora_fim FROM reserva
       WHERE fk_id_sala = ? 

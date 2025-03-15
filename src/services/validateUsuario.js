@@ -5,15 +5,14 @@ module.exports = {
     if (!NIF || !email || !senha || !nome) {
       return { error: "Todos os campos devem ser preenchidos" };
     }
-
     if (isNaN(NIF) || NIF.length !== 7) {
-      return { error: "NIF inválido. Deve conter exatamente 7 dígitos numéricos" };
+      return {
+        error: "NIF inválido. Deve conter exatamente 7 dígitos numéricos",
+      };
     }
-
     if (!email.includes("@")) {
       return { error: "Email inválido. Deve conter @" };
     }
-
     return null;
   },
 
@@ -24,11 +23,13 @@ module.exports = {
 
       connect.query(query, values, (err, results) => {
         if (err) {
-          reject("Erro ao verificar NIF ou email");
+          return reject("Erro ao verificar NIF ou email");
         } else if (results.length > 0) {
-          resolve({ error: "O NIF ou email já está vinculado a outro usuário" });
+          return resolve({
+            error: "O NIF ou email já está vinculado a outro usuário",
+          });
         } else {
-          resolve(null);
+          return resolve(null);
         }
       });
     });
@@ -38,11 +39,9 @@ module.exports = {
     if (!email || !senha) {
       return { error: "Todos os campos devem ser preenchidos" };
     }
-
     if (!email.includes("@")) {
       return { error: "Email inválido. Deve conter @" };
     }
-
     return null;
   },
 

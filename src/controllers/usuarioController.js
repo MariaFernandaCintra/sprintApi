@@ -21,34 +21,37 @@ module.exports = class usuarioController {
       const valuesInsert = [nome, email, NIF, senha];
 
       await new Promise((resolve, reject) => {
-        connect.query(queryInsert, valuesInsert, (err) => {
+        connect.query(queryInsert, valuesInsert, (err, results) => {
           if (err) {
             console.error(err);
             return reject({ error: "Erro Interno do Servidor" });
           }
-          resolve();
+          resolve(results);
         });
       });
 
       const querySelect = `SELECT * FROM usuario WHERE email = ?`;
-      connect.query(querySelect, [email], function (err, results) {
-        if (err) {
-          console.error(err);
-          return res.status(500).json({ error: "Erro Interno do Servidor" });
-        }
-
-        if (results.length === 0) {
-          return res.status(404).json({ error: "Usuário não encontrado" });
-        }
-
-        const usuario = results[0];
-        return res.status(200).json({
-          usuario: {
-            id_usuario: usuario.id_usuario,
-            email: usuario.email,
-          },
-          message: "Cadastro bem-sucedido",
+      const results = await new Promise((resolve, reject) => {
+        connect.query(querySelect, [email], (err, results) => {
+          if (err) {
+            console.error(err);
+            return reject({ error: "Erro Interno do Servidor" });
+          }
+          resolve(results);
         });
+      });
+
+      if (results.length === 0) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      const usuario = results[0];
+      return res.status(200).json({
+        usuario: {
+          id_usuario: usuario.id_usuario,
+          email: usuario.email,
+        },
+        message: "Cadastro bem-sucedido",
       });
     } catch (error) {
       console.error(error);
@@ -68,31 +71,33 @@ module.exports = class usuarioController {
     const values = [email];
 
     try {
-      connect.query(query, values, function (err, results) {
-        if (err) {
-          console.error(err);
-          return res.status(500).json({ error: "Erro Interno do Servidor" });
-        }
-
-        if (results.length === 0) {
-          return res.status(404).json({ error: "Usuário não encontrado" });
-        }
-
-        const usuario = results[0];
-
-        if (usuario.senha === senha) {
-          return res.status(200).json({
-            message: "Login realizado com sucesso!",
-            usuario: {
-              id_usuario: usuario.id_usuario,
-              email: usuario.email,
-              nome: usuario.nome,
-            },
-          });
-        } else {
-          return res.status(401).json({ error: "Senha ou E-mail incorreto" });
-        }
+      const results = await new Promise((resolve, reject) => {
+        connect.query(query, values, (err, results) => {
+          if (err) {
+            console.error(err);
+            return reject({ error: "Erro Interno do Servidor" });
+          }
+          resolve(results);
+        });
       });
+
+      if (results.length === 0) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      const usuario = results[0];
+      if (usuario.senha === senha) {
+        return res.status(200).json({
+          message: "Login realizado com sucesso!",
+          usuario: {
+            id_usuario: usuario.id_usuario,
+            email: usuario.email,
+            nome: usuario.nome,
+          },
+        });
+      } else {
+        return res.status(401).json({ error: "Senha ou E-mail incorreto" });
+      }
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Erro Interno do Servidor" });
@@ -103,13 +108,13 @@ module.exports = class usuarioController {
     const query = `SELECT * FROM usuario`;
 
     try {
-      connect.query(query, function (err, results) {
-        if (err) {
-          console.error(err);
-          return res.status(500).json({ error: "Erro Interno do Servidor" });
-        }
-        return res.status(200).json({ message: "Obtendo todos os usuários", usuarios: results });
+      const results = await new Promise((resolve, reject) => {
+        connect.query(query, (err, results) => {
+          if (err) return reject(err);
+          resolve(results);
+        });
       });
+      return res.status(200).json({ message: "Obtendo todos os usuários", usuarios: results });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Erro Interno do Servidor" });
@@ -120,7 +125,7 @@ module.exports = class usuarioController {
     const { email, senha, nome } = req.body;
     const usuarioId = req.params.id_usuario;
 
-    // Valida os campos de atualização e o id do usuário
+    // Valida os campos de atualização e o ID do usuário
     const updateValidationError = usuarioValidator.validateUpdateUsuario({ email, senha, nome });
     if (updateValidationError) {
       return res.status(400).json(updateValidationError);
@@ -134,25 +139,25 @@ module.exports = class usuarioController {
     const values = [email, senha, nome, usuarioId];
 
     try {
-      connect.query(query, values, function (err, results) {
-        if (err) {
-          console.error(err);
-          if (err.code === "ER_DUP_ENTRY") {
-            return res.status(400).json({
-              error: "O email já está vinculado a outro usuário",
-            });
+      const results = await new Promise((resolve, reject) => {
+        connect.query(query, values, (err, results) => {
+          if (err) {
+            console.error(err);
+            return reject(err);
           }
-          return res.status(500).json({ error: "Erro interno no servidor" });
-        }
-
-        if (results.affectedRows === 0) {
-          return res.status(404).json({ error: "Usuário não encontrado" });
-        }
-        return res.status(200).json({ message: "Usuário atualizado com sucesso" });
+          resolve(results);
+        });
       });
+      if (results.affectedRows === 0) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+      return res.status(200).json({ message: "Usuário atualizado com sucesso" });
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ error: "Erro interno do servidor" });
+      if (error.code === "ER_DUP_ENTRY") {
+        return res.status(400).json({ error: "O email já está vinculado a outro usuário" });
+      }
+      return res.status(500).json({ error: "Erro interno no servidor" });
     }
   }
 
@@ -167,17 +172,19 @@ module.exports = class usuarioController {
     const values = [usuarioId];
 
     try {
-      connect.query(query, values, function (err, results) {
-        if (err) {
-          console.error(err);
-          return res.status(500).json({ error: "Erro interno no servidor" });
-        }
-
-        if (results.affectedRows === 0) {
-          return res.status(404).json({ error: "Usuário não encontrado" });
-        }
-        return res.status(200).json({ message: "Usuário excluído com sucesso" });
+      const results = await new Promise((resolve, reject) => {
+        connect.query(query, values, (err, results) => {
+          if (err) {
+            console.error(err);
+            return reject(err);
+          }
+          resolve(results);
+        });
       });
+      if (results.affectedRows === 0) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+      return res.status(200).json({ message: "Usuário excluído com sucesso" });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Erro interno do servidor" });
@@ -185,7 +192,8 @@ module.exports = class usuarioController {
   }
 
   static async getUsuarioById(req, res) {
-    const id_usuario = req.params.id_usuario;
+    const id_usuario = req.params.id_usuario; // Obtém o ID do usuário a partir dos parâmetros da URL
+
     // Valida se o ID foi fornecido
     const idValidationError = usuarioValidator.validateUsuarioId(id_usuario);
     if (idValidationError) {
@@ -194,16 +202,19 @@ module.exports = class usuarioController {
 
     const query = `SELECT * FROM usuario WHERE id_usuario = ?`;
 
-    connect.query(query, [id_usuario], function (err, results) {
-      if (err) {
-        console.error("Erro ao buscar usuário:", err);
-        return res.status(500).json({ error: "Erro interno do servidor" });
-      }
-
+    try {
+      const results = await new Promise((resolve, reject) => {
+        connect.query(query, [id_usuario], (err, results) => {
+          if (err) {
+            console.error("Erro ao buscar usuário:", err);
+            return reject(err);
+          }
+          resolve(results);
+        });
+      });
       if (results.length === 0) {
         return res.status(404).json({ error: "Usuário não encontrado" });
       }
-
       const usuario = results[0];
       return res.status(200).json({
         usuario: {
@@ -214,7 +225,10 @@ module.exports = class usuarioController {
           senha: usuario.senha,
         },
       });
-    });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Erro interno do servidor" });
+    }
   }
 
   static async getUsuarioReservas(req, res) {
@@ -233,14 +247,16 @@ module.exports = class usuarioController {
     `;
 
     try {
-      connect.query(queryReservas, [id_usuario], (err, results) => {
-        if (err) {
-          console.error("Erro ao buscar reservas:", err);
-          return res.status(500).json({ error: "Erro ao buscar reservas" });
-        }
-
-        return res.status(200).json({ reservas: results });
+      const results = await new Promise((resolve, reject) => {
+        connect.query(queryReservas, [id_usuario], (err, results) => {
+          if (err) {
+            console.error("Erro ao buscar reservas:", err);
+            return reject(err);
+          }
+          resolve(results);
+        });
       });
+      return res.status(200).json({ reservas: results });
     } catch (error) {
       console.error("Erro ao buscar reservas:", error);
       return res.status(500).json({ error: "Erro interno do servidor" });

@@ -1,21 +1,17 @@
 const connect = require("../db/connect");
 const validateSala = require("../services/validateSala");
 
-// Função auxiliar que converte o padrão callback do connect.query em uma Promise
-const queryAsync = (query, values = []) => {
-  return new Promise((resolve, reject) => {
-    connect.query(query, values, (err, results) => {
-      if (err) return reject(err);
-      resolve(results);
-    });
-  });
-};
-
 module.exports = class salaController {
   static async createSalas(req, res) {
     const { nome, descricao, bloco, tipo, capacidade } = req.body;
 
-    const validationError = validateSala.validateCreateSala({ nome, descricao, bloco, tipo, capacidade });
+    const validationError = validateSala.validateCreateSala({
+      nome,
+      descricao,
+      bloco,
+      tipo,
+      capacidade,
+    });
     if (validationError) {
       return res.status(400).json(validationError);
     }
@@ -24,7 +20,12 @@ module.exports = class salaController {
     const values = [nome, descricao, bloco, tipo, capacidade];
 
     try {
-      await queryAsync(query, values);
+      await new Promise((resolve, reject) => {
+        connect.query(query, values, (err, results) => {
+          if (err) return reject(err);
+          resolve(results);
+        });
+      });
       return res.status(201).json({ message: "Sala Criada com Sucesso!" });
     } catch (error) {
       console.error(error);
@@ -38,8 +39,15 @@ module.exports = class salaController {
   static async getAllSalasTabela(req, res) {
     const query = `SELECT * FROM sala`;
     try {
-      const results = await queryAsync(query);
-      return res.status(200).json({ message: "Obtendo todas as salas", salas: results });
+      const results = await new Promise((resolve, reject) => {
+        connect.query(query, (err, results) => {
+          if (err) return reject(err);
+          resolve(results);
+        });
+      });
+      return res
+        .status(200)
+        .json({ message: "Obtendo todas as salas", salas: results });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Erro Interno do Servidor" });
@@ -50,7 +58,10 @@ module.exports = class salaController {
     const { datahora_inicio, datahora_fim } = req.body;
 
     // Validação dos dados informados
-    const validationError = validateSala.validateHorario({ datahora_inicio, datahora_fim });
+    const validationError = validateSala.validateHorario({
+      datahora_inicio,
+      datahora_fim,
+    });
     if (validationError) {
       return res.status(400).json(validationError);
     }
@@ -72,9 +83,14 @@ module.exports = class salaController {
 
     try {
       // Obtém todas as salas
-      const salasDisponiveis = await queryAsync(querySalasDisponiveis);
-      const salasDisponiveisFinal = [];
+      const salasDisponiveis = await new Promise((resolve, reject) => {
+        connect.query(querySalasDisponiveis, (err, results) => {
+          if (err) return reject(err);
+          resolve(results);
+        });
+      });
 
+      const salasDisponiveisFinal = [];
       // Para cada sala, verifica se há conflito de horário
       for (const sala of salasDisponiveis) {
         const valuesHorario = [
@@ -88,19 +104,30 @@ module.exports = class salaController {
           datahora_inicio,
           datahora_fim,
         ];
-        const conflito = await queryAsync(queryHorarioConflito, valuesHorario);
+        const conflito = await new Promise((resolve, reject) => {
+          connect.query(queryHorarioConflito, valuesHorario, (err, results) => {
+            if (err) return reject(err);
+            resolve(results);
+          });
+        });
         if (conflito.length === 0) {
           salasDisponiveisFinal.push(sala);
         }
       }
 
       if (salasDisponiveisFinal.length === 0) {
-        return res.status(404).json({ message: "Não há salas disponíveis para o horário solicitado" });
+        return res
+          .status(404)
+          .json({
+            message: "Não há salas disponíveis para o horário solicitado",
+          });
       }
       return res.status(200).json(salasDisponiveisFinal);
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ message: "Erro ao obter as salas disponíveis" });
+      return res
+        .status(500)
+        .json({ message: "Erro ao obter as salas disponíveis" });
     }
   }
 
@@ -108,7 +135,10 @@ module.exports = class salaController {
     const { data_inicio, data_fim } = req.body;
 
     // Validação do intervalo de datas
-    const validationError = validateSala.validateDataRange({ data_inicio, data_fim });
+    const validationError = validateSala.validateDataRange({
+      data_inicio,
+      data_fim,
+    });
     if (validationError) {
       return res.status(400).json(validationError);
     }
@@ -129,9 +159,14 @@ module.exports = class salaController {
     `;
 
     try {
-      const salasDisponiveis = await queryAsync(querySalasDisponiveis);
-      const salasDisponiveisFinal = [];
+      const salasDisponiveis = await new Promise((resolve, reject) => {
+        connect.query(querySalasDisponiveis, (err, results) => {
+          if (err) return reject(err);
+          resolve(results);
+        });
+      });
 
+      const salasDisponiveisFinal = [];
       for (const sala of salasDisponiveis) {
         const valuesConflito = [
           sala.id_sala,
@@ -144,19 +179,34 @@ module.exports = class salaController {
           data_inicio,
           data_fim,
         ];
-        const conflito = await queryAsync(queryConflitoReserva, valuesConflito);
+        const conflito = await new Promise((resolve, reject) => {
+          connect.query(
+            queryConflitoReserva,
+            valuesConflito,
+            (err, results) => {
+              if (err) return reject(err);
+              resolve(results);
+            }
+          );
+        });
         if (conflito.length === 0) {
           salasDisponiveisFinal.push(sala);
         }
       }
 
       if (salasDisponiveisFinal.length === 0) {
-        return res.status(404).json({ message: "Não há salas disponíveis para o período solicitado" });
+        return res
+          .status(404)
+          .json({
+            message: "Não há salas disponíveis para o período solicitado",
+          });
       }
       return res.status(200).json(salasDisponiveisFinal);
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ message: "Erro ao obter as salas disponíveis" });
+      return res
+        .status(500)
+        .json({ message: "Erro ao obter as salas disponíveis" });
     }
   }
 
@@ -164,13 +214,24 @@ module.exports = class salaController {
     const queryReserva = `SELECT fk_id_sala FROM reserva`;
     const querySala = `SELECT id_sala FROM sala`;
     try {
-      const salasDisponiveisRows = await queryAsync(querySala);
-      const salasReservadasRows = await queryAsync(queryReserva);
+      const salasDisponiveisRows = await new Promise((resolve, reject) => {
+        connect.query(querySala, (err, results) => {
+          if (err) return reject(err);
+          resolve(results);
+        });
+      });
+      const salasReservadasRows = await new Promise((resolve, reject) => {
+        connect.query(queryReserva, (err, results) => {
+          if (err) return reject(err);
+          resolve(results);
+        });
+      });
 
-      const salasDisponiveis = salasDisponiveisRows.map(row => row.id_sala);
-      const salasReservadas = salasReservadasRows.map(row => row.fk_id_sala);
-
-      const salasSomenteDisponiveis = salasDisponiveis.filter(sala => !salasReservadas.includes(sala));
+      const salasDisponiveis = salasDisponiveisRows.map((row) => row.id_sala);
+      const salasReservadas = salasReservadasRows.map((row) => row.fk_id_sala);
+      const salasSomenteDisponiveis = salasDisponiveis.filter(
+        (sala) => !salasReservadas.includes(sala)
+      );
       const salasOrdenadas = salasSomenteDisponiveis.sort((a, b) => a - b);
 
       return res.status(200).json(salasOrdenadas);
@@ -184,7 +245,13 @@ module.exports = class salaController {
     const { nome, descricao, bloco, tipo, capacidade } = req.body;
     const salaId = req.params.id_sala;
 
-    const validationError = validateSala.validateUpdateSala({ nome, descricao, bloco, tipo, capacidade });
+    const validationError = validateSala.validateUpdateSala({
+      nome,
+      descricao,
+      bloco,
+      tipo,
+      capacidade,
+    });
     if (validationError) {
       return res.status(400).json(validationError);
     }
@@ -193,7 +260,12 @@ module.exports = class salaController {
     const values = [nome, descricao, bloco, tipo, capacidade, salaId];
 
     try {
-      const results = await queryAsync(query, values);
+      const results = await new Promise((resolve, reject) => {
+        connect.query(query, values, (err, results) => {
+          if (err) return reject(err);
+          resolve(results);
+        });
+      });
       if (results.affectedRows === 0) {
         return res.status(404).json({ error: "Sala não encontrada" });
       }
@@ -211,7 +283,12 @@ module.exports = class salaController {
     const salaId = req.params.id_sala;
     const query = `DELETE FROM sala WHERE id_sala = ?`;
     try {
-      const results = await queryAsync(query, [salaId]);
+      const results = await new Promise((resolve, reject) => {
+        connect.query(query, [salaId], (err, results) => {
+          if (err) return reject(err);
+          resolve(results);
+        });
+      });
       if (results.affectedRows === 0) {
         return res.status(404).json({ error: "Sala não encontrada" });
       }
@@ -219,9 +296,12 @@ module.exports = class salaController {
     } catch (error) {
       console.error(error);
       if (error.code === "ER_ROW_IS_REFERENCED_2") {
-        return res.status(400).json({
-          error: "A sala está vinculada a uma reserva, e não pode ser excluída"
-        });
+        return res
+          .status(400)
+          .json({
+            error:
+              "A sala está vinculada a uma reserva, e não pode ser excluída",
+          });
       }
       return res.status(500).json({ error: "Erro interno no servidor" });
     }
