@@ -1,7 +1,7 @@
 const connect = require("../db/connect");
 const validateReserva = require("../services/validateReserva");
 
-// Função auxiliar que converte o padrão de callback do connect.query em uma Promise
+// Função auxiliar para executar queries e retornar uma Promise
 const queryAsync = (query, values = []) => {
   return new Promise((resolve, reject) => {
     connect.query(query, values, (err, results) => {
