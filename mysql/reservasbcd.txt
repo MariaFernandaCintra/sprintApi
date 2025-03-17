@@ -93,8 +93,32 @@ INSERT INTO sala (nome, descricao, bloco, tipo, capacidade) VALUES
 ('OFI - LIXAMENTO', 'Lixadeiras e Polidoras', 'Oficina', 'Oficina', 16);
 
 INSERT INTO reserva (datahora_inicio, datahora_fim, fk_id_usuario, fk_id_sala) VALUES
-('2024-11-13 09:00:00', '2024-11-13 12:00:00', 1, 12),
-('2024-11-13 14:00:00', '2024-11-13 18:00:00', 2, 19),
-('2024-11-13 08:00:00', '2024-11-13 12:00:00', 3, 30),
-('2024-11-13 13:00:00', '2024-11-13 17:00:00', 4, 21),
-('2024-11-13 09:00:00', '2024-11-13 13:00:00', 5, 29);
+('2025-11-13 09:00:00', '2025-11-13 12:00:00', 1, 12),
+('2025-11-13 14:00:00', '2025-11-13 18:00:00', 2, 19),
+('2025-11-13 08:00:00', '2025-11-13 12:00:00', 3, 30),
+('2025-11-13 13:00:00', '2025-11-13 17:00:00', 4, 21),
+('2025-11-13 09:00:00', '2025-11-13 13:00:00', 5, 29);
+
+CREATE VIEW contagemReservasUsuarios AS SELECT 
+    u.id_usuario, 
+    u.nome, 
+    COUNT(r.id_reserva) AS total_reservas
+FROM 
+    usuario u
+LEFT JOIN 
+    reserva r ON u.id_usuario = r.fk_id_usuario
+GROUP BY 
+    u.id_usuario, u.nome;
+
+CREATE VIEW detalhesReservasUsuarios AS SELECT 
+    r.id_reserva, 
+    r.datahora_inicio, 
+    r.datahora_fim, 
+    s.nome AS sala_nome, 
+    u.nome AS usuario_nome
+FROM 
+    reserva r
+JOIN 
+    sala s ON r.fk_id_sala = s.id_sala
+JOIN 
+    usuario u ON r.fk_id_usuario = u.id_usuario;

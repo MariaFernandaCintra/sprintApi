@@ -1,10 +1,10 @@
 CREATE DATABASE  IF NOT EXISTS `rs` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 USE `rs`;
--- MySQL dump 10.13  Distrib 8.0.41, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 8.0.36, for Win64 (x86_64)
 --
 -- Host: localhost    Database: rs
 -- ------------------------------------------------------
--- Server version	8.4.0
+-- Server version	8.0.36
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -16,6 +16,36 @@ USE `rs`;
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Temporary view structure for view `contagemreservasusuarios`
+--
+
+DROP TABLE IF EXISTS `contagemreservasusuarios`;
+/*!50001 DROP VIEW IF EXISTS `contagemreservasusuarios`*/;
+SET @saved_cs_client     = @@character_set_client;
+/*!50503 SET character_set_client = utf8mb4 */;
+/*!50001 CREATE VIEW `contagemreservasusuarios` AS SELECT 
+ 1 AS `id_usuario`,
+ 1 AS `nome`,
+ 1 AS `total_reservas`*/;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary view structure for view `detalhesreservasusuarios`
+--
+
+DROP TABLE IF EXISTS `detalhesreservasusuarios`;
+/*!50001 DROP VIEW IF EXISTS `detalhesreservasusuarios`*/;
+SET @saved_cs_client     = @@character_set_client;
+/*!50503 SET character_set_client = utf8mb4 */;
+/*!50001 CREATE VIEW `detalhesreservasusuarios` AS SELECT 
+ 1 AS `id_reserva`,
+ 1 AS `datahora_inicio`,
+ 1 AS `datahora_fim`,
+ 1 AS `sala_nome`,
+ 1 AS `usuario_nome`*/;
+SET character_set_client = @saved_cs_client;
 
 --
 -- Table structure for table `reserva`
@@ -113,6 +143,42 @@ UNLOCK TABLES;
 --
 -- Dumping routines for database 'rs'
 --
+
+--
+-- Final view structure for view `contagemreservasusuarios`
+--
+
+/*!50001 DROP VIEW IF EXISTS `contagemreservasusuarios`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`alunods`@`%` SQL SECURITY DEFINER */
+/*!50001 VIEW `contagemreservasusuarios` AS select `u`.`id_usuario` AS `id_usuario`,`u`.`nome` AS `nome`,count(`r`.`id_reserva`) AS `total_reservas` from (`usuario` `u` left join `reserva` `r` on((`u`.`id_usuario` = `r`.`fk_id_usuario`))) group by `u`.`id_usuario`,`u`.`nome` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `detalhesreservasusuarios`
+--
+
+/*!50001 DROP VIEW IF EXISTS `detalhesreservasusuarios`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`alunods`@`%` SQL SECURITY DEFINER */
+/*!50001 VIEW `detalhesreservasusuarios` AS select `r`.`id_reserva` AS `id_reserva`,`r`.`datahora_inicio` AS `datahora_inicio`,`r`.`datahora_fim` AS `datahora_fim`,`s`.`nome` AS `sala_nome`,`u`.`nome` AS `usuario_nome` from ((`reserva` `r` join `sala` `s` on((`r`.`fk_id_sala` = `s`.`id_sala`))) join `usuario` `u` on((`r`.`fk_id_usuario` = `u`.`id_usuario`))) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -123,4 +189,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-02-26 20:22:00
+-- Dump completed on 2025-03-17 12:54:28
