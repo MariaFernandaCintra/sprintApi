@@ -27,7 +27,23 @@ module.exports = {
       return { error: "Todos os campos devem ser preenchidos" };
     }
     if (new Date(datahora_inicio) >= new Date(datahora_fim)) {
-      return { error: "A data de início deve ser anterior à data de fim" };
+      return { error: "Para checar a reserva, a data de início deve ser anterior à data de fim" };
+    }
+    const inicioDate = new Date(datahora_inicio);
+    const fimDate = new Date(datahora_fim);
+    const inicioHour = inicioDate.getHours();
+    const fimHour = fimDate.getHours();
+    if (inicioHour < 7 || inicioHour >= 23 || fimHour < 7 || fimHour >= 23) {
+      return {
+        error:
+          "Para checar a reserva, ela deve ser feita no horário de funcionamento do SENAI. Entre 7:00 e 23:00",
+      };
+    }
+
+    const duration = fimDate - inicioDate;
+    const limit = 50 * 60 * 1000; // 50 minutos em milissegundos
+    if (duration !== limit) {
+      return { error: "Para checar a reserva, ela deve ter exatamente 50 minutos" };
     }
     return null;
   },
@@ -38,7 +54,23 @@ module.exports = {
       return { error: "Todos os campos devem ser preenchidos" };
     }
     if (new Date(data_inicio) >= new Date(data_fim)) {
-      return { error: "A data de início deve ser anterior à data de fim" };
+      return { error: "Para checar a reserva, a data de início deve ser anterior à data de fim" };
+    }
+    const inicioDate = new Date(data_inicio);
+    const fimDate = new Date(data_fim);
+    const inicioHour = inicioDate.getHours();
+    const fimHour = fimDate.getHours();
+    if (inicioHour < 7 || inicioHour >= 23 || fimHour < 7 || fimHour >= 23) {
+      return {
+        error:
+          "A reserva deve ser feita no horário de funcionamento do SENAI. Entre 7:00 e 23:00",
+      };
+    }
+
+    const duration = fimDate - inicioDate;
+    const limit = 50 * 60 * 1000; // 50 minutos em milissegundos
+    if (duration !== limit) {
+      return { error: "Para checar a reserva, ela deve ter exatamente 50 minutos" };
     }
     return null;
   },

@@ -20,10 +20,10 @@ module.exports = {
 
     const inicioHour = inicioDate.getHours();
     const fimHour = fimDate.getHours();
-    if (inicioHour < 7 || inicioHour >= 21 || fimHour < 7 || fimHour >= 21) {
+    if (inicioHour < 7 || inicioHour >= 23 || fimHour < 7 || fimHour >= 23) {
       return {
         error:
-          "A reserva deve ser feita no horário de funcionamento do SENAI. Entre 7:00 e 21:00",
+          "A reserva deve ser feita no horário de funcionamento do SENAI. Entre 7:00 e 23:00",
       };
     }
 
