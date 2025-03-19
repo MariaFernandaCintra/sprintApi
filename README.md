@@ -1,4 +1,4 @@
-# Sprint API
+# SprintApi
 
 Este é o back-end da aplicação Sprint, um sistema de reservas e navegação desenvolvido durante um sprint. Este projeto fornece a API responsável pelo processamento dos dados, integração com serviços externos e gerenciamento das operações do sistema.
 
@@ -36,14 +36,14 @@ A Sprint API foi desenvolvida utilizando Node.js e Express, oferecendo endpoints
 1. **Clonar o Repositório**
 
    ```bash
-      git clone https://github.com/MariaFernandaCintra/sprintApi.git
+    git clone https://github.com/MariaFernandaCintra/sprintApi.git
 
    ```
 
 2. **Entre na Pasta**
 
    ```bash
-      cd sprintApi
+    cd sprintApi
    ```
 
 3. **Instalar as Dependências**
