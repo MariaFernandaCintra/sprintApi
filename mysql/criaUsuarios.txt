@@ -1,0 +1,14 @@
+DROP USER 'vini'@'%';
+DROP USER 'mafer'@'%';
+DROP USER 'maju'@'%';
+
+CREATE USER 'vini'@'%' IDENTIFIED BY 'senha';
+GRANT ALL PRIVILEGES ON *.* TO 'vini'@'%' WITH GRANT OPTION;
+
+CREATE USER 'mafer'@'%' IDENTIFIED BY 'senha';
+GRANT ALL PRIVILEGES ON *.* TO 'mafer'@'%' WITH GRANT OPTION;
+
+CREATE USER 'maju'@'%' IDENTIFIED BY 'senha';
+GRANT ALL PRIVILEGES ON *.* TO 'maju'@'%' WITH GRANT OPTION;
+
+FLUSH PRIVILEGES;
