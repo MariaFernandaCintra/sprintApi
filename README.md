@@ -36,14 +36,14 @@ A Sprint API foi desenvolvida utilizando Node.js e Express, oferecendo endpoints
 1. **Clonar o Repositório**
 
    ```bash
-   git clone https://github.com/MariaFernandaCintra/sprintApi.git
+      git clone https://github.com/MariaFernandaCintra/sprintApi.git
 
    ```
 
 2. **Entre na Pasta**
 
    ```bash
-   cd sprintApi
+      cd sprintApi
    ```
 
 3. **Instalar as Dependências**
@@ -51,14 +51,14 @@ A Sprint API foi desenvolvida utilizando Node.js e Express, oferecendo endpoints
 - Se estiver usando npm, execute:
 
   ```bash
-     npm install
+      npm install
   ```
 
 4. **Iniciar o Servidor de Desenvolvimento**
 
 - Com npm, execute:
   ```bash
-     npm run dev
+      npm start
   ```
 
 ### Dependências Necessárias
@@ -68,7 +68,7 @@ A Sprint API foi desenvolvida utilizando Node.js e Express, oferecendo endpoints
 - Para construir a API:
 
   ```bash
-     npm install express
+      npm install express
   ```
 
 2. **Cors**
