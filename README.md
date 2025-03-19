@@ -1,4 +1,4 @@
-# SPRINT FRONT
+# SrintFront
 
 Este é o front-end de um sistema de reservas desenvolvido durante um sprint. O projeto foi criado para oferecer uma interface moderna, responsiva e intuitiva para usuários que desejam acessar o sistema de reservas. A aplicação foi construída com as mais recentes tecnologias e boas práticas de desenvolvimento, visando performance e uma experiência de usuário de alta qualidade.
 
@@ -30,10 +30,22 @@ O projeto consiste em uma tela de login (e possivelmente outras telas relacionad
 
 ### Pré-requisitos
 
-- [Node.js](https://nodejs.org/) instalado (recomenda-se a versão LTS).
+- [Node.js](https://nodejs.org/) instalado.
 
 ### Passos
 
 1. **Clonar o repositório**
    ```bash
    git clone https://github.com/MariaFernandaCintra/sprintFront.git
+
+2. **Instalar as Dependências**
+   - Se estiver usando npm, execute:
+    ```bash
+       npm install
+    ```
+
+2. **Iniciar o Servidor de Desenvolvimento**
+   - Com npm, execute:
+    ```bash
+       npm run dev
+    ```
