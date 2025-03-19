@@ -176,6 +176,9 @@ module.exports = class usuarioController {
         connect.query(query, values, (err, results) => {
           if (err) {
             console.error(err);
+            if (err.code === "ER_ROW_IS_REFERENCED_2") {
+              return res.status(400).json({ error: "Usuário não pode ser excluido, pois tem uma reserva" });
+            }
             return reject(err);
           }
           resolve(results);
