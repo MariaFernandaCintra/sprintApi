@@ -51,14 +51,14 @@ A Sprint API foi desenvolvida utilizando Node.js e Express, oferecendo endpoints
 - Se estiver usando npm, execute:
 
   ```bash
-      npm i
+    npm i
   ```
 
 4. **Iniciar o Servidor de Desenvolvimento**
 
 - Com npm, execute:
   ```bash
-      npm start
+    npm start
   ```
 
 ### Dependências Necessárias
@@ -68,7 +68,7 @@ A Sprint API foi desenvolvida utilizando Node.js e Express, oferecendo endpoints
 - Para construir a API:
 
   ```bash
-      npm i express
+    npm i express
   ```
 
 2. **Cors**
@@ -76,7 +76,7 @@ A Sprint API foi desenvolvida utilizando Node.js e Express, oferecendo endpoints
 - Para habilitar CORS e permitir requisições de outros domínios:
 
   ```bash
-      npm i cors
+    npm i cors
   ```
 
 3. **Axios**
@@ -84,5 +84,5 @@ A Sprint API foi desenvolvida utilizando Node.js e Express, oferecendo endpoints
 - Para integrar com a API utilizando Axios, instale:
 
   ```bash
-      npm i axios
+    npm i axios
   ```
