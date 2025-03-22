@@ -11,17 +11,35 @@ const queryAsync = (query, values = []) => {
   });
 };
 
-module.exports = class AgendamentoController {
+// Atualiza a função getDiaSemana para evitar deslocamento de data
+const getDiaSemana = (data) => {
+  // Divide a data (formato YYYY-MM-DD) em ano, mês e dia
+  const [year, month, day] = data.split("-").map(Number);
+  // Cria o objeto Date utilizando o construtor local (mês em JavaScript inicia em 0)
+  const date = new Date(year, month - 1, day);
+  const diasSemana = [
+    "Domingo",
+    "Segunda-Feira",
+    "Terça-Feira",
+    "Quarta-Feira",
+    "Quinta-Feira",
+    "Sexta-Feira",
+    "Sábado",
+  ];
+  return diasSemana[date.getDay()];
+};
+
+module.exports = class ReservaController {
   static async createReservas(req, res) {
-    const { fk_id_usuario, fk_id_sala, datahora_inicio, datahora_fim } =
-      req.body;
+    const { fk_id_usuario, fk_id_sala, data, hora_inicio, hora_fim } = req.body;
 
     // Validação inicial dos campos
     const validationError = validateReserva.validateReserva({
       fk_id_usuario,
       fk_id_sala,
-      datahora_inicio,
-      datahora_fim,
+      data,
+      hora_inicio,
+      hora_fim,
     });
     if (validationError) {
       return res.status(400).json(validationError);
@@ -40,44 +58,64 @@ module.exports = class AgendamentoController {
         return res.status(404).json({ error: "Sala não encontrada" });
       }
 
-      // Verifica conflitos de horário para a sala
-      const conflitos = await validateReserva.checkConflitoHorario(
+      // Verifica conflitos de horário para a sala no mesmo dia
+      const queryConflito = `
+        SELECT hora_inicio, hora_fim 
+        FROM reserva 
+        WHERE fk_id_sala = ? AND data = ? AND (
+          (hora_inicio < ? AND hora_fim > ?) OR
+          (hora_inicio < ? AND hora_fim > ?) OR
+          (hora_inicio >= ? AND hora_inicio < ?) OR
+          (hora_fim > ? AND hora_fim <= ?)
+        )
+      `;
+      const conflitos = await queryAsync(queryConflito, [
         fk_id_sala,
-        datahora_inicio,
-        datahora_fim
-      );
+        data,
+        hora_inicio,
+        hora_inicio,
+        hora_inicio,
+        hora_fim,
+        hora_inicio,
+        hora_fim,
+        hora_inicio,
+        hora_fim,
+      ]);
       if (conflitos && conflitos.length > 0) {
+        // Ordena os conflitos pelo horário de término para sugerir um próximo horário
         const reservasOrdenadas = conflitos.sort(
-          (a, b) => new Date(a.datahora_fim) - new Date(b.datahora_fim)
+          (a, b) =>
+            new Date(`1970-01-01T${a.hora_fim}`) -
+            new Date(`1970-01-01T${b.hora_fim}`)
         );
-        const proximoHorarioInicio = new Date(
-          reservasOrdenadas[0].datahora_fim
-        );
-        proximoHorarioInicio.setHours(proximoHorarioInicio.getHours() - 3);
-        const proximoHorarioFim = new Date(
-          proximoHorarioInicio.getTime() + 50 * 60 * 1000
-        );
+        const proximoHorarioInicio = reservasOrdenadas[0].hora_fim;
+        // Sugere um intervalo de 50 minutos após o término do conflito
+        const [hora, min, seg] = proximoHorarioInicio.split(":");
+        const inicioDate = new Date(1970, 0, 1, hora, min, seg);
+        const fimDate = new Date(inicioDate.getTime() + 50 * 60 * 1000);
+        const formatTime = (d) => d.toTimeString().split(" ")[0];
         return res.status(400).json({
-          error: `A sala já está reservada neste horário. O próximo horário disponível é de ${proximoHorarioInicio
-            .toISOString()
-            .replace("T", " ")
-            .substring(0, 19)} até ${proximoHorarioFim
-            .toISOString()
-            .replace("T", " ")
-            .substring(0, 19)}`,
+          error: `A sala já está reservada neste horário. O próximo horário disponível é de ${formatTime(
+            inicioDate
+          )} até ${formatTime(fimDate)}`,
         });
       }
 
+      // Calcula o dia da semana a partir da data
+      const dia_semana = getDiaSemana(data);
+
       // Insere a nova reserva no banco de dados
       const queryInsert = `
-        INSERT INTO reserva (fk_id_usuario, fk_id_sala, datahora_inicio, datahora_fim)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO reserva (fk_id_usuario, fk_id_sala, dia_semana, data, hora_inicio, hora_fim)
+        VALUES (?, ?, ?, ?, ?, ?)
       `;
       await queryAsync(queryInsert, [
         fk_id_usuario,
         fk_id_sala,
-        datahora_inicio,
-        datahora_fim,
+        dia_semana,
+        data,
+        hora_inicio,
+        hora_fim,
       ]);
 
       return res.status(201).json({ message: "Sala reservada com sucesso!" });
@@ -88,76 +126,21 @@ module.exports = class AgendamentoController {
   }
 
   static async getAllReservas(req, res) {
-    // const query = `SELECT * FROM reserva;`
-    // try {
-    //   const results = await queryAsync(query);
-    //   return res.status(200).json({ message: "Obtendo todas as reservas", reservas: results });
-    // } catch (error) {
-    //   console.error(error);
-    //   return res.status(500).json({ error: "Erro Interno do Servidor" });
-    // }
     const query = `SELECT * FROM reserva`;
     try {
       const results = await queryAsync(query);
-
+      // Mapeia cada reserva para garantir os formatos desejados
       const reservasTransformadas = results.map((reserva) => {
-        // Extrai as strings de data/hora
-        const startStr = reserva.datahora_inicio.toISOString();
-        const endStr = reserva.datahora_fim.toISOString();
-
-        // Caso o formato não esteja em ISO (com "T"), converte para garantir que o Date entenda corretamente
-        const startISO = startStr.includes("T")
-          ? startStr
-          : startStr.replace(" ", "T");
-        const endISO = endStr.includes("T") ? endStr : endStr.replace(" ", "T");
-
-        const startDate = new Date(startISO);
-        const endDate = new Date(endISO);
-
-        // Função para formatar data no formato YYYY-MM-DD
-        const formatDate = (date) => {
-          const ano = date.getFullYear();
-          const mes = String(date.getMonth() + 1).padStart(2, "0");
-          const dia = String(date.getDate()).padStart(2, "0");
-          return `${ano}-${mes}-${dia}`;
-        };
-
-        // Função para formatar hora no formato HH:MM:SS
-        const formatTime = (date) => {
-          const hora = String(date.getHours()).padStart(2, "0");
-          const minuto = String(date.getMinutes()).padStart(2, "0");
-          const segundo = String(date.getSeconds()).padStart(2, "0");
-          return `${hora}:${minuto}:${segundo}`;
-        };
-
-        // Mapeamento dos dias da semana em português
-        // Em JavaScript, getDay() retorna 0 para domingo, 1 para segunda, etc.
-        const diasSemana = [
-          "domingo",
-          "segunda-feira",
-          "terça-feira",
-          "quarta-feira",
-          "quinta-feira",
-          "sexta-feira",
-          "sábado",
-        ];
-
-        const diaSemana = diasSemana[startDate.getDay()];
-
         return {
-          // Caso queira manter outras propriedades da reserva, pode desestruturar o objeto original:
-          // ...reserva,
-          id_reserva : reserva.id_reserva,
+          id_reserva: reserva.id_reserva,
           fk_id_sala: reserva.fk_id_sala,
-          fk_id_usuario : reserva.fk_id_usuario,
-          dia: diaSemana,
-          data_inicio: formatDate(startDate),
-          data_fim: formatDate(endDate),
-          hora_inicio: formatTime(startDate),
-          hora_fim: formatTime(endDate),
+          fk_id_usuario: reserva.fk_id_usuario,
+          dia_semana: reserva.dia_semana,
+          data: reserva.data, // esperado no formato YYYY-MM-DD
+          hora_inicio: reserva.hora_inicio, // esperado no formato HH:MM:SS
+          hora_fim: reserva.hora_fim,
         };
       });
-
       return res.status(200).json({
         message: "Obtendo todas as reservas",
         reservas: reservasTransformadas,
@@ -169,18 +152,20 @@ module.exports = class AgendamentoController {
   }
 
   static async updateReserva(req, res) {
-    const { datahora_inicio, datahora_fim } = req.body;
-    const reservaId = req.params.id_reserva;
-
+    const { data, hora_inicio, hora_fim } = req.body;
+    // Se a rota for /reserva/:id, utilize req.params.id
+    const reservaId = req.params.id_reserva; // Alterado de req.params.id_reserva para req.params.id
+  
     // Valida os campos de atualização usando a função de validação específica
     const validationError = validateReserva.validateUpdateReserva({
-      datahora_inicio,
-      datahora_fim,
+      data,
+      hora_inicio,
+      hora_fim,
     });
     if (validationError) {
       return res.status(400).json(validationError);
     }
-
+  
     try {
       // Obtém o fk_id_sala da reserva para verificação de conflitos
       const querySala = `SELECT fk_id_sala FROM reserva WHERE id_reserva = ?`;
@@ -188,65 +173,68 @@ module.exports = class AgendamentoController {
       if (resultadosSala.length === 0) {
         return res.status(404).json({ error: "Reserva não encontrada" });
       }
-      const fk_id_sala = resultadosSala[0].fk_id_sala;
-
-      // Verifica conflitos de horário (excluindo a própria reserva)
+      const { fk_id_sala } = resultadosSala[0];
+  
+      // Verifica conflitos de horário para a mesma sala e data (excluindo a própria reserva)
       const queryHorario = `
-        SELECT datahora_inicio, datahora_fim 
+        SELECT hora_inicio, hora_fim 
         FROM reserva 
-        WHERE fk_id_sala = ? AND id_reserva != ? AND (
-          (datahora_inicio < ? AND datahora_fim > ?) OR
-          (datahora_inicio < ? AND datahora_fim > ?) OR
-          (datahora_inicio >= ? AND datahora_inicio < ?) OR
-          (datahora_fim > ? AND datahora_fim <= ?)
+        WHERE fk_id_sala = ? AND id_reserva != ? AND data = ? AND (
+          (hora_inicio < ? AND hora_fim > ?) OR
+          (hora_inicio < ? AND hora_fim > ?) OR
+          (hora_inicio >= ? AND hora_inicio < ?) OR
+          (hora_fim > ? AND hora_fim <= ?)
         )
       `;
-      const valuesHorario = [
+      const conflitos = await queryAsync(queryHorario, [
         fk_id_sala,
         reservaId,
-        datahora_inicio,
-        datahora_inicio,
-        datahora_inicio,
-        datahora_fim,
-        datahora_inicio,
-        datahora_fim,
-        datahora_inicio,
-        datahora_fim,
-      ];
-      const conflitos = await queryAsync(queryHorario, valuesHorario);
+        data,
+        hora_inicio,
+        hora_inicio,
+        hora_inicio,
+        hora_fim,
+        hora_inicio,
+        hora_fim,
+        hora_inicio,
+        hora_fim,
+      ]);
       if (conflitos.length > 0) {
         const reservasOrdenadas = conflitos.sort(
-          (a, b) => new Date(a.datahora_fim) - new Date(b.datahora_fim)
+          (a, b) =>
+            new Date(`1970-01-01T${a.hora_fim}`) -
+            new Date(`1970-01-01T${b.hora_fim}`)
         );
-        const proximoHorarioInicio = new Date(
-          reservasOrdenadas[0].datahora_fim
-        );
-        proximoHorarioInicio.setHours(proximoHorarioInicio.getHours() - 3);
-        const proximoHorarioFim = new Date(
-          proximoHorarioInicio.getTime() + 50 * 60 * 1000
-        );
+        const proximoHorarioInicio = reservasOrdenadas[0].hora_fim;
+        const [hora, min, seg] = proximoHorarioInicio.split(":");
+        const inicioDate = new Date(1970, 0, 1, hora, min, seg);
+        const fimDate = new Date(inicioDate.getTime() + 50 * 60 * 1000);
+        const formatTime = (d) => d.toTimeString().split(" ")[0];
         return res.status(400).json({
-          error: `A sala já está reservada neste horário. O próximo horário disponível é de ${proximoHorarioInicio
-            .toISOString()
-            .replace("T", " ")
-            .substring(0, 19)} até ${proximoHorarioFim
-            .toISOString()
-            .replace("T", " ")
-            .substring(0, 19)}`,
+          error: `A sala já está reservada neste horário. O próximo horário disponível é de ${formatTime(
+            inicioDate
+          )} até ${formatTime(fimDate)}`,
         });
       }
-
+  
+      // Atualiza o dia da semana com base na nova data
+      const dia_semana = getDiaSemana(data);
+  
       // Atualiza a reserva
       const queryUpdate = `
         UPDATE reserva 
-        SET datahora_inicio = ?, datahora_fim = ? 
+        SET data = ?, hora_inicio = ?, hora_fim = ?, dia_semana = ?
         WHERE id_reserva = ?
       `;
-      await queryAsync(queryUpdate, [datahora_inicio, datahora_fim, reservaId]);
-
-      return res
-        .status(200)
-        .json({ message: "Reserva atualizada com sucesso!" });
+      await queryAsync(queryUpdate, [
+        data,
+        hora_inicio,
+        hora_fim,
+        dia_semana,
+        reservaId,
+      ]);
+  
+      return res.status(200).json({ message: "Reserva atualizada com sucesso!" });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Erro ao atualizar reserva" });

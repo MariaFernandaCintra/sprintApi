@@ -23,14 +23,17 @@ CREATE TABLE reserva(
      id_reserva int primary key auto_increment,
      fk_id_sala int not null,
      fk_id_usuario int not null,
-     datahora_inicio datetime not null, 
-     datahora_fim datetime not null,
+     dia_semana varchar(20),
+     data date not null,
+     hora_inicio time not null,
+     hora_fim time not null,
      foreign key (fk_id_sala) references sala(id_sala),
      foreign key (fk_id_usuario) references usuario(id_usuario)
  );
 
-CREATE INDEX idx_reserva_datahora_inicio ON reserva(datahora_inicio);
-CREATE INDEX idx_reserva_datahora_fim ON reserva(datahora_fim);
+CREATE INDEX idx_reserva_dia_semana ON reserva(dia_semana);
+CREATE INDEX idx_reserva_hora_inicio ON reserva(hora_inicio);
+CREATE INDEX idx_reserva_hora_fim ON reserva(hora_fim);
 
 INSERT INTO usuario (nome, email, senha, NIF) VALUES
 ('João Silva', 'joao.silva@example.com', 'senha123', '3456789'),
@@ -93,12 +96,12 @@ INSERT INTO sala (nome, descricao, bloco, tipo, capacidade) VALUES
 ('OFI - MARCENARIA', 'Ferramentas de Marcenaria', 'Oficina', 'Oficina', 16),
 ('OFI - LIXAMENTO', 'Lixadeiras e Polidoras', 'Oficina', 'Oficina', 16);
 
-INSERT INTO reserva (datahora_inicio, datahora_fim, fk_id_usuario, fk_id_sala) VALUES
-('2025-12-31 09:00:00', '2025-12-31 09:50:00', 1, 12),
-('2025-12-31 14:00:00', '2025-12-31 14:50:00', 2, 19),
-('2025-12-31 08:00:00', '2025-12-31 08:50:00', 3, 30),
-('2025-12-31 13:00:00', '2025-12-31 13:50:00', 4, 21),
-('2025-12-31 09:00:00', '2025-12-31 09:50:00', 5, 29);
+INSERT INTO reserva (data, hora_inicio, hora_fim, dia_semana, fk_id_usuario, fk_id_sala) VALUES
+('2025-12-31', '09:00:00', '09:50:00', 'Quarta-Feira', 1, 1),
+('2025-12-31', '14:00:00', '14:50:00', 'Quarta-Feira', 2, 2),
+('2025-12-31', '08:00:00', '08:50:00', 'Quarta-Feira', 3, 3),
+('2025-12-31', '13:00:00', '13:50:00', 'Quarta-Feira', 4, 4),
+('2025-12-31', '12:00:00', '12:50:00', 'Quarta-Feira', 5, 5);
 
 
 CREATE VIEW contagem_reservas_usuarios AS SELECT 
@@ -114,9 +117,12 @@ GROUP BY
 
 
 CREATE VIEW reservas_detalhes AS SELECT 
-    r.id_reserva, 
-    r.datahora_inicio, 
-    r.datahora_fim, 
+    r.id_reserva,
+    r.data,
+    r.dia_semana,
+    r.hora_inicio, 
+    r.hora_fim,
+    s.id_sala AS sala_id_sala, 
     s.nome AS sala_nome, 
     u.nome AS usuario_nome
 FROM 

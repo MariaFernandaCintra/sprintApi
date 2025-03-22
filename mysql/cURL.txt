@@ -55,10 +55,11 @@ curl --location --request DELETE 'http://localhost:5000/reservas/v1/usuario/1' \
 curl --location --request POST 'http://localhost:5000/reservas/v1/reserva' \
 --header 'Content-Type: application/json' \
 --data '{
-    "fk_id_usuario":"1",
-    "fk_id_sala":"1", 
-    "datahora_inicio":"2025-12-31 07:00:00", 
-    "datahora_fim":"2025-12-31 07:50:00"
+    "fk_id_usuario": "1",
+    "fk_id_sala": "1",
+    "data": "2025-12-31",
+    "hora_inicio": "07:00:00",
+    "hora_fim": "07:50:00"
 }'
 
 -------------------------------------------------------------------------------
@@ -74,8 +75,9 @@ curl --location 'http://localhost:5000/reservas/v1/reservas'
 curl --location --request PUT 'http://localhost:5000/reservas/v1/reserva/1' \
 --header 'Content-Type: application/json' \
 --data '{ 
-    "datahora_inicio":"2025-12-31 07:50:00", 
-    "datahora_fim":"2025-12-31 08:40:00"
+    "data": "2025-12-31", 
+    "hora_inicio": "07:50:00", 
+    "hora_fim": "08:40:00"
 }'
 
 
@@ -136,24 +138,9 @@ curl --location --request DELETE 'http://localhost:5000/reservas/v1/sala/1' \
 curl --location --request GET 'http://localhost:5000/reservas/v1/salasdisponivelhorario' \
 --header 'Content-Type: application/json' \
 --data '{
-    "datahora_inicio":"2025-12-31 07:00:00",
-    "datahora_fim":"2025-12-31 07:50:00"
+    "data": "2025-12-31",
+    "hora_inicio": "07:00:00",
+    "hora_fim": "07:50:00"
 }'
 
 -------------------------------------------------------------------------------
-
- - SALAS DIAS - GET
-
-curl --location --request GET 'http://localhost:5000/reservas/v1/salasdisponiveldata' \
---header 'Content-Type: application/json' \
---data '{
-    "data_inicio":"2025-12-31 07:00:00",
-    "data_fim":"2025-12-31 07:50:00"
-}'
-
--------------------------------------------------------------------------------
-
- - SALAS DISPONIVEIS - GET
-
-curl --location 'http://localhost:5000/reservas/v1/salasdisponiveis' \
---data ''
