@@ -13,7 +13,6 @@ router.delete("/usuario/:id_usuario", usuarioController.deleteUsuario);
 router.get('/usuario/perfil/:id_usuario', usuarioController.getUsuarioById);
 router.get('/usuario/perfil/:id_usuario/reservas', usuarioController.getUsuarioReservas);
 
-router.get("/reserva", reservaController.createReservas);
 router.post("/reserva", reservaController.createReservas);
 router.get("/reservas", reservaController.getAllReservas);
 router.put("/reserva/:id_reserva", reservaController.updateReserva);
