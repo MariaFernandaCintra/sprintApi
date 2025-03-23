@@ -82,7 +82,7 @@ module.exports = {
   },
 
   // Verifica se o usuário existe no banco de dados
-  checkUserExists: async function (fk_id_usuario) {
+  checkUsuarioExiste: async function (fk_id_usuario) {
     const query = `SELECT id_usuario FROM usuario WHERE id_usuario = ?`;
     const values = [fk_id_usuario];
     return new Promise((resolve, reject) => {
@@ -94,7 +94,7 @@ module.exports = {
   },
 
   // Verifica se a sala existe no banco de dados
-  checkSalaExists: async function (fk_id_sala) {
+  checkSalaExiste: async function (fk_id_sala) {
     const query = `SELECT id_sala FROM sala WHERE id_sala = ?`;
     const values = [fk_id_sala];
     return new Promise((resolve, reject) => {

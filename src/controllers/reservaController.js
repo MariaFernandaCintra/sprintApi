@@ -32,7 +32,7 @@ const getDiaSemana = (data) => {
 module.exports = class ReservaController {
   static async createReservas(req, res) {
     const { fk_id_usuario, fk_id_sala, data, hora_inicio, hora_fim } = req.body;
-
+  
     // Validação inicial dos campos
     const validationError = validateReserva.validateReserva({
       fk_id_usuario,
@@ -44,67 +44,82 @@ module.exports = class ReservaController {
     if (validationError) {
       return res.status(400).json(validationError);
     }
-
+  
     try {
       // Verifica se o usuário existe
-      const userExists = await validateReserva.checkUserExists(fk_id_usuario);
-      if (!userExists) {
+      const usuarioExiste = await validateReserva.checkUsuarioExiste(fk_id_usuario);
+      if (!usuarioExiste) {
         return res.status(404).json({ error: "Usuário não encontrado" });
       }
-
+  
       // Verifica se a sala existe
-      const salaExists = await validateReserva.checkSalaExists(fk_id_sala);
-      if (!salaExists) {
+      const salaExiste = await validateReserva.checkSalaExiste(fk_id_sala);
+      if (!salaExiste) {
         return res.status(404).json({ error: "Sala não encontrada" });
       }
-
-      // Verifica conflitos de horário para a sala no mesmo dia
-      const queryConflito = `
+  
+      // Consulta todas as reservas do dia para a sala, ordenadas pelo horário de início
+      const queryReservas = `
         SELECT hora_inicio, hora_fim 
         FROM reserva 
-        WHERE fk_id_sala = ? AND data = ? AND (
-          (hora_inicio < ? AND hora_fim > ?) OR
-          (hora_inicio < ? AND hora_fim > ?) OR
-          (hora_inicio >= ? AND hora_inicio < ?) OR
-          (hora_fim > ? AND hora_fim <= ?)
-        )
+        WHERE fk_id_sala = ? AND data = ?
+        ORDER BY hora_inicio ASC
       `;
-      const conflitos = await queryAsync(queryConflito, [
-        fk_id_sala,
-        data,
-        hora_inicio,
-        hora_inicio,
-        hora_inicio,
-        hora_fim,
-        hora_inicio,
-        hora_fim,
-        hora_inicio,
-        hora_fim,
-      ]);
-      if (conflitos && conflitos.length > 0) {
-        // Ordena os conflitos pelo horário de término para sugerir um próximo horário
-        const reservasOrdenadas = conflitos.sort(
-          (a, b) =>
-            new Date(`1970-01-01T${a.hora_fim}`) -
-            new Date(`1970-01-01T${b.hora_fim}`)
-        );
-        const proximoHorarioInicio = reservasOrdenadas[0].hora_fim;
-        // Sugere um intervalo de 50 minutos após o término do conflito
-        const [hora, min, seg] = proximoHorarioInicio.split(":");
-        const inicioDate = new Date(1970, 0, 1, hora, min, seg);
-        const fimDate = new Date(inicioDate.getTime() + 50 * 60 * 1000);
+      const reservas = await queryAsync(queryReservas, [fk_id_sala, data]);
+  
+      // Cria objetos Date para o horário desejado (base fixada em 1970-01-01)
+      const desiredStart = new Date(`1970-01-01T${hora_inicio}`);
+      const desiredEnd = new Date(`1970-01-01T${hora_fim}`);
+      let conflictFound = false;
+  
+      // Verifica se o intervalo desejado conflita com alguma reserva existente
+      for (const reserva of reservas) {
+        const rStart = new Date(`1970-01-01T${reserva.hora_inicio}`);
+        const rEnd = new Date(`1970-01-01T${reserva.hora_fim}`);
+        if (desiredStart < rEnd && desiredEnd > rStart) {
+          conflictFound = true;
+          break;
+        }
+      }
+  
+      // Se houver conflito, procura o primeiro intervalo livre com duração de 50 minutos
+      if (conflictFound) {
+        const duracaoMs = 50 * 60 * 1000; // 50 minutos em milissegundos
+        let inicioDisponivel = desiredStart;
+        // Define o fim do dia (ajuste se necessário conforme regras do sistema)
+        const fimDoDia = new Date('1970-01-01T23:59:59');
+  
+        // Itera pelas reservas para identificar um intervalo livre
+        for (const reserva of reservas) {
+          const rStart = new Date(`1970-01-01T${reserva.hora_inicio}`);
+          const rEnd = new Date(`1970-01-01T${reserva.hora_fim}`);
+          // Se o espaço entre o horário disponível atual e o início da reserva for suficiente:
+          if (inicioDisponivel.getTime() + duracaoMs <= rStart.getTime()) {
+            break;
+          } else {
+            // Atualiza o início disponível se houver sobreposição
+            if (inicioDisponivel < rEnd) {
+              inicioDisponivel = rEnd;
+            }
+          }
+        }
+  
+        // Se o intervalo livre extrapolar o fim do dia, não há disponibilidade
+        if (inicioDisponivel.getTime() + duracaoMs > fimDoDia.getTime()) {
+          return res.status(400).json({
+            error: "Não há horários disponíveis para uma reserva de 50 minutos neste dia."
+          });
+        }
+  
+        const fimDisponivel = new Date(inicioDisponivel.getTime() + duracaoMs);
         const formatTime = (d) => d.toTimeString().split(" ")[0];
         return res.status(400).json({
-          error: `A sala já está reservada neste horário. O próximo horário disponível é de ${formatTime(
-            inicioDate
-          )} até ${formatTime(fimDate)}`,
+          error: `A sala já está reservada neste horário. O próximo horário disponível é de ${formatTime(inicioDisponivel)} até ${formatTime(fimDisponivel)}`
         });
       }
-
-      // Calcula o dia da semana a partir da data
+  
+      // Se não houver conflito, calcula o dia da semana e insere a nova reserva
       const dia_semana = getDiaSemana(data);
-
-      // Insere a nova reserva no banco de dados
       const queryInsert = `
         INSERT INTO reserva (fk_id_usuario, fk_id_sala, dia_semana, data, hora_inicio, hora_fim)
         VALUES (?, ?, ?, ?, ?, ?)
@@ -117,13 +132,13 @@ module.exports = class ReservaController {
         hora_inicio,
         hora_fim,
       ]);
-
+  
       return res.status(201).json({ message: "Sala reservada com sucesso!" });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Erro ao criar reserva" });
     }
-  }
+  }  
 
   static async getAllReservas(req, res) {
     const query = `SELECT * FROM reserva`;
