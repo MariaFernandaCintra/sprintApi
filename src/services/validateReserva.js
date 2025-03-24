@@ -14,17 +14,33 @@ module.exports = {
     }
 
     // Concatena data e hora para criar os objetos Date
-    const inicioDate = new Date(`${data}T${hora_inicio}`);
-    const fimDate = new Date(`${data}T${hora_fim}`);
-
+    const inicioTime = new Date(`${data}T${hora_inicio}`);
+    const fimTime = new Date(`${data}T${hora_fim}`);
+    const now = new Date();
+    
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    const hour = String(now.getHours()).padStart(2, '0');
+    const minute = String(now.getMinutes()).padStart(2, '0');
+    const second = String(now.getSeconds()).padStart(2, '0');
+    
+    const nowFormatted = `${day}-${month}-${year} ${hour}:${minute}:${second}`;
+    
     // A reserva deve ser para um horário futuro e com fim após o início
-    if (inicioDate < new Date() || fimDate <= inicioDate) {
-      return { error: "Data ou Horário Inválidos" };
+    if (inicioTime < now) {
+      return { error: "A reserva deve ser depois de: " + nowFormatted };
+    }
+
+    if (fimTime <= inicioTime) {
+      return {
+        error: "A hora de início deve ser antes da hora de fim",
+      };
     }
 
     // Verifica se os horários estão dentro do funcionamento do SENAI (das 7:00 às 23:00)
-    const inicioHour = inicioDate.getHours();
-    const fimHour = fimDate.getHours();
+    const inicioHour = inicioTime.getHours();
+    const fimHour = fimTime.getHours();
     if (inicioHour < 7 || inicioHour >= 23 || fimHour < 7 || fimHour >= 23) {
       return {
         error:
@@ -33,7 +49,7 @@ module.exports = {
     }
 
     // Verifica se a duração é exatamente de 50 minutos
-    const duration = fimDate - inicioDate;
+    const duration = fimTime - inicioTime;
     const limit = 50 * 60 * 1000; // 50 minutos em milissegundos
     if (duration !== limit) {
       return { error: "A reserva deve ter exatamente 50 minutos" };
@@ -48,22 +64,33 @@ module.exports = {
       return { error: "Todos os campos devem ser preenchidos" };
     }
 
-    const inicioDate = new Date(`${data}T${hora_inicio}`);
-    const fimDate = new Date(`${data}T${hora_fim}`);
-
-    // Na atualização, a reserva deve ser para um horário futuro
-    if (inicioDate < new Date() || fimDate < new Date()) {
-      return { error: "Data ou Horário inválidos" };
+    // Concatena data e hora para criar os objetos Date
+    const inicioTime = new Date(`${data}T${hora_inicio}`);
+    const fimTime = new Date(`${data}T${hora_fim}`);
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    const hour = String(now.getHours()).padStart(2, '0');
+    const minute = String(now.getMinutes()).padStart(2, '0');
+    const second = String(now.getSeconds()).padStart(2, '0');
+    
+    const nowFormatted = `${day}-${month}-${year} ${hour}:${minute}:${second}`;
+    
+    // A reserva deve ser para um horário futuro e com fim após o início
+    if (inicioTime < now) {
+      return { error: "A reserva deve ser depois de: " + nowFormatted };
     }
-    if (fimDate <= inicioDate) {
+
+    if (fimTime <= inicioTime) {
       return {
-        error: "A data/hora de fim deve ser após a data/hora de início",
+        error: "A hora de início deve ser antes da hora de fim",
       };
     }
 
     // Verifica se os horários estão dentro do funcionamento do SENAI (das 7:00 às 23:00)
-    const inicioHour = inicioDate.getHours();
-    const fimHour = fimDate.getHours();
+    const inicioHour = inicioTime.getHours();
+    const fimHour = fimTime.getHours();
     if (inicioHour < 7 || inicioHour >= 23 || fimHour < 7 || fimHour >= 23) {
       return {
         error:
@@ -72,7 +99,7 @@ module.exports = {
     }
 
     // Verifica se a duração é exatamente de 50 minutos
-    const duration = fimDate - inicioDate;
+    const duration = fimTime - inicioTime;
     const limit = 50 * 60 * 1000;
     if (duration !== limit) {
       return { error: "A reserva deve ter exatamente 50 minutos" };
