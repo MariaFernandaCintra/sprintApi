@@ -37,6 +37,9 @@ module.exports = class salaController {
       if (error.code === "ER_DUP_ENTRY") {
         return res.status(400).json({ error: "O nome da sala já existe" });
       }
+      if (error.code === "ER_DATA_TOO_LONG") {
+        return res.status(400).json({ error: "O bloco deve ter somente uma letra" });
+      }
       return res.status(500).json({ error: "Erro Interno do Servidor" });
     }
   }

@@ -14,7 +14,7 @@ CREATE TABLE sala(
      id_sala int primary key auto_increment,
      nome varchar(255) unique not null,
      descricao text, 
-     bloco varchar(255) not null, 
+     bloco varchar(1) not null, 
      tipo varchar(255) not null,
      capacidade int not null
  );
@@ -88,13 +88,13 @@ INSERT INTO sala (nome, descricao, bloco, tipo, capacidade) VALUES
 ('D2 - MODELAGEM', 'Estações de Trabalho de Modelagem', 'D', 'Oficina', 20),
 ('D3 - AULA', 'Quadro e Projetor', 'D', 'Sala', 16),
 ('D4 - CRIAÇÃO', 'Materiais de Artesanato', 'D', 'Oficina', 18),
-('LAB - ALIMENTOS', 'Equipamentos de Cozinha', 'Lab', 'Laboratório', 16),
-('OFI - AJUSTAGEM/FRESAGEM', 'Máquinas de Fresagem', 'Oficina', 'Oficina', 16),
-('OFI - COMANDOS ELÉTRICOS', 'Circuitos Elétricos', 'Oficina', 'Oficina', 16),
-('OFI - TORNEARIA', 'Torno Mecânico', 'Oficina', 'Oficina', 20),
-('OFI - SOLDAGEM', 'Equipamentos de Solda', 'Oficina', 'Oficina', 16),
-('OFI - MARCENARIA', 'Ferramentas de Marcenaria', 'Oficina', 'Oficina', 16),
-('OFI - LIXAMENTO', 'Lixadeiras e Polidoras', 'Oficina', 'Oficina', 16);
+('LAB - ALIMENTOS', 'Equipamentos de Cozinha', 'L', 'Laboratório', 16),
+('OFI - AJUSTAGEM/FRESAGEM', 'Máquinas de Fresagem', 'O', 'Oficina', 16),
+('OFI - COMANDOS ELÉTRICOS', 'Circuitos Elétricos', 'O', 'Oficina', 16),
+('OFI - TORNEARIA', 'Torno Mecânico', 'O', 'Oficina', 20),
+('OFI - SOLDAGEM', 'Equipamentos de Solda', 'O', 'Oficina', 16),
+('OFI - MARCENARIA', 'Ferramentas de Marcenaria', 'O', 'Oficina', 16),
+('OFI - LIXAMENTO', 'Lixadeiras e Polidoras', 'O', 'Oficina', 16);
 
 INSERT INTO reserva (data, hora_inicio, hora_fim, dia_semana, fk_id_usuario, fk_id_sala) VALUES
 ('2025-12-31', '09:00:00', '09:50:00', 'Quarta-Feira', 1, 1),
@@ -104,7 +104,7 @@ INSERT INTO reserva (data, hora_inicio, hora_fim, dia_semana, fk_id_usuario, fk_
 ('2025-12-31', '12:00:00', '12:50:00', 'Quarta-Feira', 5, 5);
 
 
-CREATE VIEW contagem_reservas_usuarios AS SELECT 
+CREATE VIEW cru AS SELECT -- contagem_reservas_usuarios
     u.id_usuario, 
     u.nome, 
     COUNT(r.id_reserva) AS total_reservas
@@ -116,7 +116,7 @@ GROUP BY
     u.id_usuario, u.nome;
 
 
-CREATE VIEW reservas_detalhes AS SELECT 
+CREATE VIEW rd AS SELECT -- reservas_detalhes
     r.id_reserva,
     r.data,
     r.dia_semana,

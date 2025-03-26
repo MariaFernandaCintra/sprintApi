@@ -96,11 +96,11 @@ curl --location --request DELETE 'http://localhost:5000/reservas/v1/reserva/1' \
 curl --location 'http://localhost:5000/reservas/v1/sala' \
 --header 'Content-Type: application/json' \
 --data '{
-    "nome":"Sala Teste",
+    "nome":"SALA TESTE",
     "descricao":"Descrição",
     "bloco":"A",
     "tipo":"Oficina",
-    "capacidade":"999"
+    "capacidade":"100"
 }'
 
 -------------------------------------------------------------------------------
@@ -117,7 +117,7 @@ curl --location 'http://localhost:5000/reservas/v1/salas' \
 curl --location --request PUT 'http://localhost:5000/reservas/v1/sala/1' \
 --header 'Content-Type: application/json' \
 --data '{
-    "nome":"Sala Teste - PUT",
+    "nome":"SALA TESTE - PUT",
     "descricao":"Descrição - PUT",
     "bloco":"A",
     "tipo":"Oficina",

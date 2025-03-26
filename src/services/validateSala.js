@@ -7,6 +7,12 @@ module.exports = {
     if (isNaN(capacidade) || Number(capacidade) <= 0) {
       return { error: "Capacidade deve ser um número positivo" };
     }
+    if(typeof bloco !== 'string' || !/^[A-Z]$/.test(bloco)){
+      return { error: "Bloco deve ser uma letra maiúscula" };
+    }
+    if (Number(capacidade) < 0 || Number(capacidade) > 100) {
+      return { error: "Capacidade deve estar entre 5 e 100 pessoas" };
+    }
     return null;
   },
 
@@ -17,6 +23,12 @@ module.exports = {
     }
     if (isNaN(capacidade) || Number(capacidade) <= 0) {
       return { error: "Capacidade deve ser um número positivo" };
+    }
+    if(typeof bloco !== 'string' || !/^[A-Z]$/.test(bloco)){
+      return { error: "Bloco deve ser uma letra maiúscula" };
+    }
+    if (Number(capacidade) < 0 || Number(capacidade) > 100) {
+      return { error: "Capacidade deve estar entre 5 e 100 pessoas" };
     }
     return null;
   },
