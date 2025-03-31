@@ -12,6 +12,22 @@ const formatarDataHoraAtual = () => {
   return `${day}-${month}-${year} ${hour}:${minute}:${second}`;
 };
 
+// Retorna o dia da semana em português, dado uma data no formato "YYYY-MM-DD"
+const getDiaSemana = (data) => {
+  const [year, month, day] = data.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  const diasSemana = [
+    "Domingo",
+    "Segunda-Feira",
+    "Terça-Feira",
+    "Quarta-Feira",
+    "Quinta-Feira",
+    "Sexta-Feira",
+    "Sábado",
+  ];
+  return diasSemana[date.getDay()];
+};
+
 // Função auxiliar para criar um objeto Date a partir de data e horário
 const criarDataHora = (data, hora) => new Date(`${data}T${hora}`);
 
@@ -28,6 +44,7 @@ module.exports = {
       return { error: "Todos os campos devem ser preenchidos" };
     }
 
+    const diaDaSemana = getDiaSemana(data);
     const inicioTime = criarDataHora(data, hora_inicio);
     const fimTime = criarDataHora(data, hora_fim);
     const now = new Date();
@@ -39,6 +56,10 @@ module.exports = {
 
     if (fimTime <= inicioTime) {
       return { error: "A hora de início deve ser antes da hora de fim" };
+    }
+
+    if (diaDaSemana === "Domingo") {
+      return { error: "A reserva não pode ser feita em um domingo" };
     }
 
     const inicioHour = inicioTime.getHours();
