@@ -1,14 +1,13 @@
 const connect = require("../db/connect");
 
 module.exports = {
+  // Valida os campos obrigatórios para criação do usuário
   validateUsuario: function ({ NIF, email, senha, nome }) {
     if (!NIF || !email || !senha || !nome) {
       return { error: "Todos os campos devem ser preenchidos" };
     }
     if (isNaN(NIF) || NIF.length !== 7) {
-      return {
-        error: "NIF inválido. Deve conter exatamente 7 dígitos numéricos",
-      };
+      return { error: "NIF inválido. Deve conter exatamente 7 dígitos numéricos" };
     }
     if (!email.includes("@")) {
       return { error: "Email inválido. Deve conter @" };
@@ -16,6 +15,7 @@ module.exports = {
     return null;
   },
 
+  // Valida se o NIF ou email já estão vinculados a outro usuário
   validateNifEmail: async function (NIF, email) {
     return new Promise((resolve, reject) => {
       const query = "SELECT id_usuario FROM usuario WHERE NIF = ? OR email = ?";
@@ -24,17 +24,16 @@ module.exports = {
       connect.query(query, values, (err, results) => {
         if (err) {
           return reject("Erro ao verificar NIF ou email");
-        } else if (results.length > 0) {
-          return resolve({
-            error: "O NIF ou email já está vinculado a outro usuário",
-          });
-        } else {
-          return resolve(null);
         }
+        if (results.length > 0) {
+          return resolve({ error: "O NIF ou email já está vinculado a outro usuário" });
+        }
+        return resolve(null);
       });
     });
   },
 
+  // Valida os campos para login
   validateLogin: function ({ email, senha }) {
     if (!email || !senha) {
       return { error: "Todos os campos devem ser preenchidos" };
@@ -45,6 +44,7 @@ module.exports = {
     return null;
   },
 
+  // Valida os campos para atualização do usuário
   validateUpdateUsuario: function ({ email, senha, nome }) {
     if (!email || !senha || !nome) {
       return { error: "Todos os campos devem ser preenchidos" };
@@ -55,6 +55,7 @@ module.exports = {
     return null;
   },
 
+  // Valida se o ID do usuário foi fornecido
   validateUsuarioId: function (id_usuario) {
     if (!id_usuario) {
       return { error: "ID do usuário é obrigatório" };

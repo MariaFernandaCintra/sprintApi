@@ -15,13 +15,14 @@ module.exports = class usuarioController {
   static async createUsuarios(req, res) {
     const { NIF, email, senha, nome } = req.body;
 
-    // Valida todos os campos necessários para criação
+    // Valida os campos obrigatórios para criação
     const userValidationError = usuarioValidator.validateUsuario(req.body);
     if (userValidationError) {
       return res.status(400).json(userValidationError);
     }
 
     try {
+      // Valida se NIF ou email já estão cadastrados
       const nifEmailValidationError = await usuarioValidator.validateNifEmail(NIF, email);
       if (nifEmailValidationError && nifEmailValidationError.error) {
         return res.status(400).json(nifEmailValidationError);
@@ -31,6 +32,7 @@ module.exports = class usuarioController {
       const valuesInsert = [nome, email, NIF, senha];
       await queryAsync(queryInsert, valuesInsert);
 
+      // Após a inserção, busca o usuário cadastrado
       const querySelect = `SELECT * FROM usuario WHERE email = ?`;
       const results = await queryAsync(querySelect, [email]);
 
@@ -53,8 +55,9 @@ module.exports = class usuarioController {
   }
 
   static async loginUsuario(req, res) {
-    const { senha, email } = req.body;
+    const { email, senha } = req.body;
 
+    // Valida os campos para login
     const loginValidationError = usuarioValidator.validateLogin(req.body);
     if (loginValidationError) {
       return res.status(400).json(loginValidationError);
@@ -144,14 +147,14 @@ module.exports = class usuarioController {
     } catch (error) {
       console.error(error);
       if (error.code === "ER_ROW_IS_REFERENCED_2") {
-        return res.status(400).json({ error: "Usuário não pode ser excluido, pois tem uma reserva" });
+        return res.status(400).json({ error: "Usuário não pode ser excluído, pois tem uma reserva" });
       }
       return res.status(500).json({ error: "Erro interno do servidor" });
     }
   }
 
   static async getUsuarioById(req, res) {
-    const id_usuario = req.params.id_usuario; // Obtém o ID do usuário a partir dos parâmetros da URL
+    const id_usuario = req.params.id_usuario;
 
     // Valida se o ID foi fornecido
     const idValidationError = usuarioValidator.validateUsuarioId(id_usuario);
