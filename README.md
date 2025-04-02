@@ -29,7 +29,7 @@ A Sprint API foi desenvolvida utilizando Node.js e Express, oferecendo endpoints
 
 ### Pré-requisitos
 
-- [Node.js](https://nodejs.org/) instalado.
+- [node.js](https://nodejs.org/) instalado.
 
 ### Passos para Instalação
 
