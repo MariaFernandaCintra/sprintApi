@@ -103,18 +103,9 @@ module.exports = class ReservaController {
     const query = `SELECT * FROM reserva`;
     try {
       const results = await queryAsync(query);
-      const reservasFormatadas = results.map((reserva) => ({
-        id_reserva: reserva.id_reserva,
-        fk_id_sala: reserva.fk_id_sala,
-        fk_id_usuario: reserva.fk_id_usuario,
-        dia_semana: reserva.dia_semana,
-        data: reserva.data,
-        hora_inicio: reserva.hora_inicio,
-        hora_fim: reserva.hora_fim,
-      }));
       return res.status(200).json({
         message: "Obtendo todas as reservas",
-        reservas: reservasFormatadas,
+        reservas: results,
       });
     } catch (error) {
       console.error(error);

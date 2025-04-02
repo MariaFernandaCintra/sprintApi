@@ -173,7 +173,7 @@ module.exports = {
         // Se houver conflito, procura o primeiro intervalo livre de 50 minutos
         const duracaoMs = 50 * 60 * 1000;
         let inicioDisponivel = uReservaInicio;
-        const fimDoDia = criarHorario("23:59:59");
+        const fimDoDia = criarHorario("23:00:00");
 
         for (const reserva of reservas) {
           const reservaInicio = criarHorario(reserva.hora_inicio);
