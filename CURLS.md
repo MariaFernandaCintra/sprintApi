@@ -53,6 +53,19 @@ curl --location 'http://localhost:5000/reservas/v1/usuarios' \
 ```
 
 ---
+#### - getUsuarioById
+
+#### Retorna um usuário específico
+```http
+GET /reservas/v1/usuario/perfil/{id}
+```
+##### Exemplo de requisição:
+```sh
+curl --location 'http://localhost:5000/reservas/v1/usuario/perfil/1' \
+--header 'Content-Type: application/json'
+```
+
+---
 #### - putUsuario
 
 #### Atualizar um usuário específico
@@ -81,6 +94,18 @@ DELETE /reservas/v1/usuario/{id}
 curl --location --request DELETE 'http://localhost:5000/reservas/v1/usuario/1' \
 --header 'Content-Type: application/json' \
 --data ''
+```
+
+### *Reservas do Usuário pelo (id_usuario)*
+
+#### Retornar as reservas de um usuário específico
+```http
+GET /reservas/v1/usuario/perfil/{id}/reservas'
+```
+##### Exemplo de requisição:
+```sh
+curl --location 'http://localhost:5000/reservas/v1/usuario/perfil/1/reservas' \
+--header 'Content-Type: application/json'
 ```
 
 ## - *Reservas*
