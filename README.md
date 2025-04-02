@@ -87,6 +87,92 @@ A Sprint API foi desenvolvida utilizando Node.js e Express, oferecendo endpoints
     npm i axios
   ```
 
+# Configuração do Banco de Dados e Conexão MySQL
+
+## Configuração da Conexão com MySQL
+
+O projeto utiliza o pacote `mysql2` para gerenciar a conexão com o banco de dados MySQL. Para configurar a conexão, atualize o seguinte código armazenado em *(src->db->connect.js)*:
+
+```javascript
+const mysql = require("mysql2");
+
+const pool = mysql.createPool({
+  connectionLimit: 10,
+  host: "{Seu IP}",
+  user: "{Seu usuário SQL}",
+  password: "{Senha do seu usuário SQL}",
+  database: "rs",
+});
+
+module.exports = pool;
+```
+
+## Estrutura do Banco de Dados
+
+Para criar o banco de dados e suas tabelas, execute os seguintes comandos no MySQL:
+
+### Criar o Banco de Dados
+```sql
+CREATE DATABASE rs;
+USE rs;
+```
+
+### Tabela `usuario`
+```sql
+CREATE TABLE usuario(
+     id_usuario INT PRIMARY KEY AUTO_INCREMENT,
+     nome VARCHAR(255) NOT NULL,
+     email VARCHAR(255) UNIQUE NOT NULL,
+     NIF CHAR(7) UNIQUE NOT NULL,
+     senha VARCHAR(255) NOT NULL
+);
+```
+
+### Tabela `sala`
+```sql
+CREATE TABLE sala(
+     id_sala INT PRIMARY KEY AUTO_INCREMENT,
+     nome VARCHAR(255) UNIQUE NOT NULL,
+     descricao VARCHAR(255) NOT NULL,
+     bloco VARCHAR(1) NOT NULL,
+     tipo VARCHAR(255) NOT NULL,
+     capacidade INT NOT NULL
+);
+```
+
+### Tabela `reserva`
+```sql
+CREATE TABLE reserva(
+     id_reserva INT PRIMARY KEY AUTO_INCREMENT,
+     fk_id_sala INT NOT NULL,
+     fk_id_usuario INT NOT NULL,
+     dia_semana VARCHAR(20) NOT NULL,
+     data DATE NOT NULL,
+     hora_inicio TIME NOT NULL,
+     hora_fim TIME NOT NULL,
+     FOREIGN KEY (fk_id_sala) REFERENCES sala(id_sala),
+     FOREIGN KEY (fk_id_usuario) REFERENCES usuario(id_usuario)
+);
+```
+
+### Criação de Índices para Otimização
+```sql
+CREATE INDEX idx_reserva_dia_semana ON reserva(dia_semana);
+CREATE INDEX idx_reserva_hora_inicio ON reserva(hora_inicio);
+CREATE INDEX idx_reserva_hora_fim ON reserva(hora_fim);
+```
+
+## Notas Adicionais
+- A conexão utiliza um pool para gerenciar até 10 conexões simultâneas.
+- O `NIF` (documento de identificação) e o `email` dos usuários são únicos.
+- A estrutura da tabela `reserva` garante integridade referencial por meio de `FOREIGN KEY` ligadas a `usuario` e `sala`.
+- Índices foram adicionados para melhorar a eficiência das consultas.
+
+## Executando os Comandos
+1. Copie os comandos SQL acima e execute-os no seu banco de dados MySQL.
+2. Certifique-se de que o servidor MySQL está rodando e acessível.
+3. Verifique a conexão testando uma consulta simples após a execução.
+
 ## Documentação Completa dos Endpoints
 
 Os exemplos de requisição cURL foram movidos para um arquivo separado. Acesse-os [aqui](https://github.com/MariaFernandaCintra/sprintApi/blob/main/CURLS.md).
