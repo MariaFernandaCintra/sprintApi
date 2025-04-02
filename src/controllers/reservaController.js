@@ -1,6 +1,5 @@
 const validateReserva = require("../services/validateReserva");
-const { formatarHorario } = require("../services/functions");
-const queryAsync = require("../services/queryAsync");
+const { queryAsync, formatarHorario } = require("../services/functions");
 
 // Retorna o dia da semana em português, dado uma data no formato "YYYY-MM-DD"
 const getDiaSemana = (data) => {
