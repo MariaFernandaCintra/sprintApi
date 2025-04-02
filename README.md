@@ -86,3 +86,13 @@ A Sprint API foi desenvolvida utilizando Node.js e Express, oferecendo endpoints
   ```bash
     npm i axios
   ```
+
+## Documentação Completa dos Endpoints
+
+Os exemplos de requisição cURL foram movidos para um arquivo separado. Acesse-os [aqui](https://github.com/MariaFernandaCintra/sprintApi/blob/main/CURLS.md).
+
+## Autores
+
+- [@fogazzaa](https://github.com/Fogazzaa)
+- [@mariafernandacintra](https://github.com/MariaFernandaCintra)
+- [@mariajuliacintra](https://github.com/mariajuliacintra)
