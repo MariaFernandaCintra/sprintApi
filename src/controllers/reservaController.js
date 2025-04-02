@@ -1,4 +1,5 @@
 const validateReserva = require("../services/validateReserva");
+const { formatarHorario } = require("../services/functions");
 const queryAsync = require("../services/queryAsync");
 
 // Retorna o dia da semana em português, dado uma data no formato "YYYY-MM-DD"
@@ -58,7 +59,7 @@ module.exports = class ReservaController {
         if (conflitoResult.disponivel) {
           const { inicioDisponivel, fimDisponivel } = conflitoResult;
           return res.status(400).json({
-            error: `A sala já está reservada neste horário. O próximo horário disponível é de ${validateReserva.formatarHorario(inicioDisponivel)} até ${validateReserva.formatarHorario(fimDisponivel)}`
+            error: `A sala já está reservada neste horário. O próximo horário disponível é de ${formatarHorario(inicioDisponivel)} até ${formatarHorario(fimDisponivel)}`
           });
         } else {
           return res.status(400).json({

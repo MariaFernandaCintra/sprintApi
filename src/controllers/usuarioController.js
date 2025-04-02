@@ -1,4 +1,5 @@
 const queryAsync = require("../services/queryAsync");
+const formatarData = require("../services/functions");
 const usuarioValidator = require("../services/validateUsuario");
 
 module.exports = class usuarioController {
@@ -13,7 +14,10 @@ module.exports = class usuarioController {
 
     try {
       // Valida se NIF ou email já estão cadastrados
-      const nifEmailValidationError = await usuarioValidator.validateNifEmail(NIF, email);
+      const nifEmailValidationError = await usuarioValidator.validateNifEmail(
+        NIF,
+        email
+      );
       if (nifEmailValidationError && nifEmailValidationError.error) {
         return res.status(400).json(nifEmailValidationError);
       }
@@ -83,7 +87,9 @@ module.exports = class usuarioController {
     const query = `SELECT * FROM usuario`;
     try {
       const results = await queryAsync(query);
-      return res.status(200).json({ message: "Obtendo todos os usuários", usuarios: results });
+      return res
+        .status(200)
+        .json({ message: "Obtendo todos os usuários", usuarios: results });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Erro Interno do Servidor" });
@@ -95,7 +101,11 @@ module.exports = class usuarioController {
     const usuarioId = req.params.id_usuario;
 
     // Valida os campos de atualização e o ID do usuário
-    const updateValidationError = usuarioValidator.validateUpdateUsuario({ email, senha, nome });
+    const updateValidationError = usuarioValidator.validateUpdateUsuario({
+      email,
+      senha,
+      nome,
+    });
     if (updateValidationError) {
       return res.status(400).json(updateValidationError);
     }
@@ -110,11 +120,15 @@ module.exports = class usuarioController {
       if (results.affectedRows === 0) {
         return res.status(404).json({ error: "Usuário não encontrado" });
       }
-      return res.status(200).json({ message: "Usuário atualizado com sucesso" });
+      return res
+        .status(200)
+        .json({ message: "Usuário atualizado com sucesso" });
     } catch (error) {
       console.error(error);
       if (error.code === "ER_DUP_ENTRY") {
-        return res.status(400).json({ error: "O email já está vinculado a outro usuário" });
+        return res
+          .status(400)
+          .json({ error: "O email já está vinculado a outro usuário" });
       }
       return res.status(500).json({ error: "Erro interno no servidor" });
     }
@@ -137,7 +151,11 @@ module.exports = class usuarioController {
     } catch (error) {
       console.error(error);
       if (error.code === "ER_ROW_IS_REFERENCED_2") {
-        return res.status(400).json({ error: "Usuário não pode ser excluído, pois tem uma reserva" });
+        return res
+          .status(400)
+          .json({
+            error: "Usuário não pode ser excluído, pois tem uma reserva",
+          });
       }
       return res.status(500).json({ error: "Erro interno do servidor" });
     }
@@ -183,14 +201,27 @@ module.exports = class usuarioController {
     }
 
     const queryReservas = `
-      SELECT r.id_reserva, s.nome, r.datahora_inicio, r.datahora_fim
+      SELECT r.id_reserva, s.nome, r.data, r.hora_inicio, r.hora_fim, r.dia_semana
       FROM reserva r
       JOIN sala s ON r.fk_id_sala = s.id_sala
       WHERE r.fk_id_usuario = ?
     `;
     try {
       const results = await queryAsync(queryReservas, [id_usuario]);
-      return res.status(200).json({ reservas: results });
+      const reservas = results.map((reserva) => ({
+        id_reserva: reserva.id_reserva,
+        sala: reserva.nome,
+        dia_semana: reserva.dia_semana,
+        data: reserva.data ? formatarData(new Date(reserva.data)) : null,
+        hora_inicio: reserva.hora_inicio,
+        hora_fim: reserva.hora_fim,
+      }));
+      if (reservas.length === 0) {
+        return res
+          .status(404)
+          .json({ error: "Nenhuma reserva encontrada para este usuário" });
+      }
+      return res.status(200).json({ reservas });
     } catch (error) {
       console.error("Erro ao buscar reservas:", error);
       return res.status(500).json({ error: "Erro interno do servidor" });

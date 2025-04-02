@@ -18,9 +18,6 @@ const criarDataHora = (data, hora) => new Date(`${data}T${hora}`);
 // Função auxiliar para criar um objeto Date com base somente no horário (fixando a data em 1970-01-01)
 const criarHorario = (hora) => new Date(`1970-01-01T${hora}`);
 
-// Formata um objeto Date para o formato HH:MM:SS
-const formatarHorario = (dateObj) => dateObj.toTimeString().split(" ")[0];
-
 module.exports = {
   // Valida os campos obrigatórios e regras de negócio para criação de reserva
   validarCamposReserva: function ({
@@ -178,7 +175,10 @@ module.exports = {
         for (const reserva of reservas) {
           const reservaInicio = criarHorario(reserva.hora_inicio);
           const reservaFim = criarHorario(reserva.hora_fim);
-          if (inicioDisponivel.getTime() + duracaoMs <= reservaInicio.getTime()) {
+          if (
+            inicioDisponivel.getTime() + duracaoMs <=
+            reservaInicio.getTime()
+          ) {
             break;
           } else if (inicioDisponivel < reservaFim) {
             inicioDisponivel = reservaFim;
@@ -257,5 +257,4 @@ module.exports = {
       });
     });
   },
-  formatarHorario,
 };
