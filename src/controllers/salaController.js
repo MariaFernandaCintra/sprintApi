@@ -1,15 +1,5 @@
-const connect = require("../db/connect");
 const validateSala = require("../services/validateSala");
-
-// Função auxiliar para executar queries e retornar uma Promise
-const queryAsync = (query, values = []) => {
-  return new Promise((resolve, reject) => {
-    connect.query(query, values, (err, results) => {
-      if (err) return reject(err);
-      resolve(results);
-    });
-  });
-};
+const queryAsync = require("../services/queryAsync");
 
 module.exports = class salaController {
   static async createSalas(req, res) {

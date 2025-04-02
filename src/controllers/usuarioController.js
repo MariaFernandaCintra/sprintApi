@@ -1,15 +1,5 @@
-const connect = require("../db/connect");
+const queryAsync = require("../services/queryAsync");
 const usuarioValidator = require("../services/validateUsuario");
-
-// Função auxiliar para executar queries e retornar uma Promise
-const queryAsync = (query, values = []) => {
-  return new Promise((resolve, reject) => {
-    connect.query(query, values, (err, results) => {
-      if (err) return reject(err);
-      resolve(results);
-    });
-  });
-};
 
 module.exports = class usuarioController {
   static async createUsuarios(req, res) {

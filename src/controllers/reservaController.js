@@ -1,15 +1,5 @@
-const connect = require("../db/connect");
 const validateReserva = require("../services/validateReserva");
-
-// Função auxiliar para executar queries e retornar uma Promise
-const queryAsync = (query, values = []) => {
-  return new Promise((resolve, reject) => {
-    connect.query(query, values, (err, results) => {
-      if (err) return reject(err);
-      resolve(results);
-    });
-  });
-};
+const queryAsync = require("../services/queryAsync");
 
 // Retorna o dia da semana em português, dado uma data no formato "YYYY-MM-DD"
 const getDiaSemana = (data) => {
