@@ -65,7 +65,7 @@ CREATE TABLE `reserva` (
   KEY `fk_id_usuario` (`fk_id_usuario`),
   CONSTRAINT `reserva_ibfk_1` FOREIGN KEY (`fk_id_sala`) REFERENCES `sala` (`id_sala`),
   CONSTRAINT `reserva_ibfk_2` FOREIGN KEY (`fk_id_usuario`) REFERENCES `usuario` (`id_usuario`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -74,7 +74,7 @@ CREATE TABLE `reserva` (
 
 LOCK TABLES `reserva` WRITE;
 /*!40000 ALTER TABLE `reserva` DISABLE KEYS */;
-INSERT INTO `reserva` VALUES (1,12,1,'2024-11-13 09:00:00','2024-11-13 12:00:00'),(2,19,2,'2024-11-13 14:00:00','2024-11-13 18:00:00'),(3,30,3,'2024-11-13 08:00:00','2024-11-13 12:00:00'),(4,21,4,'2024-11-13 13:00:00','2024-11-13 17:00:00'),(5,29,5,'2024-11-13 09:00:00','2024-11-13 13:00:00');
+INSERT INTO `reserva` VALUES (1,12,1,'2024-11-13 09:00:00','2024-11-13 12:00:00'),(2,19,2,'2024-11-13 14:00:00','2024-11-13 18:00:00'),(3,30,3,'2024-11-13 08:00:00','2024-11-13 12:00:00'),(4,21,4,'2024-11-13 13:00:00','2024-11-13 17:00:00'),(5,29,5,'2024-11-13 09:00:00','2024-11-13 13:00:00'),(6,1,1,'2025-12-31 10:00:00','2025-12-31 10:50:00');
 /*!40000 ALTER TABLE `reserva` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -123,7 +123,7 @@ CREATE TABLE `usuario` (
   PRIMARY KEY (`id_usuario`),
   UNIQUE KEY `email` (`email`),
   UNIQUE KEY `NIF` (`NIF`)
-) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -143,6 +143,30 @@ UNLOCK TABLES;
 --
 -- Dumping routines for database 'rs'
 --
+/*!50003 DROP PROCEDURE IF EXISTS `HistoricoReservaUsuario` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`alunods`@`%` PROCEDURE `HistoricoReservaUsuario`(
+    p_id_usuario int
+)
+BEGIN
+    SELECT datahora_inicio, datahora_fim, fk_id_sala
+    FROM reserva
+    WHERE p_id_usuario = fk_id_usuario;
+
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Final view structure for view `contagemreservasusuarios`
@@ -189,4 +213,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-03-17 12:54:28
+-- Dump completed on 2025-04-16 11:17:25

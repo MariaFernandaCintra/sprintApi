@@ -7,7 +7,9 @@ module.exports = {
       return { error: "Todos os campos devem ser preenchidos" };
     }
     if (isNaN(NIF) || NIF.length !== 7) {
-      return { error: "NIF inválido. Deve conter exatamente 7 dígitos numéricos" };
+      return {
+        error: "NIF inválido. Deve conter exatamente 7 dígitos numéricos",
+      };
     }
     if (!email.includes("@")) {
       return { error: "Email inválido. Deve conter @" };
@@ -18,7 +20,7 @@ module.exports = {
   // Valida se o NIF ou email já estão vinculados a outro usuário
   validateNifEmail: async function (NIF, email) {
     return new Promise((resolve, reject) => {
-      const query = "SELECT id_usuario FROM usuario WHERE NIF = ? OR email = ?";
+      const query = "in";
       const values = [NIF, email];
 
       connect.query(query, values, (err, results) => {
@@ -26,7 +28,9 @@ module.exports = {
           return reject("Erro ao verificar NIF ou email");
         }
         if (results.length > 0) {
-          return resolve({ error: "O NIF ou email já está vinculado a outro usuário" });
+          return resolve({
+            error: "O NIF ou email já está vinculado a outro usuário",
+          });
         }
         return resolve(null);
       });
