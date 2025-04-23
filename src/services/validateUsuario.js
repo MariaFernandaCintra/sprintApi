@@ -61,11 +61,22 @@ module.exports = {
 
   // Valida os campos para atualização do usuário
   validateUpdateUsuario: function ({ email, senha, nome }) {
+
+    const senaiDomains = [
+      "@edu.senai.br",
+      "@docente.senai.br",
+      "@sesisenaisp.org.br"
+    ];
+
     if (!email || !senha || !nome) {
       return { error: "Todos os campos devem ser preenchidos" };
     }
     if (!email.includes("@")) {
       return { error: "Email inválido. Deve conter @" };
+    }
+    const emailDomain = email.substring(email.lastIndexOf("@"));
+    if (!senaiDomains.includes(emailDomain)) {
+      return { error: "Email inválido. Deve pertencer a um domínio SENAI autorizado" };
     }
     return null;
   },

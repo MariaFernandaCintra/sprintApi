@@ -93,7 +93,7 @@ module.exports = class salaController {
     const { nome, descricao, bloco, tipo, capacidade } = req.body;
     const salaId = req.params.id_sala;
 
-    const validationError = validateSala.validateUpdateSala({
+    const validationError = validateSala.validateCreateSala({
       nome,
       descricao,
       bloco,

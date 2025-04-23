@@ -18,23 +18,6 @@ module.exports = {
     return null;
   },
 
-  // Valida os dados obrigatórios para atualização de uma sala
-  validateUpdateSala: function ({ nome, descricao, bloco, tipo, capacidade }) {
-    if (!nome || !descricao || !bloco || !tipo || !capacidade) {
-      return { error: "Todos os campos devem ser preenchidos" };
-    }
-    if (isNaN(capacidade) || Number(capacidade) <= 0) {
-      return { error: "Capacidade deve ser um número positivo" };
-    }
-    if (typeof bloco !== "string" || !/^[A-Z]$/.test(bloco)) {
-      return { error: "Bloco deve ser uma letra maiúscula" };
-    }
-    if (Number(capacidade) < 5 || Number(capacidade) > 100) {
-      return { error: "Capacidade deve estar entre 5 e 100 pessoas" };
-    }
-    return null;
-  },
-
   // Valida os campos de data/hora para checagem do horário de reserva
   validateHorario: function ({ data, hora_inicio, hora_fim }) {
     if (!data || !hora_inicio || !hora_fim) {
