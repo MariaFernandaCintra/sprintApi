@@ -102,7 +102,7 @@ CREATE TABLE `sala` (
   `capacidade` int NOT NULL,
   PRIMARY KEY (`id_sala`),
   UNIQUE KEY `nome` (`nome`)
-) ENGINE=InnoDB AUTO_INCREMENT=38 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -111,7 +111,7 @@ CREATE TABLE `sala` (
 
 LOCK TABLES `sala` WRITE;
 /*!40000 ALTER TABLE `sala` DISABLE KEYS */;
-INSERT INTO `sala` VALUES (1,'AMA - Automotiva','Alta Mogiana Automotiva','A','Oficina',16),(2,'AMS - Desenvolvimento','Alta Mogiana Desenvolvimento de Sistema','A','Sala',16),(3,'AME - Eletroeletrônica','Alta Mogiana Eletroeletrônica','A','Laboratório',16),(4,'AMM - Manutenção','Alta Mogiana Manutenção','A','Oficina',16),(5,'A2 - ELETRÔNICA','Laboratório de Eletrônica','A','Laboratório',16),(6,'A3 - CLP','Controladores Lógicos Programáveis','A','Laboratório',16),(7,'A4 - AUTOMAÇÃO','Sistemas de Automação','A','Laboratório',20),(8,'A5 - METROLOGIA','Instrumentos de Medição','A','Laboratório',16),(9,'A6 - PNEUMÁTICA','Equipamentos Pneumáticos e Hidráulicos','A','Laboratório',20),(10,'B2 - AULA','Sala de Aula','B','Sala',32),(11,'B3 - AULA','Sala de Aula','B','Sala',32),(12,'B5 - AULA','Sala de Aula','B','Sala',40),(13,'B6 - AULA','Sala de Aula','B','Sala',32),(14,'B7 - AULA','Sala de Aula','B','Sala',32),(15,'B8 - INFORMÁTICA','Laboratório de Informática','B','Laboratório',20),(16,'B9 - INFORMÁTICA','Estação de Trabalho','B','Laboratório',16),(17,'B10 - INFORMÁTICA','Computadores Programáveis','B','Laboratório',16),(18,'B11 - INFORMÁTICA','Equipamentos de Rede','B','Laboratório',40),(19,'B12 - INFORMÁTICA','Laboratório de TI','B','Laboratório',40),(20,'CA - Colorado A1','Sala Multimídia','C','Sala',16),(21,'COF - Colorado Oficina','Ferramentas Manuais','C','Oficina',16),(22,'C1 - AULA (ALP)','Sala de Aula (ALP)','C','Sala',24),(23,'C2 - INFORMATICA','Software Educacional','C','Laboratório',32),(24,'C3 - MODELAGEM','Máquinas de Costura','C','Oficina',20),(25,'C4 - MODELAGEM','Equipamentos de Modelagem','C','Oficina',20),(26,'C5 - AULA','Materiais Didáticos','C','Sala',16),(27,'D1 - MODELAGEM','Ferramentas de Modelagem','D','Oficina',16),(28,'D2 - MODELAGEM','Estações de Trabalho de Modelagem','D','Oficina',20),(29,'D3 - AULA','Quadro e Projetor','D','Sala',16),(30,'D4 - CRIAÇÃO','Materiais de Artesanato','D','Oficina',18),(31,'LAB - ALIMENTOS','Equipamentos de Cozinha','L','Laboratório',16),(32,'OFI - AJUSTAGEM/FRESAGEM','Máquinas de Fresagem','O','Oficina',16),(33,'OFI - COMANDOS ELÉTRICOS','Circuitos Elétricos','O','Oficina',16),(34,'OFI - TORNEARIA','Torno Mecânico','O','Oficina',20),(35,'OFI - SOLDAGEM','Equipamentos de Solda','O','Oficina',16),(36,'OFI - MARCENARIA','Ferramentas de Marcenaria','O','Oficina',16),(37,'OFI - LIXAMENTO','Lixadeiras e Polidoras','O','Oficina',16);
+INSERT INTO `sala` VALUES (1,'SALA TESTE - PUT','Descrição - PUT','A','Oficina',20),(2,'AMS - Desenvolvimento','Alta Mogiana Desenvolvimento de Sistema','A','Sala',16),(3,'AME - Eletroeletrônica','Alta Mogiana Eletroeletrônica','A','Laboratório',16),(4,'AMM - Manutenção','Alta Mogiana Manutenção','A','Oficina',16),(5,'A2 - ELETRÔNICA','Laboratório de Eletrônica','A','Laboratório',16),(6,'A3 - CLP','Controladores Lógicos Programáveis','A','Laboratório',16),(7,'A4 - AUTOMAÇÃO','Sistemas de Automação','A','Laboratório',20),(8,'A5 - METROLOGIA','Instrumentos de Medição','A','Laboratório',16),(9,'A6 - PNEUMÁTICA','Equipamentos Pneumáticos e Hidráulicos','A','Laboratório',20),(10,'B2 - AULA','Sala de Aula','B','Sala',32),(11,'B3 - AULA','Sala de Aula','B','Sala',32),(12,'B5 - AULA','Sala de Aula','B','Sala',40),(13,'B6 - AULA','Sala de Aula','B','Sala',32),(14,'B7 - AULA','Sala de Aula','B','Sala',32),(15,'B8 - INFORMÁTICA','Laboratório de Informática','B','Laboratório',20),(16,'B9 - INFORMÁTICA','Estação de Trabalho','B','Laboratório',16),(17,'B10 - INFORMÁTICA','Computadores Programáveis','B','Laboratório',16),(18,'B11 - INFORMÁTICA','Equipamentos de Rede','B','Laboratório',40),(19,'B12 - INFORMÁTICA','Laboratório de TI','B','Laboratório',40),(20,'CA - Colorado A1','Sala Multimídia','C','Sala',16),(21,'COF - Colorado Oficina','Ferramentas Manuais','C','Oficina',16),(22,'C1 - AULA (ALP)','Sala de Aula (ALP)','C','Sala',24),(23,'C2 - INFORMATICA','Software Educacional','C','Laboratório',32),(24,'C3 - MODELAGEM','Máquinas de Costura','C','Oficina',20),(25,'C4 - MODELAGEM','Equipamentos de Modelagem','C','Oficina',20),(26,'C5 - AULA','Materiais Didáticos','C','Sala',16),(27,'D1 - MODELAGEM','Ferramentas de Modelagem','D','Oficina',16),(28,'D2 - MODELAGEM','Estações de Trabalho de Modelagem','D','Oficina',20),(29,'D3 - AULA','Quadro e Projetor','D','Sala',16),(30,'D4 - CRIAÇÃO','Materiais de Artesanato','D','Oficina',18),(31,'LAB - ALIMENTOS','Equipamentos de Cozinha','L','Laboratório',16),(32,'OFI - AJUSTAGEM/FRESAGEM','Máquinas de Fresagem','O','Oficina',16),(33,'OFI - COMANDOS ELÉTRICOS','Circuitos Elétricos','O','Oficina',16),(34,'OFI - TORNEARIA','Torno Mecânico','O','Oficina',20),(35,'OFI - SOLDAGEM','Equipamentos de Solda','O','Oficina',16),(36,'OFI - MARCENARIA','Ferramentas de Marcenaria','O','Oficina',16),(37,'OFI - LIXAMENTO','Lixadeiras e Polidoras','O','Oficina',16),(38,'SALA TESTE','Descrição','A','Oficina',100);
 /*!40000 ALTER TABLE `sala` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -131,7 +131,7 @@ CREATE TABLE `usuario` (
   PRIMARY KEY (`id_usuario`),
   UNIQUE KEY `email` (`email`),
   UNIQUE KEY `NIF` (`NIF`)
-) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -140,7 +140,7 @@ CREATE TABLE `usuario` (
 
 LOCK TABLES `usuario` WRITE;
 /*!40000 ALTER TABLE `usuario` DISABLE KEYS */;
-INSERT INTO `usuario` VALUES (1,'João Silva','joao.silva@example.com','3456789','senha123'),(2,'Maria Oliveira','maria.oliveira@example.com','7654321','senha123'),(3,'Carlos Pereira','carlos.pereira@example.com','3987456','senha123'),(4,'Ana Souza','ana.souza@example.com','6123789','senha123'),(5,'Pedro Costa','pedro.costa@example.com','9123456','senha123'),(6,'Laura Lima','laura.lima@example.com','1654987','senha123'),(7,'Lucas Alves','lucas.alves@example.com','4321987','senha123'),(8,'Fernanda Rocha','fernanda.rocha@example.com','1852963','senha123'),(9,'Rafael Martins','rafael.martins@example.com','9258147','senha123'),(10,'Juliana Nunes','juliana.nunes@example.com','8147369','senha123'),(11,'Paulo Araujo','paulo.araujo@example.com','9753486','senha123'),(12,'Beatriz Melo','beatriz.melo@example.com','6159753','senha123'),(13,'Renato Dias','renato.dias@example.com','3486159','senha123'),(14,'Camila Ribeiro','camila.ribeiro@example.com','3852741','senha123'),(15,'Thiago Teixeira','thiago.teixeira@example.com','2741963','senha123'),(16,'Patrícia Fernandes','patricia.fernandes@example.com','1963852','senha123'),(17,'Rodrigo Gomes','rodrigo.gomes@example.com','3741852','senha123'),(18,'Mariana Batista','mariana.batista@example.com','7258369','senha123'),(19,'Fábio Freitas','fabio.freitas@example.com','9147258','senha123'),(20,'Isabela Cardoso','isabela.cardoso@example.com','8369147','senha123');
+INSERT INTO `usuario` VALUES (1,'Renata Souza','renata.souza@edu.senai.br','3456789','senha456'),(2,'Maria Oliveira','maria.oliveira@example.com','7654321','senha123'),(3,'Carlos Pereira','carlos.pereira@example.com','3987456','senha123'),(4,'Ana Souza','ana.souza@example.com','6123789','senha123'),(5,'Pedro Costa','pedro.costa@example.com','9123456','senha123'),(6,'Laura Lima','laura.lima@example.com','1654987','senha123'),(7,'Lucas Alves','lucas.alves@example.com','4321987','senha123'),(8,'Fernanda Rocha','fernanda.rocha@example.com','1852963','senha123'),(9,'Rafael Martins','rafael.martins@example.com','9258147','senha123'),(10,'Juliana Nunes','juliana.nunes@example.com','8147369','senha123'),(11,'Paulo Araujo','paulo.araujo@example.com','9753486','senha123'),(12,'Beatriz Melo','beatriz.melo@example.com','6159753','senha123'),(13,'Renato Dias','renato.dias@example.com','3486159','senha123'),(14,'Camila Ribeiro','camila.ribeiro@example.com','3852741','senha123'),(15,'Thiago Teixeira','thiago.teixeira@example.com','2741963','senha123'),(16,'Patrícia Fernandes','patricia.fernandes@example.com','1963852','senha123'),(17,'Rodrigo Gomes','rodrigo.gomes@example.com','3741852','senha123'),(18,'Mariana Batista','mariana.batista@example.com','7258369','senha123'),(19,'Fábio Freitas','fabio.freitas@example.com','9147258','senha123'),(20,'Isabela Cardoso','isabela.cardoso@example.com','8369147','senha123'),(21,'Gustavo Almeida','gustavo.almeida@edu.senai.br','5439871','senha123');
 /*!40000 ALTER TABLE `usuario` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -170,6 +170,30 @@ BEGIN
     FROM usuario;
 
     RETURN total;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `buscar_salas` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`alunods`@`%` PROCEDURE `buscar_salas`(
+  IN p_termo VARCHAR(100)
+)
+BEGIN
+  SELECT *
+  FROM sala
+  WHERE nome LIKE CONCAT('%', p_termo, '%')
+     OR descricao LIKE CONCAT('%', p_termo, '%');
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -246,4 +270,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-04-16 14:00:55
+-- Dump completed on 2025-04-23 16:12:39
