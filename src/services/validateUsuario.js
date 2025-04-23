@@ -3,6 +3,13 @@ const connect = require("../db/connect");
 module.exports = {
   // Valida os campos obrigatórios para criação do usuário
   validateUsuario: function ({ NIF, email, senha, nome }) {
+
+    const senaiDomains = [
+      "@edu.senai.br",
+      "@docente.senai.br",
+      "@sesisenaisp.org.br"
+    ];
+
     if (!NIF || !email || !senha || !nome) {
       return { error: "Todos os campos devem ser preenchidos" };
     }
@@ -14,13 +21,17 @@ module.exports = {
     if (!email.includes("@")) {
       return { error: "Email inválido. Deve conter @" };
     }
+    const emailDomain = email.substring(email.lastIndexOf("@"));
+    if (!senaiDomains.includes(emailDomain)) {
+      return { error: "Email inválido. Deve pertencer a um domínio SENAI autorizado" };
+    }
     return null;
   },
 
   // Valida se o NIF ou email já estão vinculados a outro usuário
   validateNifEmail: async function (NIF, email) {
     return new Promise((resolve, reject) => {
-      const query = "in";
+      const query = "SELECT id_usuario FROM usuario WHERE NIF = ? OR email = ?";
       const values = [NIF, email];
 
       connect.query(query, values, (err, results) => {
