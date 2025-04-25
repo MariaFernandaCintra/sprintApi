@@ -1,19 +1,19 @@
 const { queryAsync, formatarData } = require("../utils/functions");
-const usuarioValidator = require("../services/validateUsuario");
+const validateUsuario = require("../services/validateUsuario");
 
 module.exports = class usuarioController {
   static async createUsuarios(req, res) {
     const { NIF, email, senha, nome } = req.body;
 
     // Valida os campos obrigatórios para criação
-    const userValidationError = usuarioValidator.validateUsuario(req.body);
+    const userValidationError = validateUsuario.validateUsuario(req.body);
     if (userValidationError) {
       return res.status(400).json(userValidationError);
     }
 
     try {
       // Valida se NIF ou email já estão cadastrados
-      const nifEmailValidationError = await usuarioValidator.validateNifEmail(
+      const nifEmailValidationError = await validateUsuario.validateNifEmail(
         NIF,
         email
       );
@@ -51,7 +51,7 @@ module.exports = class usuarioController {
     const { email, senha } = req.body;
 
     // Valida os campos para login
-    const loginValidationError = usuarioValidator.validateLogin(req.body);
+    const loginValidationError = validateUsuario.validateLogin(req.body);
     if (loginValidationError) {
       return res.status(400).json(loginValidationError);
     }
@@ -100,7 +100,7 @@ module.exports = class usuarioController {
     const usuarioId = req.params.id_usuario;
 
     // Valida os campos de atualização e o ID do usuário
-    const updateValidationError = usuarioValidator.validateUpdateUsuario({
+    const updateValidationError = validateUsuario.validateUpdateUsuario({
       email,
       senha,
       nome,
@@ -108,7 +108,7 @@ module.exports = class usuarioController {
     if (updateValidationError) {
       return res.status(400).json(updateValidationError);
     }
-    const idValidationError = usuarioValidator.validateUsuarioId(usuarioId);
+    const idValidationError = validateUsuario.validateUsuarioId(usuarioId);
     if (idValidationError) {
       return res.status(400).json(idValidationError);
     }
@@ -136,7 +136,7 @@ module.exports = class usuarioController {
   static async deleteUsuario(req, res) {
     const usuarioId = req.params.id_usuario;
     // Valida se o ID do usuário foi fornecido
-    const idValidationError = usuarioValidator.validateUsuarioId(usuarioId);
+    const idValidationError = validateUsuario.validateUsuarioId(usuarioId);
     if (idValidationError) {
       return res.status(400).json(idValidationError);
     }
@@ -164,7 +164,7 @@ module.exports = class usuarioController {
     const id_usuario = req.params.id_usuario;
 
     // Valida se o ID foi fornecido
-    const idValidationError = usuarioValidator.validateUsuarioId(id_usuario);
+    const idValidationError = validateUsuario.validateUsuarioId(id_usuario);
     if (idValidationError) {
       return res.status(400).json(idValidationError);
     }
@@ -192,10 +192,9 @@ module.exports = class usuarioController {
   }
 
   static async getUsuarioByEmail(req, res) {
-    const { email } = req.query;
+    const { email } = req.body;
 
-    // Valida se o ID foi fornecido
-    const emailValidationError = usuarioValidator.validateUsuarioEmail(email);
+    const emailValidationError = validateUsuario.validateUsuarioEmail(email);
     if (emailValidationError) {
       return res.status(400).json(emailValidationError);
     }
@@ -223,9 +222,9 @@ module.exports = class usuarioController {
   }
 
   static async getUsuarioReservasByEmail(req, res) {
-    const { email } = req.query;
+    const { email } = req.body;
   
-    const emailValidationError = usuarioValidator.validateUsuarioEmail(email);
+    const emailValidationError = validateUsuario.validateUsuarioEmail(email);
     if (emailValidationError) {
       return res.status(400).json(emailValidationError);
     }
@@ -263,7 +262,7 @@ module.exports = class usuarioController {
   static async getUsuarioReservas(req, res) {
     const id_usuario = req.params.id_usuario;
     // Valida se o ID foi fornecido
-    const idValidationError = usuarioValidator.validateUsuarioId(id_usuario);
+    const idValidationError = validateUsuario.validateUsuarioId(id_usuario);
     if (idValidationError) {
       return res.status(400).json(idValidationError);
     }
