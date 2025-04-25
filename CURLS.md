@@ -15,9 +15,10 @@ curl --location 'http://localhost:5000/reservas/v1/cadastro' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "nome": "Gustavo Almeida",
-    "email":"gustavo.almeida@example.com",
+    "email":"gustavo.almeida@docente.senai.br",
     "NIF":"5439871",
-    "senha":"senha123"
+    "senha":"gustavo.9871",
+    "confirmarSenha":"gustavo.9871"
 }'
 ```
 
@@ -34,8 +35,8 @@ POST /reservas/v1/login
 curl --location 'http://localhost:5000/reservas/v1/login' \
 --header 'Content-Type: application/json' \
 --data-raw '{
-    "email":"gustavo.almeida@example.com",
-    "senha":"senha123"
+    "email":"gustavo.almeida@docente.senai.br",
+    "senha":"gustavo.9871"
 }'
 ```
 
@@ -66,6 +67,22 @@ curl --location 'http://localhost:5000/reservas/v1/usuario/perfil/1' \
 ```
 
 ---
+#### - getUsuarioByEmail
+
+#### Retorna um usuário específico (pelo e-mail)
+```http
+GET /reservas/v1/usuario/email/perfil/reservas
+```
+##### Exemplo de requisição:
+```sh
+curl --location --request GET 'http://localhost:5000/reservas/v1/usuario/perfil/' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "email" : "joao.silva@docente.senai.br"
+}'
+```
+
+---
 #### - putUsuario
 
 #### Atualizar um usuário específico
@@ -78,8 +95,8 @@ curl --location --request PUT 'http://localhost:5000/reservas/v1/usuario/1' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "nome": "Renata Souza",
-    "email":"renata.souza@example.com",
-    "senha":"senha456"
+    "email":"renata.souza@docente.senai.br",
+    "senha":"renata.9871",
 }'
 ```
 ---
@@ -106,6 +123,21 @@ GET /reservas/v1/usuario/perfil/{id}/reservas'
 ```sh
 curl --location 'http://localhost:5000/reservas/v1/usuario/perfil/1/reservas' \
 --header 'Content-Type: application/json'
+```
+
+### *Reservas do Usuário pelo (e-mail)*
+
+#### Retornar as reservas de um usuário específico
+```http
+GET /reservas/v1/usuario/email/perfil/reservas'
+```
+##### Exemplo de requisição:
+```sh
+curl --location --request GET 'http://localhost:5000/reservas/v1/usuario/email/perfil/reservas/' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "email" : "joao.silva@docente.senai.br"
+}'
 ```
 
 ## - *Reservas*
