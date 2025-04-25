@@ -1,5 +1,5 @@
 const validateSala = require("../services/validateSala");
-const { queryAsync } = require("../services/functions");
+const { queryAsync } = require("../utils/functions");
 
 module.exports = class salaController {
   static async createSalas(req, res) {
