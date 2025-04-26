@@ -217,7 +217,7 @@ module.exports = {
           return resolve({ conflito: false });
         }
 
-        // Se houver conflito, procura o primeiro intervalo livre de 50 minutos
+        // Se houver conflito, procura o primeiro intervalo livre de 1 Hora
         const duracaoMs = 60 * 60 * 1000;
         let inicioDisponivel = uReservaInicio;
         const fimDoDia = truncarSegundosEms(criarHorario("23:00:00"));
