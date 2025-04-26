@@ -3,13 +3,16 @@ const connect = require("../db/connect");
 // Função auxiliar para formatar a data e hora atuais no padrão "DD-MM-YYYY HH:MM:SS"
 const formatarDataHoraAtual = () => {
   const now = new Date();
+  now.setSeconds(0); // Zera os segundos
+  now.setMilliseconds(0); // Zera os milissegundos
+
   const day = String(now.getDate()).padStart(2, "0");
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const year = now.getFullYear();
   const hour = String(now.getHours()).padStart(2, "0");
   const minute = String(now.getMinutes()).padStart(2, "0");
-  const second = String(now.getSeconds()).padStart(2, "0");
-  return `${day}-${month}-${year} ${hour}:${minute}:${second}`;
+
+  return `${day}-${month}-${year} ${hour}:${minute}:00`;
 };
 
 // Função auxiliar para criar um objeto Date a partir de data e horário
@@ -297,7 +300,7 @@ module.exports = {
           const proximoInicio = results[0].hora_fim;
           const inicioDisponivel = criarHorario(proximoInicio);
           const fimDisponivel = new Date(
-            inicioDisponivel.getTime() +60 * 60 * 1000
+            inicioDisponivel.getTime() + 60 * 60 * 1000
           );
           return resolve({
             conflito: true,
