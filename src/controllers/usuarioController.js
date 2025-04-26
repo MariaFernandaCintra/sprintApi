@@ -192,7 +192,7 @@ module.exports = class usuarioController {
   }
 
   static async getUsuarioByEmail(req, res) {
-    const { email } = req.body;
+    const { email } = req.query;
 
     const emailValidationError = validateUsuario.validateUsuarioEmail(email);
     if (emailValidationError) {
@@ -222,7 +222,7 @@ module.exports = class usuarioController {
   }
 
   static async getUsuarioReservasByEmail(req, res) {
-    const { email } = req.body;
+    const { email } = req.query;
   
     const emailValidationError = validateUsuario.validateUsuarioEmail(email);
     if (emailValidationError) {

@@ -13,7 +13,23 @@ const formatarDataHoraAtual = () => {
 };
 
 // Função auxiliar para criar um objeto Date a partir de data e horário
-const criarDataHora = (data, hora) => new Date(`${data}T${hora}`);
+const criarDataHora = (data, hora) => {
+  if (!data || !hora || !hora.includes(":")) {
+    console.log("Data ou hora inválida:", data, hora);
+    return new Date("invalid");
+  }
+
+  const [ano, mes, dia] = data.split("-").map(Number);
+  const [h, m, s = "00"] = hora.split(":").map(Number);
+
+  const dataHora = new Date(ano, mes - 1, dia, h, m, s);
+
+  if (isNaN(dataHora.getTime())) {
+    console.log("Data inválida montada:", ano, mes, dia, h, m, s);
+  }
+
+  return dataHora;
+};
 
 // Função auxiliar para criar um objeto Date com base somente no horário (fixando a data em 1970-01-01)
 const criarHorario = (hora) => new Date(`1970-01-01T${hora}`);
@@ -38,6 +54,11 @@ module.exports = {
     const [year, month, day] = data.split("-").map(Number);
     const date = new Date(year, month - 1, day);
 
+    // Remove segundos e milissegundos da hora
+    inicioTime.setSeconds(0, 0);
+    fimTime.setSeconds(0, 0);
+    now.setSeconds(0, 0);
+
     if (inicioTime < now) {
       return { error: "A reserva deve ser depois de: " + nowFormatado };
     }
@@ -61,6 +82,12 @@ module.exports = {
 
     const duracao = fimTime - inicioTime;
     const limite = 50 * 60 * 1000;
+
+    // Verifica se inicioTime e fimTime são válidos
+    if (isNaN(inicioTime.getTime()) || isNaN(fimTime.getTime())) {
+      return { error: "Hora de início ou Hora de Fim Inválida" };
+    }
+
     if (duracao !== limite) {
       return { error: "A reserva deve ter exatamente 50 minutos" };
     }
@@ -139,7 +166,7 @@ module.exports = {
     const query = `
       SELECT hora_inicio, hora_fim 
       FROM reserva 
-      WHERE fk_id_sala = ? AND data = ?
+      WHERE fk_id_sala = ? AND data = ? 
       ORDER BY hora_inicio ASC
     `;
     const values = [fk_id_sala, data];
@@ -148,14 +175,34 @@ module.exports = {
       connect.query(query, values, (err, reservas) => {
         if (err) return reject(err);
 
-        const uReservaInicio = criarHorario(hora_inicio);
-        const uReservaFim = criarHorario(hora_fim);
+        // Função para criar um horário sem segundos e milissegundos
+        function truncarSegundosEms(date) {
+          const novaData = new Date(date);
+          novaData.setSeconds(0, 0); // Remove segundos e milissegundos
+          return novaData;
+        }
+
+        // Função para criar o horário de forma consistente
+        function criarHorario(horaStr) {
+          const [hour, minute, second] = horaStr.split(":").map(Number);
+          const now = new Date();
+          now.setHours(hour, minute, second, 0); // Sem milissegundos
+          return now;
+        }
+
+        const uReservaInicio = truncarSegundosEms(criarHorario(hora_inicio));
+        const uReservaFim = truncarSegundosEms(criarHorario(hora_fim));
+
         let conflito = false;
 
         // Verifica se há conflito com alguma reserva existente
         for (const reserva of reservas) {
-          const reservaInicio = criarHorario(reserva.hora_inicio);
-          const reservaFim = criarHorario(reserva.hora_fim);
+          const reservaInicio = truncarSegundosEms(
+            criarHorario(reserva.hora_inicio)
+          );
+          const reservaFim = truncarSegundosEms(criarHorario(reserva.hora_fim));
+
+          // Verifica o conflito de horários
           if (uReservaInicio < reservaFim && uReservaFim > reservaInicio) {
             conflito = true;
             break;
@@ -170,11 +217,15 @@ module.exports = {
         // Se houver conflito, procura o primeiro intervalo livre de 50 minutos
         const duracaoMs = 50 * 60 * 1000;
         let inicioDisponivel = uReservaInicio;
-        const fimDoDia = criarHorario("23:00:00");
+        const fimDoDia = truncarSegundosEms(criarHorario("23:00:00"));
 
         for (const reserva of reservas) {
-          const reservaInicio = criarHorario(reserva.hora_inicio);
-          const reservaFim = criarHorario(reserva.hora_fim);
+          const reservaInicio = truncarSegundosEms(
+            criarHorario(reserva.hora_inicio)
+          );
+          const reservaFim = truncarSegundosEms(criarHorario(reserva.hora_fim));
+
+          // Verifica o espaço livre entre as reservas
           if (
             inicioDisponivel.getTime() + duracaoMs <=
             reservaInicio.getTime()
@@ -185,6 +236,7 @@ module.exports = {
           }
         }
 
+        // Verifica se o horário disponível é antes do fim do dia
         if (inicioDisponivel.getTime() + duracaoMs > fimDoDia.getTime()) {
           return resolve({ conflito: true, disponivel: false });
         }
@@ -199,7 +251,6 @@ module.exports = {
       });
     });
   },
-
   // Valida conflitos de horário para atualização de reserva (excluindo a própria reserva)
   validarConflitoReservaAtualizacao: async function (
     fk_id_sala,
