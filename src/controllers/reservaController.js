@@ -137,7 +137,7 @@ module.exports = class ReservaController {
       if (conflitoResult.conflito) {
         const { inicioDisponivel, fimDisponivel } = conflitoResult;
         return res.status(400).json({
-          error: `A sala já está reservada neste horário. O próximo horário disponível é de ${validateReserva.formatarHorario(inicioDisponivel)} até ${validateReserva.formatarHorario(fimDisponivel)}`
+          error: `A sala já está reservada neste horário. O próximo horário disponível é de ${formatarHorario(inicioDisponivel)} até ${formatarHorario(fimDisponivel)}`
         });
       }
 

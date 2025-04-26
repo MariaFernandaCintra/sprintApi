@@ -81,7 +81,7 @@ module.exports = {
     }
 
     const duracao = fimTime - inicioTime;
-    const limite = 50 * 60 * 1000;
+    const limite = 60 * 60 * 1000;
 
     // Verifica se inicioTime e fimTime são válidos
     if (isNaN(inicioTime.getTime()) || isNaN(fimTime.getTime())) {
@@ -89,7 +89,7 @@ module.exports = {
     }
 
     if (duracao !== limite) {
-      return { error: "A reserva deve ter exatamente 50 minutos" };
+      return { error: "A reserva deve ter exatamente 1 Hora" };
     }
 
     return null;
@@ -124,7 +124,7 @@ module.exports = {
     }
 
     const duracao = fimTime - inicioTime;
-    const limite = 50 * 60 * 1000;
+    const limite = 60 * 60 * 1000;
     if (duracao !== limite) {
       return { error: "A reserva deve ter exatamente 50 minutos" };
     }
@@ -215,7 +215,7 @@ module.exports = {
         }
 
         // Se houver conflito, procura o primeiro intervalo livre de 50 minutos
-        const duracaoMs = 50 * 60 * 1000;
+        const duracaoMs = 60 * 60 * 1000;
         let inicioDisponivel = uReservaInicio;
         const fimDoDia = truncarSegundosEms(criarHorario("23:00:00"));
 
@@ -297,7 +297,7 @@ module.exports = {
           const proximoInicio = results[0].hora_fim;
           const inicioDisponivel = criarHorario(proximoInicio);
           const fimDisponivel = new Date(
-            inicioDisponivel.getTime() + 50 * 60 * 1000
+            inicioDisponivel.getTime() +60 * 60 * 1000
           );
           return resolve({
             conflito: true,

@@ -60,7 +60,7 @@ module.exports = {
     }
 
     const duration = fimDate - inicioDate;
-    const limit = 50 * 60 * 1000; // 50 minutos em milissegundos
+    const limit = 60 * 60 * 1000; // 60 minutos em milissegundos
     if (duration !== limit) {
       return { error: "Para checar a reserva, ela deve ter exatamente 50 minutos" };
     }

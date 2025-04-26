@@ -97,11 +97,11 @@ INSERT INTO sala (nome, descricao, bloco, tipo, capacidade) VALUES
 ('OFI - LIXAMENTO', 'Lixadeiras e Polidoras', 'O', 'Oficina', 16);
 
 INSERT INTO reserva (data, hora_inicio, hora_fim, dia_semana, fk_id_usuario, fk_id_sala) VALUES
-('2025-12-31', '09:00:00', '09:50:00', 'Quarta-Feira', 1, 1),
-('2025-12-31', '14:00:00', '14:50:00', 'Quarta-Feira', 2, 2),
-('2025-12-31', '08:00:00', '08:50:00', 'Quarta-Feira', 3, 3),
-('2025-12-31', '13:00:00', '13:50:00', 'Quarta-Feira', 4, 4),
-('2025-12-31', '12:00:00', '12:50:00', 'Quarta-Feira', 5, 5);
+('2025-12-31', '07:00:00', '08:00:00', 'Quarta-Feira', 1, 1),
+('2025-12-31', '08:00:00', '09:00:00', 'Quarta-Feira', 2, 2),
+('2025-12-31', '09:00:00', '10:00:00', 'Quarta-Feira', 3, 3),
+('2025-12-31', '10:00:00', '11:00:00', 'Quarta-Feira', 4, 4),
+('2025-12-31', '11:00:00', '12:00:00', 'Quarta-Feira', 5, 5);
 
 
 CREATE VIEW cru AS SELECT -- contagem_reservas_usuarios
