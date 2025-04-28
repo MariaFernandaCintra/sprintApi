@@ -1,5 +1,6 @@
 const validateUsuario = require("../services/validateUsuario");
 const { queryAsync, formatarData } = require("../utils/functions");
+const jwt = require("jsonwebtoken");
 
 module.exports = class usuarioController {
   static async createUsuarios(req, res) {
@@ -34,13 +35,19 @@ module.exports = class usuarioController {
       }
 
       const usuario = results[0];
-      return res.status(200).json({
-        usuario: {
-          id_usuario: usuario.id_usuario,
-          email: usuario.email,
-        },
-        message: "Cadastro bem-sucedido",
-      });
+      const token = jwt.sign(
+        {id: usuario.id_usuario }, 
+        process.env.SECRET, 
+        {expiresIn: "1h",});
+
+        //Remove um atributo de um obj
+        delete usuario.senha
+
+        return res.status(200).json({message: "Cadastro bem-sucedido",
+      usuario, 
+      token
+    })
+        
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Erro Interno do Servidor" });
@@ -65,14 +72,18 @@ module.exports = class usuarioController {
 
       const usuario = results[0];
       if (usuario.senha === senha) {
-        return res.status(200).json({
-          message: "Login realizado com sucesso!",
-          usuario: {
-            id_usuario: usuario.id_usuario,
-            email: usuario.email,
-            nome: usuario.nome,
-          },
-        });
+        const token = jwt.sign(
+          {id: usuario.id_usuario }, 
+          process.env.SECRET, 
+          {expiresIn: "1h",});
+
+          //Remove um atributo de um obj
+          delete usuario.senha
+
+          return res.status(200).json({message:"Login Bem-sucedido",
+        usuario, 
+        token
+      })
       } else {
         return res.status(401).json({ error: "Senha ou E-mail incorreto" });
       }
@@ -98,6 +109,7 @@ module.exports = class usuarioController {
   static async updateUsuario(req, res) {
     const { email, senha, nome } = req.body;
     const usuarioId = req.params.id_usuario;
+    const verificarToken =  req.userId;
 
     // Valida os campos de atualização e o ID do usuário
     const updateValidationError = validateUsuario.validateUpdateUsuario({
@@ -112,7 +124,9 @@ module.exports = class usuarioController {
     if (idValidationError) {
       return res.status(400).json(idValidationError);
     }
-
+    if (Number(verificarToken) !== Number(usuarioId)){
+      return res.status(400).json({message: "Você não pode atualizar outro usuário!"});
+    }
     const query = `UPDATE usuario SET email = ?, senha = ?, nome = ? WHERE id_usuario = ?`;
     try {
       const results = await queryAsync(query, [email, senha, nome, usuarioId]);
@@ -135,10 +149,14 @@ module.exports = class usuarioController {
 
   static async deleteUsuario(req, res) {
     const usuarioId = req.params.id_usuario;
+    const verificarToken = req.userId; 
     // Valida se o ID do usuário foi fornecido
     const idValidationError = validateUsuario.validateUsuarioId(usuarioId);
     if (idValidationError) {
       return res.status(400).json(idValidationError);
+    }
+    if(Number(verificarToken) !== Number(usuarioId)){
+      return res.status(400).json({message: "Você não pode deletar outro usuário!"});
     }
     const query = `DELETE FROM usuario WHERE id_usuario = ?`;
     try {
@@ -149,7 +167,7 @@ module.exports = class usuarioController {
       return res.status(200).json({ message: "Usuário excluído com sucesso" });
     } catch (error) {
       console.error(error);
-      if (error.code === "ER_ROW_IS_REFERENCED_2") {
+      if (error.code === "ER_ROW_IS_REFERENCED") {
         return res
           .status(400)
           .json({
@@ -286,7 +304,7 @@ module.exports = class usuarioController {
       if (reservas.length === 0) {
         return res
           .status(404)
-          .json({ error: "Nenhuma reserva encontrada para este usuário" });
+          .json({ error: "Nenhuma reserva encontrada para este usuário nesta sala" });
       }
       return res.status(200).json({ reservas });
     } catch (error) {

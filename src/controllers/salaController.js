@@ -1,5 +1,6 @@
 const validateSala = require("../services/validateSala");
 const { queryAsync } = require("../utils/functions");
+const jwt = require("jsonwebtoken");
 
 module.exports = class salaController {
   static async createSalas(req, res) {
@@ -20,8 +21,16 @@ module.exports = class salaController {
     const values = [nome, descricao, bloco, tipo, capacidade];
 
     try {
-      await queryAsync(query, values);
-      return res.status(201).json({ message: "Sala criada com sucesso!" });
+      const result = await queryAsync(query, values);
+      const token = jwt.sign(
+        {id: result.id_sala }, 
+        process.env.SECRET, 
+        {expiresIn: "1h",});
+
+        return res.status(200).json({message: "Sala Cadatrada com sucesso!",
+      result, 
+      token
+    })
     } catch (error) {
       console.error(error);
       if (error.code === "ER_DUP_ENTRY") {
