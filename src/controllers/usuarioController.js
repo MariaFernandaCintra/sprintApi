@@ -181,7 +181,7 @@ module.exports = class usuarioController {
 
   static async getUsuarioById(req, res) {
     const id_usuario = req.params.id_usuario;
-    const verificarToken =  req.userId;
+    const verificarToken =  req.params.userId;
     
     // Valida se o ID foi fornecido
     const idValidationError = validateUsuario.validateUsuarioId(id_usuario);
