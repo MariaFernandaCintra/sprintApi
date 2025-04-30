@@ -21,7 +21,6 @@ const getDiaSemana = (data) => {
 module.exports = class ReservaController {
   static async createReservas(req, res) {
     const { fk_id_usuario, fk_id_sala, data, hora_inicio, hora_fim } = req.body;
-    const verificarToken = req.userId;
 
     // Validação inicial dos campos
     const erroValidacao = validateReserva.validarCamposReserva({
@@ -33,9 +32,6 @@ module.exports = class ReservaController {
     });
     if (erroValidacao) {
       return res.status(400).json(erroValidacao);
-    }
-    if (Number(verificarToken) !== Number(fk_id_usuario)){
-      return res.status(400).json({message: "Você não pode fazer reserva com ID de outro usuário!"});
     }
 
     try {
@@ -111,7 +107,6 @@ module.exports = class ReservaController {
   static async updateReserva(req, res) {
     const { fk_id_usuario, data, hora_inicio, hora_fim } = req.body;
     const reservaId = req.params.id_reserva;
-    const verificarToken =  req.userId;
 
     // Valida os campos de atualização
     const erroValidacao = validateReserva.validarCamposAtualizacao({
@@ -122,10 +117,6 @@ module.exports = class ReservaController {
     });
     if (erroValidacao) {
       return res.status(400).json(erroValidacao);
-    }
-
-    if (Number(verificarToken) !== Number(fk_id_usuario)){
-      return res.status(400).json({message: "Você não pode atualizar a reserva de outro usuário!"});
     }
 
     try {
@@ -177,11 +168,7 @@ module.exports = class ReservaController {
   static async deleteReserva(req, res) {
     const reservaId = req.params.id_reserva;
     const usuarioId = req.params.id_usuario;
-    const verificarToken =  req.userId;
 
-    if (Number(verificarToken) !== Number(usuarioId)){
-      return res.status(400).json({message: "Você não pode deletar a reserva de outro usuário!"});
-    }
     const query = `DELETE FROM reserva WHERE id_reserva = ?`;
     try {
       const results = await queryAsync(query, [reservaId]);
