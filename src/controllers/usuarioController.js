@@ -36,7 +36,7 @@ module.exports = class usuarioController {
 
       const usuario = results[0];
       const token = jwt.sign(
-        {id: usuario.id_usuario }, 
+        {id: usuario.id_usuario, email: usuario.email}, 
         process.env.SECRET, 
         {expiresIn: "1h",});
 
@@ -63,7 +63,7 @@ module.exports = class usuarioController {
       return res.status(400).json(loginValidationError);
     }
 
-    const query = `SELECT * FROM usuario WHERE email = ?`;
+    const query = `SELECT * FROM usuario WHERE email = ?`
     try {
       const results = await queryAsync(query, [email]);
       if (results.length === 0) {
@@ -73,7 +73,7 @@ module.exports = class usuarioController {
       const usuario = results[0];
       if (usuario.senha === senha) {
         const token = jwt.sign(
-          {id: usuario.id_usuario }, 
+          {id: usuario.id_usuario, email: usuario.email}, 
           process.env.SECRET, 
           {expiresIn: "1h",});
 
@@ -150,6 +150,7 @@ module.exports = class usuarioController {
   static async deleteUsuario(req, res) {
     const usuarioId = req.params.id_usuario;
     const verificarToken = req.userId; 
+    
     // Valida se o ID do usuário foi fornecido
     const idValidationError = validateUsuario.validateUsuarioId(usuarioId);
     if (idValidationError) {
@@ -180,13 +181,16 @@ module.exports = class usuarioController {
 
   static async getUsuarioById(req, res) {
     const id_usuario = req.params.id_usuario;
-
+    const verificarToken =  req.userId;
+    
     // Valida se o ID foi fornecido
     const idValidationError = validateUsuario.validateUsuarioId(id_usuario);
     if (idValidationError) {
       return res.status(400).json(idValidationError);
     }
-
+    if (Number(verificarToken) !== Number(id_usuario)){
+      return res.status(400).json({message: "Você não pode atualizar outro usuário!"});
+    }
     const query = `SELECT * FROM usuario WHERE id_usuario = ?`;
     try {
       const results = await queryAsync(query, [id_usuario]);
@@ -211,10 +215,14 @@ module.exports = class usuarioController {
 
   static async getUsuarioByEmail(req, res) {
     const { email } = req.query;
+    const verificarToken =  req.email;
 
     const emailValidationError = validateUsuario.validateUsuarioEmail(email);
     if (emailValidationError) {
       return res.status(400).json(emailValidationError);
+    }
+    if (verificarToken !== email){
+      return res.status(400).json({message: "Você não pode visualizar outro usuário!"});
     }
 
     const query = `SELECT * FROM usuario WHERE email = ?`;
@@ -241,10 +249,14 @@ module.exports = class usuarioController {
 
   static async getUsuarioReservasByEmail(req, res) {
     const { email } = req.query;
+    const verificarToken =  req.email;
   
     const emailValidationError = validateUsuario.validateUsuarioEmail(email);
     if (emailValidationError) {
       return res.status(400).json(emailValidationError);
+    }
+    if (verificarToken !== email){
+      return res.status(400).json({message: "Você não pode visualizar as reservas de outro usuário!"});
     }
   
     const queryReservas = `
@@ -279,12 +291,15 @@ module.exports = class usuarioController {
 
   static async getUsuarioReservas(req, res) {
     const id_usuario = req.params.id_usuario;
+    const verificarToken =  req.userId;
     // Valida se o ID foi fornecido
     const idValidationError = validateUsuario.validateUsuarioId(id_usuario);
     if (idValidationError) {
       return res.status(400).json(idValidationError);
     }
-
+    if (Number(verificarToken) !== Number(id_usuario)){
+      return res.status(400).json({message: "Você não tem autirização para ver as reservas de outro usuário!"});
+    }
     const queryReservas = `
       SELECT r.id_reserva, s.nome, r.data, r.hora_inicio, r.hora_fim, r.dia_semana
       FROM reserva r
@@ -304,7 +319,7 @@ module.exports = class usuarioController {
       if (reservas.length === 0) {
         return res
           .status(404)
-          .json({ error: "Nenhuma reserva encontrada para este usuário nesta sala" });
+          .json({ error: "Nenhuma reserva encontrada para este usuário" });
       }
       return res.status(200).json({ reservas });
     } catch (error) {

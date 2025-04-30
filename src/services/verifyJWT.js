@@ -13,6 +13,7 @@ function verifyJWT(req, res, next){
         }
         
         req.userId = decoded.id;
+        req.email = decoded.email;
         next();
     })
 }
