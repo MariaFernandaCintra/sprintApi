@@ -26,7 +26,7 @@ router.get("/salas", salaController.getAllSalasTabela);
 router.put("/sala/:id_sala", salaController.updateSala);
 router.delete("/sala/:id_sala", salaController.deleteSala);
 
-router.get("/salasdisponivelhorario", salaController.getSalasDisponiveisHorario);
+router.post("/salasdisponivelhorario", salaController.getSalasDisponiveisHorario);
 
 module.exports = router;
 
