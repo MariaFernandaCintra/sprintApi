@@ -16,15 +16,15 @@ router.get('/usuario/perfil/', verifyJWT, usuarioController.getUsuarioByEmail);
 router.get('/usuario/perfil/:id_usuario/reservas', verifyJWT, usuarioController.getUsuarioReservas);
 router.get('/usuario/email/perfil/reservas', verifyJWT, usuarioController.getUsuarioReservasByEmail);
 
-router.post("/reserva", reservaController.createReservas);
+router.post("/reserva", verifyJWT, reservaController.createReservas);
 router.get("/reservas", reservaController.getAllReservas);
-router.put("/reserva/:id_reserva", reservaController.updateReserva);
-router.delete("/reserva/:id_reserva", reservaController.deleteReserva);
+router.put("/reserva/:id_reserva", verifyJWT, reservaController.updateReserva);
+router.delete("/reserva/:id_reserva/:id_usuario", verifyJWT, reservaController.deleteReserva);
 
 router.post("/sala", salaController.createSalas);
-router.get("/salas", verifyJWT, salaController.getAllSalasTabela);
-router.put("/sala/:id_sala", verifyJWT, salaController.updateSala);
-router.delete("/sala/:id_sala", verifyJWT, salaController.deleteSala);
+router.get("/salas", salaController.getAllSalasTabela);
+router.put("/sala/:id_sala", salaController.updateSala);
+router.delete("/sala/:id_sala", salaController.deleteSala);
 
 router.get("/salasdisponivelhorario", salaController.getSalasDisponiveisHorario);
 
