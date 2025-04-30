@@ -99,8 +99,8 @@ module.exports = {
   },
 
   // Valida os campos para atualização da reserva
-  validarCamposAtualizacao: function ({ data, hora_inicio, hora_fim }) {
-    if (!data || !hora_inicio || !hora_fim) {
+  validarCamposAtualizacao: function ({ fk_id_usuario, data, hora_inicio, hora_fim }) {
+    if (!fk_id_usuario || !data || !hora_inicio || !hora_fim) {
       return { error: "Todos os campos devem ser preenchidos" };
     }
 
