@@ -12,9 +12,7 @@ router.put("/usuario/:id_usuario", verifyJWT, usuarioController.updateUsuario);
 router.delete("/usuario/:id_usuario", verifyJWT, usuarioController.deleteUsuario);
 
 router.get('/usuario/perfil/:id_usuario', verifyJWT, usuarioController.getUsuarioById);
-router.get('/usuario/perfil/', verifyJWT, usuarioController.getUsuarioByEmail);
 router.get('/usuario/perfil/:id_usuario/reservas', verifyJWT, usuarioController.getUsuarioReservas);
-router.get('/usuario/email/perfil/reservas', verifyJWT, usuarioController.getUsuarioReservasByEmail);
 
 router.post("/reserva", verifyJWT, reservaController.createReservas);
 router.get("/reservas", reservaController.getAllReservas);
