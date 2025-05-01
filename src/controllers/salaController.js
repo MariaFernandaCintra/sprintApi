@@ -88,7 +88,7 @@ module.exports = class salaController {
 
       if (salasDisponiveisFinal.length === 0) {
         return res.status(404).json({
-          message: "Não há salas disponíveis para o horário solicitado",
+          error: "Não há salas disponíveis para o horário solicitado",
         });
       }
       return res.status(200).json({
@@ -97,7 +97,7 @@ module.exports = class salaController {
       });
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ message: "Erro ao obter as salas disponíveis" });
+      return res.status(500).json({ error: "Erro ao obter as salas disponíveis" });
     }
   }
 

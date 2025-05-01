@@ -1,4 +1,3 @@
-const verifyJWT = require("../services/verifyJWT");
 const router = require("express").Router(); //importando o módolo express
 
 const reservaController = require("../controllers/reservaController");
@@ -7,17 +6,17 @@ const salaController = require("../controllers/salaController");
 
 router.post("/cadastro", usuarioController.createUsuarios);
 router.post("/login",  usuarioController.loginUsuario);
-router.get("/usuarios", verifyJWT, usuarioController.getAllUsuarios);
-router.put("/usuario/:id_usuario", verifyJWT, usuarioController.updateUsuario);
-router.delete("/usuario/:id_usuario", verifyJWT, usuarioController.deleteUsuario);
+router.get("/usuarios", usuarioController.getAllUsuarios);
+router.put("/usuario/:id_usuario", usuarioController.updateUsuario);
+router.delete("/usuario/:id_usuario", usuarioController.deleteUsuario);
 
 router.get('/usuario/perfil/:id_usuario', verifyJWT, usuarioController.getUsuarioById);
 router.get('/usuario/perfil/:id_usuario/reservas', verifyJWT, usuarioController.getUsuarioReservas);
 
-router.post("/reserva", verifyJWT, reservaController.createReservas);
+router.post("/reserva", reservaController.createReservas);
 router.get("/reservas", reservaController.getAllReservas);
-router.put("/reserva/:id_reserva", verifyJWT, reservaController.updateReserva);
-router.delete("/reserva/:id_reserva/:id_usuario", verifyJWT, reservaController.deleteReserva);
+router.put("/reserva/:id_reserva", reservaController.updateReserva);
+router.delete("/reserva/:id_reserva/:id_usuario", reservaController.deleteReserva);
 
 router.post("/sala", salaController.createSalas);
 router.get("/salas", salaController.getAllSalasTabela);
