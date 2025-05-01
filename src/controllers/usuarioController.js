@@ -5,38 +5,48 @@ const jwt = require("jsonwebtoken");
 module.exports = class usuarioController {
   static async createUsuarios(req, res) {
     const { NIF, email, senha, nome } = req.body;
-
-    // Valida os campos obrigatórios para criação
+  
+    // Validação dos campos obrigatórios
     const userValidationError = validateUsuario.validateUsuario(req.body);
     if (userValidationError) {
       return res.status(400).json(userValidationError);
     }
-
+  
     try {
       // Valida se NIF ou email já estão cadastrados
-      const nifEmailValidationError = await validateUsuario.validateNifEmail(
-        NIF,
-        email
-      );
+      const nifEmailValidationError = await validateUsuario.validateNifEmail(NIF, email);
       if (nifEmailValidationError && nifEmailValidationError.error) {
         return res.status(400).json(nifEmailValidationError);
       }
-
+  
       const queryInsert = `INSERT INTO usuario (nome, email, NIF, senha) VALUES (?, ?, ?, ?)`;
       const valuesInsert = [nome, email, NIF, senha];
       await queryAsync(queryInsert, valuesInsert);
-
-      // Após a inserção, busca o usuário cadastrado
+  
+      // Busca o usuário recém-cadastrado
       const querySelect = `SELECT * FROM usuario WHERE email = ?`;
       const results = await queryAsync(querySelect, [email]);
-
+  
       if (results.length === 0) {
         return res.status(404).json({ error: "Usuário não encontrado" });
       }
-
+  
       const usuario = results[0];
-      return res.status(200).json({message: "Cadastro bem-sucedido", usuario})
-        
+  
+      // Gera o token
+      const token = jwt.sign(
+        { id: usuario.id_usuario, email: usuario.email },
+        process.env.SECRET,
+        { expiresIn: "1h" }
+      );
+  
+      // Retorna usuário e token
+      return res.status(200).json({
+        message: "Cadastro bem-sucedido",
+        usuario,
+        token
+      });
+  
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Erro Interno do Servidor" });
@@ -45,27 +55,41 @@ module.exports = class usuarioController {
 
   static async loginUsuario(req, res) {
     const { email, senha } = req.body;
-
-    // Valida os campos para login
+  
+    // Validação dos campos para login
     const loginValidationError = validateUsuario.validateLogin(req.body);
     if (loginValidationError) {
       return res.status(400).json(loginValidationError);
     }
-
-    const query = `SELECT * FROM usuario WHERE email = ?`
+  
+    const query = `SELECT * FROM usuario WHERE email = ?`;
+  
     try {
       const results = await queryAsync(query, [email]);
+  
       if (results.length === 0) {
         return res.status(404).json({ error: "Usuário não encontrado" });
       }
-
+  
       const usuario = results[0];
+  
       if (usuario.senha === senha) {
-          return res.status(200).json({message:"Login Bem-sucedido",usuario 
-      })
+        // Gera o token
+        const token = jwt.sign(
+          { id: usuario.id_usuario, email: usuario.email },
+          process.env.SECRET,
+          { expiresIn: "1h" }
+        );
+  
+        return res.status(200).json({
+          message: "Login Bem-sucedido",
+          usuario,
+          token
+        });
       } else {
         return res.status(401).json({ error: "Senha ou E-mail incorreto" });
       }
+  
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Erro Interno do Servidor" });
@@ -152,7 +176,6 @@ module.exports = class usuarioController {
 
   static async getUsuarioById(req, res) {
     const id_usuario = req.params.id_usuario;
-    const verificarToken =  req.params.userId;
     
     // Valida se o ID foi fornecido
     const idValidationError = validateUsuario.validateUsuarioId(id_usuario);
@@ -179,7 +202,8 @@ module.exports = class usuarioController {
       console.error(error);
       return res.status(500).json({ error: "Erro interno do servidor" });
     }
-
+  }
+  
   static async getUsuarioReservas(req, res) {
     const id_usuario = req.params.id_usuario;
     // Valida se o ID foi fornecido

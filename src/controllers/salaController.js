@@ -1,11 +1,10 @@
 const validateSala = require("../services/validateSala");
 const { queryAsync } = require("../utils/functions");
-const jwt = require("jsonwebtoken");
 
 module.exports = class salaController {
   static async createSalas(req, res) {
     const { nome, descricao, bloco, tipo, capacidade } = req.body;
-
+  
     const validationError = validateSala.validateCreateSala({
       nome,
       descricao,
@@ -16,21 +15,16 @@ module.exports = class salaController {
     if (validationError) {
       return res.status(400).json(validationError);
     }
-
+  
     const query = `INSERT INTO sala (nome, descricao, bloco, tipo, capacidade) VALUES (?, ?, ?, ?, ?)`;
     const values = [nome, descricao, bloco, tipo, capacidade];
-
+  
     try {
       const result = await queryAsync(query, values);
-      const token = jwt.sign(
-        {id: result.id_sala }, 
-        process.env.SECRET, 
-        {expiresIn: "1h",});
-
-        return res.status(200).json({message: "Sala Cadatrada com sucesso!",
-      result, 
-      token
-    })
+      return res.status(200).json({
+        message: "Sala cadastrada com sucesso!",
+        salaId: result.insertId
+      });
     } catch (error) {
       console.error(error);
       if (error.code === "ER_DUP_ENTRY") {
@@ -41,7 +35,7 @@ module.exports = class salaController {
       }
       return res.status(500).json({ error: "Erro interno do servidor" });
     }
-  }
+  }  
 
   static async getAllSalasTabela(req, res) {
     const query = `SELECT * FROM sala`;

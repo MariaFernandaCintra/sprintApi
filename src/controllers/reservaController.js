@@ -1,6 +1,5 @@
 const validateReserva = require("../services/validateReserva");
 const { queryAsync, formatarHorario } = require("../utils/functions");
-const jwt = require("jsonwebtoken");
 
 // Retorna o dia da semana em português, dado uma data no formato "YYYY-MM-DD"
 const getDiaSemana = (data) => {
