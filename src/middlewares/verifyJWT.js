@@ -9,7 +9,7 @@ function verifyJWT(req, res, next){
 
     jwt.verify(token, process.env.SECRET, (err, decoded) => {
         if(err){
-            return res.status(403).json({auth:false, message:"Falha na autenticação - Token Expirou"})
+            return res.status(403).json({auth:false, message:"Falha na autenticação - Token Expirado ou Inválido"})
         }
         
         req.userId = decoded.id;

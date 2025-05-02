@@ -21,7 +21,7 @@ router.put("/reserva/:id_reserva", verifyJWT, reservaController.updateReserva);
 router.delete("/reserva/:id_reserva", verifyJWT, reservaController.deleteReserva);
 
 router.post("/sala", salaController.createSalas);
-router.get("/salas", salaController.getAllSalasTabela);
+router.get("/salas", verifyJWT, salaController.getAllSalasTabela);
 router.put("/sala/:id_sala", salaController.updateSala);
 router.delete("/sala/:id_sala", salaController.deleteSala);
 

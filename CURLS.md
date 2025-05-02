@@ -1,6 +1,8 @@
 # ***Endpoints***
 #### [@fogazzaa](https://github.com/Fogazzaa)
 
+Após `Login` ou `Cadastro` armazene o `token` para fazer as próximas requisições em Rotas Protegidas, não se esqueca também de substituir `{idUsuario}, {idReserva}, {idSala}` em requisições de `PUT, GET e DELETE` por valores válidos.
+
 ## - *Usuários*
 
 #### - Cadastro
@@ -205,14 +207,14 @@ GET /reservas/v1/salas
 ##### Exemplo de requisição:
 ```sh
 curl --location 'http://localhost:5000/reservas/v1/salas' \
---data ''
+--header 'Authorization: {tokenUsuario}'
 ```
 
 ---
 #### - putSala
 #### Atualizar uma sala específica
 ```http
-PUT /reservas/v1/sala/{id}
+PUT /reservas/v1/sala/{idSala}
 ```
 ##### Exemplo de requisição:
 ```sh
@@ -231,7 +233,7 @@ curl --location --request PUT 'http://localhost:5000/reservas/v1/sala/1' \
 #### - deleteSala
 #### Deletar uma sala específica
 ```http
-DELETE /reservas/v1/sala/{id}
+DELETE /reservas/v1/sala/{idSala}
 ```
 ##### Exemplo de requisição:
 ```sh
