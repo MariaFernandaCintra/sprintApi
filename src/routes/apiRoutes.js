@@ -18,7 +18,7 @@ router.get("/usuario/perfil/:id_usuario/reservas", verifyJWT, usuarioController.
 router.post("/reserva", verifyJWT, reservaController.createReservas);
 router.get("/reservas", verifyJWT, reservaController.getAllReservas);
 router.put("/reserva/:id_reserva", verifyJWT, reservaController.updateReserva);
-router.delete("/reserva/:id_reserva/:id_usuario", verifyJWT, reservaController.deleteReserva);
+router.delete("/reserva/:id_reserva", verifyJWT, reservaController.deleteReserva);
 
 router.post("/sala", salaController.createSalas);
 router.get("/salas", salaController.getAllSalasTabela);

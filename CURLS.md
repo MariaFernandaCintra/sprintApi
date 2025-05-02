@@ -50,7 +50,8 @@ GET /reservas/v1/usuarios
 ##### Exemplo de requisição:
 ```sh
 curl --location 'http://localhost:5000/reservas/v1/usuarios' \
---header 'Content-Type: application/json'
+--header 'Content-Type: application/json' \
+--header 'Authorization: {tokenUsuario}'
 ```
 
 ---
@@ -58,28 +59,12 @@ curl --location 'http://localhost:5000/reservas/v1/usuarios' \
 
 #### Retorna um usuário específico
 ```http
-GET /reservas/v1/usuario/perfil/{id}
+GET /reservas/v1/usuario/perfil/{idUsuario}
 ```
 ##### Exemplo de requisição:
 ```sh
-curl --location 'http://localhost:5000/reservas/v1/usuario/perfil/1' \
---header 'Content-Type: application/json'
-```
-
----
-#### - getUsuarioByEmail
-
-#### Retorna um usuário específico (pelo e-mail)
-```http
-GET /reservas/v1/usuario/email/perfil/reservas
-```
-##### Exemplo de requisição:
-```sh
-curl --location --request GET 'http://localhost:5000/reservas/v1/usuario/perfil/' \
---header 'Content-Type: application/json' \
---data-raw '{
-    "email" : "joao.silva@docente.senai.br"
-}'
+curl --location 'http://localhost:5000/reservas/v1/usuario/perfil/{idUsuario}' \
+--header 'Authorization: {tokenUsuario}'
 ```
 
 ---
@@ -87,16 +72,17 @@ curl --location --request GET 'http://localhost:5000/reservas/v1/usuario/perfil/
 
 #### Atualizar um usuário específico
 ```http
-PUT /reservas/v1/usuario/{id}
+PUT /reservas/v1/usuario/{idUsuario}
 ```
 ##### Exemplo de requisição:
 ```sh
-curl --location --request PUT 'http://localhost:5000/reservas/v1/usuario/1' \
+curl --location --request PUT 'http://localhost:5000/reservas/v1/usuario/{idUsuario}' \
 --header 'Content-Type: application/json' \
+--header 'Authorization: {tokenUsuario}' \
 --data-raw '{
     "nome": "Renata Souza",
     "email":"renata.souza@docente.senai.br",
-    "senha":"renata.9871",
+    "senha":"renata.9871"
 }'
 ```
 ---
@@ -104,40 +90,25 @@ curl --location --request PUT 'http://localhost:5000/reservas/v1/usuario/1' \
 
 #### Deletar um usuário específico
 ```http
-DELETE /reservas/v1/usuario/{id}
+DELETE /reservas/v1/usuario/{idUsuario}
 ```
 ##### Exemplo de requisição:
 ```sh
-curl --location --request DELETE 'http://localhost:5000/reservas/v1/usuario/1' \
+curl --location --request DELETE 'http://localhost:5000/reservas/v1/usuario/{idUsuario}' \
 --header 'Content-Type: application/json' \
---data ''
+--header 'Authorization: {tokenUsuario}'
 ```
 
 ### *Reservas do Usuário pelo (id_usuario)*
 
 #### Retornar as reservas de um usuário específico
 ```http
-GET /reservas/v1/usuario/perfil/{id}/reservas'
+GET /reservas/v1/usuario/perfil/{idUsuario}/reservas'
 ```
 ##### Exemplo de requisição:
 ```sh
-curl --location 'http://localhost:5000/reservas/v1/usuario/perfil/1/reservas' \
---header 'Content-Type: application/json'
-```
-
-### *Reservas do Usuário pelo (e-mail)*
-
-#### Retornar as reservas de um usuário específico
-```http
-GET /reservas/v1/usuario/email/perfil/reservas'
-```
-##### Exemplo de requisição:
-```sh
-curl --location --request GET 'http://localhost:5000/reservas/v1/usuario/email/perfil/reservas/' \
---header 'Content-Type: application/json' \
---data-raw '{
-    "email" : "joao.silva@docente.senai.br"
-}'
+curl --location 'http://localhost:5000/reservas/v1/usuario/perfil/{idUsuario}/reservas' \
+--header 'Authorization: {tokenUsuario}'
 ```
 
 ## - *Reservas*
@@ -150,14 +121,15 @@ POST /reservas/v1/reserva
 ```
 ##### Exemplo de requisição:
 ```sh
-curl --location --request POST 'http://localhost:5000/reservas/v1/reserva' \
+curl --location 'http://localhost:5000/reservas/v1/reserva' \
 --header 'Content-Type: application/json' \
+--header 'Authorization: {tokenUsuario}' \
 --data '{
-    "fk_id_usuario": "1",
-    "fk_id_sala": "1",
+    "fk_id_usuario": "{idUsuario}",
+    "fk_id_sala": "{idSala}",
     "data": "2025-12-31",
-    "hora_inicio": "07:00:00",
-    "hora_fim": "08:00:00"
+    "hora_inicio": "12:00:00",
+    "hora_fim": "13:00:00"
 }'
 ```
 
@@ -169,23 +141,25 @@ GET /reservas/v1/reservas
 ```
 ##### Exemplo de requisição:
 ```sh
-curl --location 'http://localhost:5000/reservas/v1/reservas'
+curl --location 'http://localhost:5000/reservas/v1/reservas' \
+--header 'Authorization: {tokenUsuario}'
 ```
 
 ---
 #### - putReserva
 #### Atualizar uma reserva específica
 ```http
-PUT /reservas/v1/reserva/{id}
+PUT /reservas/v1/reserva/{idReserva}
 ```
 ##### Exemplo de requisição:
 ```sh
-curl --location --request PUT 'http://localhost:5000/reservas/v1/reserva/1' \
+curl --location --request PUT 'http://localhost:5000/reservas/v1/reserva/`{idReserva}`' \
 --header 'Content-Type: application/json' \
+--header 'Authorization: {tokenUsuario}' \
 --data '{ 
     "data": "2025-12-31", 
-    "hora_inicio": "08:00:00", 
-    "hora_fim": "09:00:00"
+    "hora_inicio": "13:00:00", 
+    "hora_fim": "14:00:00"
 }'
 ```
 
@@ -193,13 +167,13 @@ curl --location --request PUT 'http://localhost:5000/reservas/v1/reserva/1' \
 #### - deleteReserva
 #### Deletar uma reserva específica
 ```http
-DELETE /reservas/v1/reserva/{id}
+DELETE /reservas/v1/reserva/{idReserva}
 ```
 ##### Exemplo de requisição:
 ```sh
-curl --location --request DELETE 'http://localhost:5000/reservas/v1/reserva/1' \
+curl --location --request DELETE 'http://localhost:5000/reservas/v1/reserva/{idReserva}' \
 --header 'Content-Type: application/json' \
---data ''
+--header 'Authorization: {tokenUsuario}'
 ```
 
 ## - *Salas*
@@ -275,8 +249,9 @@ GET /reservas/v1/salasdisponivelhorario
 ```
 ##### Exemplo de requisição:
 ```sh
-curl --location --request GET 'http://localhost:5000/reservas/v1/salasdisponivelhorario' \
+curl --location 'http://localhost:5000/reservas/v1/salasdisponivelhorario' \
 --header 'Content-Type: application/json' \
+--header 'Authorization: {tokenUsuario}' \
 --data '{
     "data": "2025-12-31",
     "hora_inicio": "07:00:00",

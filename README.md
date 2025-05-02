@@ -91,20 +91,14 @@ A Sprint API foi desenvolvida utilizando Node.js e Express, oferecendo endpoints
 
 ## Configuração da Conexão com MySQL
 
-O projeto utiliza o pacote `mysql2` para gerenciar a conexão com o banco de dados MySQL. Para configurar a conexão, atualize o seguinte código armazenado em *(src->db->connect.js)*:
+O projeto utiliza o pacote `mysql2` para gerenciar a conexão com o banco de dados MySQL. Para configurar a conexão, crie o arquivo `.env` e o preencha com essas informações:
 
 ```javascript
-const mysql = require("mysql2");
-
-const pool = mysql.createPool({
-  connectionLimit: 10,
-  host: "{Seu IP}",
-  user: "{Seu usuário SQL}",
-  password: "{Senha do seu usuário SQL}",
-  database: "rs",
-});
-
-module.exports = pool;
+SECRET= "{Segredo usado para criar TokenJWT}"
+DB_HOST= "{Seu IP / localhost}"
+DB_USER= "{Seu usuário SQL}"
+DB_PASSWORD= "{Senha do seu usuário SQL}"
+DB_NAME= "rs"
 ```
 
 ## Estrutura do Banco de Dados
