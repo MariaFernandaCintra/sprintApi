@@ -112,6 +112,7 @@ module.exports = class usuarioController {
   static async updateUsuario(req, res) {
     const { email, senha, nome } = req.body;
     const usuarioId = req.params.id_usuario;
+    const token = req.userId;
 
     // Valida os campos de atualização e o ID do usuário
     const updateValidationError = validateUsuario.validateUpdateUsuario({
@@ -119,6 +120,9 @@ module.exports = class usuarioController {
       senha,
       nome,
     });
+    if (Number(usuarioId) !== Number(token)){
+      return res.status(400).json({message: "Você não pode atualizar outro usuário"});
+    }
     if (updateValidationError) {
       return res.status(400).json(updateValidationError);
     }
@@ -148,11 +152,15 @@ module.exports = class usuarioController {
 
   static async deleteUsuario(req, res) {
     const usuarioId = req.params.id_usuario;
+    const token = req.userId;
     
     // Valida se o ID do usuário foi fornecido
     const idValidationError = validateUsuario.validateUsuarioId(usuarioId);
     if (idValidationError) {
       return res.status(400).json(idValidationError);
+    }
+    if (Number(usuarioId) !== Number(token)){
+      return res.status(400).json({message: "Você não pode deletar outro usuário"});
     }
     const query = `DELETE FROM usuario WHERE id_usuario = ?`;
     try {
@@ -176,11 +184,15 @@ module.exports = class usuarioController {
 
   static async getUsuarioById(req, res) {
     const id_usuario = req.params.id_usuario;
+    const token = req.userId;
     
     // Valida se o ID foi fornecido
     const idValidationError = validateUsuario.validateUsuarioId(id_usuario);
     if (idValidationError) {
       return res.status(400).json(idValidationError);
+    }
+    if (Number(id_usuario) !== Number(token)){
+      return res.status(400).json({message: "Você não pode visualizar as informações de outro usuário"});
     }
     const query = `SELECT * FROM usuario WHERE id_usuario = ?`;
     try {
@@ -206,10 +218,15 @@ module.exports = class usuarioController {
   
   static async getUsuarioReservas(req, res) {
     const id_usuario = req.params.id_usuario;
+    const token = req.userId;
+
     // Valida se o ID foi fornecido
     const idValidationError = validateUsuario.validateUsuarioId(id_usuario);
     if (idValidationError) {
       return res.status(400).json(idValidationError);
+    }
+    if (Number(id_usuario) !== Number(token)){
+      return res.status(400).json({message: "Você não pode visualizar as reservas de outro usuário"});
     }
     const queryReservas = `
       SELECT r.id_reserva, s.nome, r.data, r.hora_inicio, r.hora_fim, r.dia_semana

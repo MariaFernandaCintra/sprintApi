@@ -56,6 +56,7 @@ module.exports = class salaController {
     if (validationError) {
       return res.status(400).json(validationError);
     }
+  
 
     // Obtém todas as salas
     const querySalas = `

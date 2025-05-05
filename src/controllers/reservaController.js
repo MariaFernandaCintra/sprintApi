@@ -1,5 +1,6 @@
 const validateReserva = require("../services/validateReserva");
 const { queryAsync, formatarHorario } = require("../utils/functions");
+const jwt = require("jsonwebtoken");
 
 // Retorna o dia da semana em português, dado uma data no formato "YYYY-MM-DD"
 const getDiaSemana = (data) => {
@@ -20,6 +21,7 @@ const getDiaSemana = (data) => {
 module.exports = class ReservaController {
   static async createReservas(req, res) {
     const { fk_id_usuario, fk_id_sala, data, hora_inicio, hora_fim } = req.body;
+    const token = req.userId;
 
     // Validação inicial dos campos
     const erroValidacao = validateReserva.validarCamposReserva({
@@ -38,6 +40,9 @@ module.exports = class ReservaController {
       const usuarioExiste = await validateReserva.verificarUsuario(fk_id_usuario);
       if (!usuarioExiste) {
         return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+      if (Number(fk_id_usuario) !== Number(token)){
+        return res.status(400).json({message: "Você não pode reservar para outro usuário"});
       }
 
       // Verifica se a sala existe
@@ -106,6 +111,7 @@ module.exports = class ReservaController {
   static async updateReserva(req, res) {
     const { fk_id_usuario, data, hora_inicio, hora_fim } = req.body;
     const reservaId = req.params.id_reserva;
+    const token = req.userId;
 
     // Valida os campos de atualização
     const erroValidacao = validateReserva.validarCamposAtualizacao({
@@ -116,6 +122,9 @@ module.exports = class ReservaController {
     });
     if (erroValidacao) {
       return res.status(400).json(erroValidacao);
+    }
+    if (Number(fk_id_usuario) !== Number(token)){
+      return res.status(400).json({message: "Você não pode atualizar as reservar de outro usuário"});
     }
 
     try {
@@ -167,7 +176,11 @@ module.exports = class ReservaController {
   static async deleteReserva(req, res) {
     const reservaId = req.params.id_reserva;
     const usuarioId = req.params.id_usuario;
+    const token = req.userId;
 
+    if (Number(usuarioId) !== Number(token)){
+      return res.status(400).json({message: "Você não pode deletar as reservar de outro usuário"});
+    }
     const query = `DELETE FROM reserva WHERE id_reserva = ?`;
     try {
       const results = await queryAsync(query, [reservaId]);
