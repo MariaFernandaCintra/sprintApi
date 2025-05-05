@@ -1,5 +1,3 @@
-CREATE DATABASE  IF NOT EXISTS `rs` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
-USE `rs`;
 -- MySQL dump 10.13  Distrib 8.0.36, for Win64 (x86_64)
 --
 -- Host: localhost    Database: rs
@@ -73,7 +71,7 @@ CREATE TABLE `reserva` (
   KEY `idx_reserva_hora_fim` (`hora_fim`),
   CONSTRAINT `reserva_ibfk_1` FOREIGN KEY (`fk_id_sala`) REFERENCES `sala` (`id_sala`),
   CONSTRAINT `reserva_ibfk_2` FOREIGN KEY (`fk_id_usuario`) REFERENCES `usuario` (`id_usuario`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -82,7 +80,7 @@ CREATE TABLE `reserva` (
 
 LOCK TABLES `reserva` WRITE;
 /*!40000 ALTER TABLE `reserva` DISABLE KEYS */;
-INSERT INTO `reserva` VALUES (1,1,1,'Quarta-Feira','2025-12-31','07:00:00','08:00:00'),(2,2,2,'Quarta-Feira','2025-12-31','08:00:00','09:00:00'),(3,3,3,'Quarta-Feira','2025-12-31','09:00:00','10:00:00'),(4,4,4,'Quarta-Feira','2025-12-31','10:00:00','11:00:00'),(5,5,5,'Quarta-Feira','2025-12-31','11:00:00','12:00:00');
+INSERT INTO `reserva` VALUES (1,1,1,'Quarta-Feira','2025-12-31','07:00:00','08:00:00'),(2,2,2,'Quarta-Feira','2025-12-31','08:00:00','09:00:00'),(3,3,3,'Quarta-Feira','2025-12-31','09:00:00','10:00:00'),(4,4,4,'Quarta-Feira','2025-12-31','10:00:00','11:00:00'),(5,5,5,'Quarta-Feira','2025-12-31','11:00:00','12:00:00'),(7,4,1,'Segunda-Feira','2025-05-05','12:00:00','13:00:00'),(8,1,1,'Quarta-Feira','2024-12-31','07:00:00','08:00:00');
 /*!40000 ALTER TABLE `reserva` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -140,17 +138,9 @@ CREATE TABLE `usuario` (
 
 LOCK TABLES `usuario` WRITE;
 /*!40000 ALTER TABLE `usuario` DISABLE KEYS */;
-INSERT INTO `usuario` VALUES (1,'João Silva','joao.silva@docente.senai.br','3456789','joao.6789'),(2,'Maria Oliveira','maria.oliveira@docente.senai.br','7654321','maria.4321'),(3,'Carlos Pereira','carlos.pereira@docente.senai.br','3987456','carlos.7456'),(4,'Ana Souza','ana.souza@docente.senai.br','6123789','ana.3789'),(5,'Pedro Costa','pedro.costa@docente.senai.br','9123456','pedro.3456'),(6,'Laura Lima','laura.lima@docente.senai.br','1654987','laura.4987'),(7,'Lucas Alves','lucas.alves@docente.senai.br','4321987','lucas.1987'),(8,'Fernanda Rocha','fernanda.rocha@docente.senai.br','1852963','fernanda.2963'),(9,'Rafael Martins','rafael.martins@docente.senai.br','9258147','rafael.8147'),(10,'Juliana Nunes','juliana.nunes@docente.senai.br','8147369','juliana.7369'),(11,'Paulo Araujo','paulo.araujo@docente.senai.br','9753486','paulo.3486'),(12,'Beatriz Melo','beatriz.melo@docente.senai.br','6159753','beatriz.9753'),(13,'Renato Dias','renato.dias@docente.senai.br','3486159','renato.6159'),(14,'Camila Ribeiro','camila.ribeiro@docente.senai.br','3852741','camila.2741'),(15,'Thiago Teixeira','thiago.teixeira@docente.senai.br','2741963','thiago.1963'),(16,'Patrícia Fernandes','patricia.fernandes@docente.senai.br','1963852','patricia.3852'),(17,'Rodrigo Gomes','rodrigo.gomes@docente.senai.br','3741852','rodrigo.1852'),(18,'Mariana Batista','mariana.batista@docente.senai.br','7258369','mariana.8369'),(19,'Fábio Freitas','fabio.freitas@docente.senai.br','9147258','fabio.7258'),(20,'Isabela Cardoso','isabela.cardoso@docente.senai.br','8369147','isabela.9147');
+INSERT INTO `usuario` VALUES (1,'João  Silva','joao.silva35@docente.senai.br','3456789','joao.6789'),(2,'Maria Oliveira','maria.oliveira@docente.senai.br','7654321','maria.4321'),(3,'Carlos Pereira','carlos.pereira@docente.senai.br','3987456','carlos.7456'),(4,'Ana Souza','ana.souza@docente.senai.br','6123789','ana.3789'),(5,'Pedro Costa','pedro.costa@docente.senai.br','9123456','pedro.3456'),(6,'Laura Lima','laura.lima@docente.senai.br','1654987','laura.4987'),(7,'Lucas Alves','lucas.alves@docente.senai.br','4321987','lucas.1987'),(8,'Fernanda Rocha','fernanda.rocha@docente.senai.br','1852963','fernanda.2963'),(9,'Rafael Martins','rafael.martins@docente.senai.br','9258147','rafael.8147'),(10,'Juliana Nunes','juliana.nunes@docente.senai.br','8147369','juliana.7369'),(11,'Paulo Araujo','paulo.araujo@docente.senai.br','9753486','paulo.3486'),(12,'Beatriz Melo','beatriz.melo@docente.senai.br','6159753','beatriz.9753'),(13,'Renato Dias','renato.dias@docente.senai.br','3486159','renato.6159'),(14,'Camila Ribeiro','camila.ribeiro@docente.senai.br','3852741','camila.2741'),(15,'Thiago Teixeira','thiago.teixeira@docente.senai.br','2741963','thiago.1963'),(16,'Patrícia Fernandes','patricia.fernandes@docente.senai.br','1963852','patricia.3852'),(17,'Rodrigo Gomes','rodrigo.gomes@docente.senai.br','3741852','rodrigo.1852'),(18,'Mariana Batista','mariana.batista@docente.senai.br','7258369','mariana.8369'),(19,'Fábio Freitas','fabio.freitas@docente.senai.br','9147258','fabio.7258'),(20,'Isabela Cardoso','isabela.cardoso@docente.senai.br','8369147','isabela.9147');
 /*!40000 ALTER TABLE `usuario` ENABLE KEYS */;
 UNLOCK TABLES;
-
---
--- Dumping events for database 'rs'
---
-
---
--- Dumping routines for database 'rs'
---
 
 --
 -- Final view structure for view `cru`
@@ -197,4 +187,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-04-28 15:46:53
+-- Dump completed on 2025-05-05  8:59:47

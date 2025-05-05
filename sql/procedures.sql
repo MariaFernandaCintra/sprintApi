@@ -1,4 +1,4 @@
--- PROCEDURE: listar histórico dereservas de um usuário
+-- PROCEDURE: listar histórico de reservas de um usuário
 DELIMITER //
 CREATE PROCEDURE HistoricoReservaUsuario (
     p_id_usuario int
@@ -6,7 +6,7 @@ CREATE PROCEDURE HistoricoReservaUsuario (
 BEGIN
     SELECT data, hora_inicio, hora_fim, fk_id_sala
     FROM reserva
-    WHERE p_id_usuario = fk_id_usuario;
+    WHERE p_id_usuario = fk_id_usuario AND data < curdate();
 
 END; //
 
