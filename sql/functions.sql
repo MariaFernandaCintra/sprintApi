@@ -1,10 +1,13 @@
 -- Total de reservas em uma determinada sala para um determinado dia
+
 DELIMITER $$
 
-CREATE FUNCTION TotalReservasPorSalaEDia(salaId INT, dataReserva DATE) 
+CREATE FUNCTION TotalReservasPorSalaEDia(salaId INT, dataReserva DATE)
+
 RETURNS INT
-not DETERMINISTIC
+NOT DETERMINISTIC
 READS SQL DATA
+
 BEGIN
     DECLARE total INT;
 

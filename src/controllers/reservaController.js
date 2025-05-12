@@ -67,7 +67,7 @@ module.exports = class ReservaController {
           });
         } else {
           return res.status(400).json({
-            error: "Não há horários disponíveis para uma reserva de 1 Hora neste dia."
+            error: "Não há horários disponíveis para uma reserva de ao menos 30 minutos neste dia."
           });
         }
       }

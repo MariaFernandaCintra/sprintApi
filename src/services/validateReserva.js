@@ -76,30 +76,35 @@ module.exports = {
 
     const inicioHour = inicioTime.getHours();
     const fimHour = fimTime.getHours();
-    if (inicioHour < 7 || inicioHour >= 23 || fimHour < 7 || fimHour >= 23) {
+    if (inicioHour < 7 || inicioHour > 23 || fimHour < 7 || fimHour > 23) {
       return {
         error:
           "A reserva deve ser feita no horário de funcionamento do SENAI. Entre 7:00 e 23:00",
       };
     }
 
-    const duracao = fimTime - inicioTime;
-    const limite = 60 * 60 * 1000;
-
     // Verifica se inicioTime e fimTime são válidos
     if (isNaN(inicioTime.getTime()) || isNaN(fimTime.getTime())) {
       return { error: "Hora de início ou Hora de Fim Inválida" };
     }
 
-    if (duracao !== limite) {
-      return { error: "A reserva deve ter exatamente 1 Hora" };
+    const duracao = fimTime - inicioTime;
+    const limite = 30 * 60 * 1000;
+
+    if (duracao < limite) {
+      return { error: "A reserva deve ter no mínimo 30 minutos" };
     }
 
     return null;
   },
 
   // Valida os campos para atualização da reserva
-  validarCamposAtualizacao: function ({ fk_id_usuario, data, hora_inicio, hora_fim }) {
+  validarCamposAtualizacao: function ({
+    fk_id_usuario,
+    data,
+    hora_inicio,
+    hora_fim,
+  }) {
     if (!fk_id_usuario || !data || !hora_inicio || !hora_fim) {
       return { error: "Todos os campos devem ser preenchidos" };
     }
@@ -119,17 +124,11 @@ module.exports = {
 
     const inicioHour = inicioTime.getHours();
     const fimHour = fimTime.getHours();
-    if (inicioHour < 7 || inicioHour >= 23 || fimHour < 7 || fimHour >= 23) {
+    if (inicioHour < 7 || inicioHour > 23 || fimHour < 7 || fimHour > 23) {
       return {
         error:
           "A reserva deve ser feita no horário de funcionamento do SENAI. Entre 7:00 e 23:00",
       };
-    }
-
-    const duracao = fimTime - inicioTime;
-    const limite = 60 * 60 * 1000;
-    if (duracao !== limite) {
-      return { error: "A reserva deve ter exatamente 50 minutos" };
     }
 
     return null;
@@ -160,6 +159,7 @@ module.exports = {
   },
 
   // Valida conflitos de horário para criação de reserva e, se houver, tenta obter o próximo horário disponível
+  // Valida conflitos de horário para criação de reserva e, se houver, tenta obter o próximo horário disponível
   validarConflitoReserva: async function (
     fk_id_sala,
     data,
@@ -167,9 +167,9 @@ module.exports = {
     hora_fim
   ) {
     const query = `
-      SELECT hora_inicio, hora_fim 
-      FROM reserva 
-      WHERE fk_id_sala = ? AND data = ? 
+      SELECT hora_inicio, hora_fim
+      FROM reserva
+      WHERE fk_id_sala = ? AND data = ?
       ORDER BY hora_inicio ASC
     `;
     const values = [fk_id_sala, data];
@@ -217,10 +217,12 @@ module.exports = {
           return resolve({ conflito: false });
         }
 
-        // Se houver conflito, procura o primeiro intervalo livre de 1 Hora
-        const duracaoMs = 60 * 60 * 1000;
+        // Se houver conflito, procura o primeiro intervalo livre com mínimo de 30 minutos
+        const duracaoMinimaMs = 30 * 60 * 1000;
         let inicioDisponivel = uReservaInicio;
         const fimDoDia = truncarSegundosEms(criarHorario("23:00:00"));
+
+        let proximoInicioDisponivel = fimDoDia; // Inicializa com o fim do dia
 
         for (const reserva of reservas) {
           const reservaInicio = truncarSegundosEms(
@@ -228,23 +230,29 @@ module.exports = {
           );
           const reservaFim = truncarSegundosEms(criarHorario(reserva.hora_fim));
 
-          // Verifica o espaço livre entre as reservas
+          // Verifica se há um espaço livre de pelo menos 30 minutos
           if (
-            inicioDisponivel.getTime() + duracaoMs <=
+            inicioDisponivel.getTime() + duracaoMinimaMs <=
             reservaInicio.getTime()
           ) {
-            break;
+            proximoInicioDisponivel = reservaInicio;
+            break; // Encontrou um intervalo disponível
           } else if (inicioDisponivel < reservaFim) {
             inicioDisponivel = reservaFim;
           }
         }
 
-        // Verifica se o horário disponível é antes do fim do dia
-        if (inicioDisponivel.getTime() + duracaoMs > fimDoDia.getTime()) {
+        // Define o fimDisponivel como o início da próxima reserva ou o fim do dia
+        const fimDisponivel = proximoInicioDisponivel;
+
+        // Verifica se o horário disponível tem pelo menos 30 minutos
+        if (
+          fimDisponivel.getTime() - inicioDisponivel.getTime() <
+          duracaoMinimaMs
+        ) {
           return resolve({ conflito: true, disponivel: false });
         }
 
-        const fimDisponivel = new Date(inicioDisponivel.getTime() + duracaoMs);
         return resolve({
           conflito: true,
           disponivel: true,
@@ -254,6 +262,7 @@ module.exports = {
       });
     });
   },
+
   // Valida conflitos de horário para atualização de reserva (excluindo a própria reserva)
   validarConflitoReservaAtualizacao: async function (
     fk_id_sala,
@@ -300,7 +309,7 @@ module.exports = {
           const proximoInicio = results[0].hora_fim;
           const inicioDisponivel = criarHorario(proximoInicio);
           const fimDisponivel = new Date(
-            inicioDisponivel.getTime() + 60 * 60 * 1000
+            inicioDisponivel.getTime() + 30 * 60 * 1000
           );
           return resolve({
             conflito: true,
