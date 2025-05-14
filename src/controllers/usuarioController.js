@@ -255,4 +255,54 @@ module.exports = class usuarioController {
       return res.status(500).json({ error: "Erro interno do servidor" });
     }
   }
+
+  static async getHistoricoReservas(req, res) {
+    const id_usuario = req.params.id_usuario;
+    const token = req.userId;
+  
+    // Valida ID e token (somente o próprio usuário pode ver seu histórico)
+    const idValidationError = validateUsuario.validateUsuarioId(id_usuario);
+    if (idValidationError) {
+      return res.status(400).json(idValidationError);
+    }
+    if (Number(id_usuario) !== Number(token)) {
+      return res.status(400).json({ message: "Você não pode visualizar o histórico de outro usuário" });
+    }
+  
+    try {
+      const query = `CALL HistoricoReservaUsuario(?)`;
+      const [results] = await queryAsync(query, [id_usuario]);
+  
+      // Atenção: MySQL retorna um array de arrays quando se usa CALL
+      const historico = results;
+  
+      if (historico.length === 0) {
+        return res.status(404).json({ message: "Nenhuma reserva anterior encontrada." });
+      }
+  
+      return res.status(200).json({ historico });
+    } catch (error) {
+      console.error("Erro ao buscar histórico de reservas:", error);
+      return res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  }
+
+  static async getHistoricoDelecao(req, res) {
+    const id_usuario = req.userId;
+  
+    const query = `
+      SELECT * FROM historico_delecao_reserva
+      WHERE fk_id_usuario = ?
+      ORDER BY data DESC
+    `;
+  
+    try {
+      const results = await queryAsync(query, [id_usuario]);
+      res.status(200).json({ historico: results });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Erro ao buscar histórico de deleções" });
+    }
+  }
+  
 };

@@ -159,7 +159,6 @@ module.exports = {
   },
 
   // Valida conflitos de horário para criação de reserva e, se houver, tenta obter o próximo horário disponível
-  // Valida conflitos de horário para criação de reserva e, se houver, tenta obter o próximo horário disponível
   validarConflitoReserva: async function (
     fk_id_sala,
     data,

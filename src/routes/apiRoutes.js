@@ -1,4 +1,5 @@
 const router = require("express").Router(); //importando o módolo express
+//const auth = require('../middlewares/auth');
 
 const reservaController = require("../controllers/reservaController");
 const usuarioController = require("../controllers/usuarioController");
@@ -11,9 +12,12 @@ router.post("/login",  usuarioController.loginUsuario);
 router.get("/usuarios", verifyJWT, usuarioController.getAllUsuarios);
 router.put("/usuario/:id_usuario", verifyJWT, usuarioController.updateUsuario);
 router.delete("/usuario/:id_usuario", verifyJWT, usuarioController.deleteUsuario);
-
 router.get("/usuario/perfil/:id_usuario", verifyJWT, usuarioController.getUsuarioById);
 router.get("/usuario/perfil/:id_usuario/reservas", verifyJWT, usuarioController.getUsuarioReservas);
+router.get("/usuarios/historico/:id_usuario", verifyJWT, usuarioController.getHistoricoReservas);
+router.get("/usuarios/historico/:id_usuario", verifyJWT, usuarioController.getHistoricoDelecao);
+
+
 
 router.post("/reserva", verifyJWT, reservaController.createReservas);
 router.get("/reservas", verifyJWT, reservaController.getAllReservas);

@@ -89,7 +89,7 @@ curl --location 'http://localhost:5000/reservas/v1/reserva' \
 --header 'Content-Type: application/json' \
 --header 'Authorization;' \
 --data '{
-    "fk_id_usuario": "21",
+    "fk_id_usuario": "1",
     "fk_id_sala": "10",
     "data": "2025-12-31",
     "hora_inicio": "07:00:00",
