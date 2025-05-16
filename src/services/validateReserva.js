@@ -262,60 +262,114 @@ module.exports = {
     });
   },
 
-  // Valida conflitos de horário para atualização de reserva (excluindo a própria reserva)
   validarConflitoReservaAtualizacao: async function (
+    id_reserva,
     fk_id_sala,
     data,
     hora_inicio,
-    hora_fim,
-    reservaId
+    hora_fim
   ) {
     const query = `
-      SELECT hora_inicio, hora_fim 
-      FROM reserva 
-      WHERE fk_id_sala = ? AND id_reserva != ? AND data = ?
-      AND (
-          (hora_inicio < ? AND hora_fim > ?) OR
-          (hora_inicio < ? AND hora_fim > ?) OR
-          (hora_inicio >= ? AND hora_inicio < ?) OR
-          (hora_fim > ? AND hora_fim <= ?)
-      )
-    `;
-    const values = [
-      fk_id_sala,
-      reservaId,
-      data,
-      hora_inicio,
-      hora_inicio,
-      hora_inicio,
-      hora_fim,
-      hora_inicio,
-      hora_fim,
-      hora_inicio,
-      hora_fim,
-    ];
+    SELECT hora_inicio, hora_fim
+    FROM reserva
+    WHERE fk_id_sala = ? AND data = ? AND id_reserva != ?
+    ORDER BY hora_inicio ASC
+  `;
+
+    const values = [fk_id_sala, data, id_reserva];
 
     return new Promise((resolve, reject) => {
-      connect.query(query, values, (err, results) => {
+      connect.query(query, values, (err, reservasExistentes) => {
         if (err) return reject(err);
-        if (results.length === 0) {
-          return resolve({ conflito: false });
-        } else {
-          // Ordena as reservas conflitantes para identificar o próximo horário disponível
-          results.sort(
-            (a, b) => criarHorario(a.hora_fim) - criarHorario(b.hora_fim)
-          );
-          const proximoInicio = results[0].hora_fim;
-          const inicioDisponivel = criarHorario(proximoInicio);
-          const fimDisponivel = new Date(
-            inicioDisponivel.getTime() + 30 * 60 * 1000
-          );
-          return resolve({
-            conflito: true,
-            inicioDisponivel,
-            fimDisponivel,
-          });
+
+        const truncarSegundos = (date) => {
+          const novaData = new Date(date);
+          novaData.setSeconds(0, 0);
+          return novaData;
+        };
+
+        const criarHorario = (horaStr) => {
+          const [h, m, s] = horaStr.split(":").map(Number);
+          const date = new Date();
+          date.setHours(h, m, s || 0, 0);
+          return date;
+        };
+
+        const uInicio = truncarSegundos(criarHorario(hora_inicio));
+        const uFim = truncarSegundos(criarHorario(hora_fim));
+
+        const duracaoMinimaMs = 30 * 60 * 1000;
+        const inicioDia = truncarSegundos(criarHorario("07:00:00"));
+        const fimDia = truncarSegundos(criarHorario("23:00:00"));
+
+        for (const reserva of reservasExistentes) {
+          const rInicio = truncarSegundos(criarHorario(reserva.hora_inicio));
+          const rFim = truncarSegundos(criarHorario(reserva.hora_fim));
+
+          if (uInicio < rFim && uFim > rInicio) {
+            // Conflito encontrado
+
+            let maiorInicio = null;
+            let maiorFim = null;
+
+            // Inclui todos os intervalos possíveis
+            const intervalosLivres = [];
+
+            let anteriorFim = inicioDia;
+
+            for (const res of reservasExistentes) {
+              const atualInicio = truncarSegundos(
+                criarHorario(res.hora_inicio)
+              );
+
+              if (
+                anteriorFim.getTime() + duracaoMinimaMs <=
+                atualInicio.getTime()
+              ) {
+                intervalosLivres.push({
+                  inicio: new Date(anteriorFim),
+                  fim: new Date(atualInicio),
+                });
+              }
+
+              anteriorFim = truncarSegundos(criarHorario(res.hora_fim));
+            }
+
+            // Verifica intervalo final do último fim até 23h
+            if (anteriorFim.getTime() + duracaoMinimaMs <= fimDia.getTime()) {
+              intervalosLivres.push({
+                inicio: new Date(anteriorFim),
+                fim: new Date(fimDia),
+              });
+            }
+
+            // Seleciona o maior intervalo livre
+            if (intervalosLivres.length > 0) {
+              const maior = intervalosLivres.reduce((a, b) => {
+                const durA = a.fim.getTime() - a.inicio.getTime();
+                const durB = b.fim.getTime() - b.inicio.getTime();
+                return durA >= durB ? a : b;
+              });
+
+              maiorInicio = maior.inicio;
+              maiorFim = maior.fim;
+            }
+
+            if (maiorInicio && maiorFim) {
+              return resolve({
+                conflito: true,
+                disponivel: true,
+                inicioDisponivel: maiorInicio,
+                fimDisponivel: maiorFim,
+              });
+            }
+
+            return resolve({ conflito: true, disponivel: false });
+          }
         }
+
+        // Sem conflitos
+        return resolve({ conflito: false });
       });
     });
   },

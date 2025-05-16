@@ -27,9 +27,40 @@ const formatarHorario = (dateObj) => {
   return `${horas}:${minutos}:${segundos}`;
 };
 
+function getDiaSemana(data) {
+  const [year, month, day] = data.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  const diasSemana = [
+    "Domingo",
+    "Segunda-Feira",
+    "Terça-Feira",
+    "Quarta-Feira",
+    "Quinta-Feira",
+    "Sexta-Feira",
+    "Sábado",
+  ];
+  return diasSemana[date.getDay()];
+}
+
+function formatarDataParaComparar(dateInput) {
+  const d = new Date(dateInput);
+  const ano = d.getFullYear();
+  const mes = String(d.getMonth() + 1).padStart(2, "0");
+  const dia = String(d.getDate()).padStart(2, "0");
+  return `${ano}-${mes}-${dia}`;
+}
+
+const jwt = require("jsonwebtoken");
+
+const tokenSecret = process.env.SECRET;
+
+function criarToken(payload, tempoExpiracao = "1h") {
+  return jwt.sign(payload, tokenSecret, { expiresIn: tempoExpiracao });
+}
+
 function validarSenha(senha) {
   const regex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[.@$!%*?&])[A-Za-z\d.@$!%*?&]{8,}$/;
   return regex.test(senha);
 }
 
-module.exports = { queryAsync, formatarData, formatarHorario, validarSenha };
+module.exports = { queryAsync, formatarData, formatarHorario, getDiaSemana, formatarDataParaComparar, validarSenha, criarToken };

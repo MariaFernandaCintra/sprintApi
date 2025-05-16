@@ -21,7 +21,7 @@ CALL  HistoricoReservaUsuario(1);
 
 DELIMITER //
 
-CREATE PROCEDURE buscar_salas (
+CREATE PROCEDURE buscarSalasNome (
   IN p_termo VARCHAR(100)
 )
 
@@ -35,4 +35,4 @@ END //
 
 DELIMITER ;
 
-CALL buscar_salas("modelagem");
+CALL buscarSalasNome("modelagem");

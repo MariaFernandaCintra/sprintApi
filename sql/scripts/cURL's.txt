@@ -27,40 +27,21 @@ curl --location 'http://localhost:5000/reservas/v1/login' \
  - GET:
 
 curl --location 'http://localhost:5000/reservas/v1/usuarios' \
---header 'Authorization;'
+--header 'Content-Type: application/json' \
+--header 'Authorization: {tokenUsuario}'
 
 -------------------------------------------------------------------------------------------------
 
  - GET - USUARIOBYID:
-curl --location 'http://localhost:5000/reservas/v1/usuario/perfil/21' \
---header 'Authorization;'
+curl --location 'http://localhost:5000/reservas/v1/usuario/perfil/1' \
+--header 'Authorization: {tokenUsuario}'
 
 -------------------------------------------------------------------------------------------------
 
  - GET - RESERVASBYUSUARIOID:
 
-curl --location 'http://localhost:5000/reservas/v1/usuario/perfil/21/reservas' \
---header 'Authorization;'
--------------------------------------------------------------------------------------------------
-
- - GET - USUARIOBYEMAIL:
-
-curl --location --request GET 'http://localhost:5000/reservas/v1/usuario/perfil/' \
---header 'Content-Type: application/json' \
---header 'Authorization;' \
---data-raw '{
-    "email" : "gustavo.almeida@edu.senai.br"
-}'
--------------------------------------------------------------------------------------------------
-
- - GET - RESERVASBYUSUARIOEMAIL:
-
-curl --location --request GET 'http://localhost:5000/reservas/v1/usuario/email/perfil/reservas/' \
---header 'Content-Type: application/json' \
---header 'Authorization;' \
---data-raw '{
-    "email" : "rodrigo.gomes@example.com"
-}'
+curl --location 'http://localhost:5000/reservas/v1/usuario/perfil/1/reservas' \
+--header 'Authorization: {tokenUsuario}'
 
 -------------------------------------------------------------------------------------------------
 
@@ -68,61 +49,63 @@ curl --location --request GET 'http://localhost:5000/reservas/v1/usuario/email/p
 
 curl --location --request PUT 'http://localhost:5000/reservas/v1/usuario/1' \
 --header 'Content-Type: application/json' \
---header 'Authorization;' \
+--header 'Authorization: {tokenUsuario}' \
 --data-raw '{
     "nome": "Renata Souza",
-    "email":"renata.souzas3@docente.senai.br",
+    "email":"renata.souza@docente.senai.br",
     "senha":"renata.9871"
 }'
 
 -------------------------------------------------------------------------------------------------
 
  - DELETE:
-curl --location --request DELETE 'http://localhost:5000/reservas/v1/usuario/1' \
+curl --location --request DELETE 'http://localhost:5000/reservas/v1/usuario/20' \
 --header 'Content-Type: application/json' \
---header 'Authorization;'
+--header 'Authorization: {tokenUsuario}'
+
 -------------------------------------------------------------------------------------------------
 
  - RESERVA - POST:
 
 curl --location 'http://localhost:5000/reservas/v1/reserva' \
 --header 'Content-Type: application/json' \
---header 'Authorization;' \
+--header 'Authorization: {tokenUsuario}' \
 --data '{
     "fk_id_usuario": "1",
-    "fk_id_sala": "10",
+    "fk_id_sala": "1",
     "data": "2025-12-31",
-    "hora_inicio": "07:00:00",
-    "hora_fim": "08:00:00"
+    "hora_inicio": "12:00:00",
+    "hora_fim": "13:00:00"
 }'
+
 -------------------------------------------------------------------------------------------------
 
  - RESERVA - GET:
 
-curl --location 'http://localhost:5000/reservas/v1/reservas'
+curl --location 'http://localhost:5000/reservas/v1/reservas' \
+--header 'Authorization: {tokenUsuario}'
 
 -------------------------------------------------------------------------------------------------
 
  - RESERVA - PUT:
 
-curl --location --request PUT 'http://localhost:5000/reservas/v1/reserva/9' \
+curl --location --request PUT 'http://localhost:5000/reservas/v1/reserva/1' \
 --header 'Content-Type: application/json' \
---header 'Authorization;' \
---data '{ 
-    "fk_id_usuario":21,
-    "data": "2025-12-20", 
-    "hora_inicio": "08:00:00", 
-    "hora_fim": "09:00:00"
+--header 'Authorization: {tokenUsuario}' \
+--data '{
+    "fk_id_usuario": 1 ,
+    "data": "2025-12-31", 
+    "hora_inicio": "13:00:00", 
+    "hora_fim": "14:00:00"
 }'
-
 
 -------------------------------------------------------------------------------------------------
 
  - RESERVA - DELETE:
 
-curl --location --request DELETE 'http://localhost:5000/reservas/v1/reserva/7/21' \
+curl --location --request DELETE 'http://localhost:5000/reservas/v1/reserva/1' \
 --header 'Content-Type: application/json' \
---header 'Authorization;'
+--header 'Authorization: {tokenUsuario}'
 
 -------------------------------------------------------------------------------------------------
 

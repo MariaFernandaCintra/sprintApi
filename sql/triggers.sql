@@ -1,8 +1,7 @@
--- TRIGGER DE DELEÇÃO DE RESERVAS
+-- TRIGGER: armazenar histórico de deleção de reservas
 
-
--- criação de tabela para armazenar os dados 
-CREATE TABLE historico_delecao_reserva (
+-- Criação de tabela para armazenar os dados 
+CREATE TABLE historicoDelecaoReserva (
   id_historico INT AUTO_INCREMENT PRIMARY KEY,
   nome_sala VARCHAR(100),
   data DATE,
@@ -15,17 +14,19 @@ CREATE TABLE historico_delecao_reserva (
 -- TRIGGER
 DELIMITER //
 
-CREATE TRIGGER salvar_historico_delecao
+CREATE TRIGGER salvarHistoricoDelecao
 AFTER DELETE ON reserva
 FOR EACH ROW
+
 BEGIN
+
   DECLARE nomeSala VARCHAR(100);
 
   -- Busca o nome da sala no momento da exclusão
   SELECT nome INTO nomeSala FROM sala WHERE id_sala = OLD.fk_id_sala;
 
   -- Insere no histórico
-  INSERT INTO historico_delecao_reserva (
+  INSERT INTO historicoDelecaoReserva (
     nome_sala,
     data,
     hora_inicio,
@@ -39,14 +40,12 @@ BEGIN
     OLD.hora_fim,
     NOW()
   );
-END;
-//
+
+END; //
 
 DELIMITER ;
 
 
-
 DELETE FROM reserva WHERE id_reserva = 5;
 
-
-DROP TRIGGER IF EXISTS salvar_historico_delecao;
+DROP TRIGGER IF EXISTS salvarHistoricoDelecao;

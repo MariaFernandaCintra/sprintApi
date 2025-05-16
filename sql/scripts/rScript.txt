@@ -1,39 +1,50 @@
+-- ================================
+--  Criação do BCD e Tabelas
+-- ================================
+
+-- Permite que usuários sem privilégio SUPER criem funções armazenadas mesmo com o log binário ativado
+
+SET GLOBAL log_bin_trust_function_creators = 1;
 
 CREATE DATABASE rs; 
 USE rs;
 
 CREATE TABLE usuario(
-     id_usuario int primary key auto_increment,
-     nome varchar(255) not null, 
-     email varchar(255) unique not null,
-     NIF char(7) unique not null,
-     senha varchar(255) not null
- );
+     id_usuario INT PRIMARY KEY AUTO_INCREMENT,
+     nome VARCHAR(255) NOT NULL, 
+     email VARCHAR(255) UNIQUE NOT NULL,
+     NIF CHAR(7) UNIQUE NOT NULL,
+     senha VARCHAR(255) NOT NULL
+);
 
 CREATE TABLE sala(
-     id_sala int primary key auto_increment,
-     nome varchar(255) unique not null,
-     descricao varchar(255) not null, 
-     bloco varchar(1) not null, 
-     tipo varchar(255) not null,
-     capacidade int not null
- );
+     id_sala INT PRIMARY KEY AUTO_INCREMENT,
+     nome VARCHAR(255) UNIQUE NOT NULL,
+     descricao VARCHAR(255) NOT NULL, 
+     bloco VARCHAR(1) NOT NULL, 
+     tipo VARCHAR(255) NOT NULL,
+     capacidade INT NOT NULL
+);
 
 CREATE TABLE reserva(
-     id_reserva int primary key auto_increment,
-     fk_id_sala int not null,
-     fk_id_usuario int not null,
-     dia_semana varchar(20) not null,
-     data date not null,
-     hora_inicio time not null,
-     hora_fim time not null,
-     foreign key (fk_id_sala) references sala(id_sala),
-     foreign key (fk_id_usuario) references usuario(id_usuario)
- );
+     id_reserva INT PRIMARY KEY AUTO_INCREMENT,
+     fk_id_sala INT NOT NULL,
+     fk_id_usuario INT NOT NULL,
+     dia_semana VARCHAR(20) NOT NULL,
+     data DATE NOT NULL,
+     hora_inicio TIME NOT NULL,
+     hora_fim TIME NOT NULL,
+     FOREIGN KEY (fk_id_sala) REFERENCES sala(id_sala),
+     FOREIGN KEY (fk_id_usuario) REFERENCES usuario(id_usuario)
+);
 
 CREATE INDEX idx_reserva_dia_semana ON reserva(dia_semana);
 CREATE INDEX idx_reserva_hora_inicio ON reserva(hora_inicio);
 CREATE INDEX idx_reserva_hora_fim ON reserva(hora_fim);
+
+-- ================================
+--  Inserção dos Dados
+-- ================================
 
 INSERT INTO usuario (nome, email, senha, NIF) VALUES
 ('João Silva', 'joao.silva@docente.senai.br', 'joao.6789', '3456789'),
@@ -98,13 +109,19 @@ INSERT INTO sala (nome, descricao, bloco, tipo, capacidade) VALUES
 
 INSERT INTO reserva (data, hora_inicio, hora_fim, dia_semana, fk_id_usuario, fk_id_sala) VALUES
 ('2025-12-31', '07:00:00', '08:00:00', 'Quarta-Feira', 1, 1),
-('2025-12-31', '08:00:00', '09:00:00', 'Quarta-Feira', 2, 2),
-('2025-12-31', '09:00:00', '10:00:00', 'Quarta-Feira', 3, 3),
-('2025-12-31', '10:00:00', '11:00:00', 'Quarta-Feira', 4, 4),
-('2025-12-31', '11:00:00', '12:00:00', 'Quarta-Feira', 5, 5);
+('2025-12-31', '08:00:00', '09:00:00', 'Quarta-Feira', 1, 1),
+('2025-12-31', '09:00:00', '10:00:00', 'Quarta-Feira', 1, 1),
+('2025-12-31', '10:00:00', '11:00:00', 'Quarta-Feira', 1, 1),
+('2025-12-31', '11:00:00', '12:00:00', 'Quarta-Feira', 1, 1);
 
+-- ================================
+--  Views
+-- ================================
 
-CREATE VIEW cru AS SELECT -- contagem_reservas_usuarios
+-- VIEW: conta quantas reservas cada usuário tem
+
+CREATE VIEW cru AS
+SELECT 
     u.id_usuario, 
     u.nome, 
     COUNT(r.id_reserva) AS total_reservas
@@ -115,8 +132,10 @@ LEFT JOIN
 GROUP BY 
     u.id_usuario, u.nome;
 
+-- VIEW: lista as reservas de forma mais detalhada
 
-CREATE VIEW rd AS SELECT -- reservas_detalhes
+CREATE VIEW rd AS 
+SELECT 
     r.id_reserva,
     r.data,
     r.dia_semana,
@@ -131,3 +150,115 @@ JOIN
     sala s ON r.fk_id_sala = s.id_sala
 JOIN 
     usuario u ON r.fk_id_usuario = u.id_usuario;
+
+-- ================================
+--  Functions
+-- ================================
+
+-- FUNCTION: total de reservas em uma determinada sala para um determinado dia
+
+DELIMITER //
+
+CREATE FUNCTION TotalReservasPorSalaEDia(salaId INT, dataReserva DATE)
+RETURNS INT
+NOT DETERMINISTIC
+READS SQL DATA
+BEGIN
+    DECLARE total INT;
+
+    SELECT COUNT(*) INTO total
+    FROM reserva
+    WHERE fk_id_sala = salaId AND data = dataReserva;
+
+    RETURN total;
+END; //
+
+DELIMITER ;
+
+-- ================================
+--  Procedures
+-- ================================
+
+-- PROCEDURE: listar histórico de reservas de um usuário
+
+DELIMITER //
+
+CREATE PROCEDURE HistoricoReservaUsuario (p_id_usuario INT)
+BEGIN
+    SELECT data, hora_inicio, hora_fim, fk_id_sala
+    FROM reserva
+    WHERE p_id_usuario = fk_id_usuario AND data < CURDATE();
+END; //
+
+CREATE PROCEDURE buscarSalasNome (IN p_termo VARCHAR(100))
+BEGIN
+    SELECT *
+    FROM sala
+    WHERE nome LIKE CONCAT('%', p_termo, '%')
+       OR descricao LIKE CONCAT('%', p_termo, '%');
+END; //
+
+DELIMITER ;
+
+-- PROCEDURE: filtro de salas pelo nome ou descrição
+
+DELIMITER //
+
+CREATE PROCEDURE buscarSalasNome (
+  IN p_termo VARCHAR(100)
+)
+
+BEGIN
+  SELECT *
+  FROM sala
+  WHERE nome LIKE CONCAT('%', p_termo, '%')
+     OR descricao LIKE CONCAT('%', p_termo, '%');
+
+END //
+
+DELIMITER ;
+
+-- ================================
+--  Triggers e Tabela de histórico
+-- ================================
+
+-- Criação de tabela para armazenar os dados
+
+CREATE TABLE historicoDelecaoReserva (
+  id_historico INT AUTO_INCREMENT PRIMARY KEY,
+  nome_sala VARCHAR(100),
+  data DATE,
+  hora_inicio TIME,
+  hora_fim TIME,
+  data_delecao DATETIME
+);
+
+-- TRIGGER: armazenar histórico de deleção de reservas
+
+DELIMITER //
+
+CREATE TRIGGER salvarHistoricoDelecao
+AFTER DELETE ON reserva
+FOR EACH ROW
+BEGIN
+  DECLARE nomeSala VARCHAR(100);
+
+  SELECT nome INTO nomeSala FROM sala WHERE id_sala = OLD.fk_id_sala;
+
+  INSERT INTO historicoDelecaoReserva (
+    nome_sala,
+    data,
+    hora_inicio,
+    hora_fim,
+    data_delecao
+  )
+  VALUES (
+    nomeSala,
+    OLD.data,
+    OLD.hora_inicio,
+    OLD.hora_fim,
+    NOW()
+  );
+END; //
+
+DELIMITER ;

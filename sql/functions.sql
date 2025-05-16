@@ -1,4 +1,4 @@
--- Total de reservas em uma determinada sala para um determinado dia
+-- FUNCTIONS: total de reservas em uma determinada sala para um determinado dia
 
 DELIMITER $$
 
