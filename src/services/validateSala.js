@@ -35,7 +35,7 @@ module.exports = {
     return null;
   },
 
-  // Valida os campos de data/hora para checagem do horário de reserva
+ // Valida os campos de data/hora para checagem do horário de reserva
   validateHorario: function ({ data, hora_inicio, hora_fim }) {
     if (!data || !hora_inicio || !hora_fim) {
       return { error: "Todos os campos devem ser preenchidos" };
@@ -52,20 +52,14 @@ module.exports = {
     const inicioHour = inicioDate.getHours();
     const fimHour = fimDate.getHours();
 
-    if (inicioHour < 7 || inicioHour >= 23 || fimHour < 7 || fimHour >= 23) {
+    if (inicioHour < 7 || inicioHour > 23 || fimHour < 7 || fimHour > 23) {
       return {
         error:
           "Para checar a reserva, ela deve ser feita no horário de funcionamento do SENAI. Entre 7:00 e 23:00",
       };
     }
 
-    const duration = fimDate - inicioDate;
-    const limit = 60 * 60 * 1000; // 60 minutos em milissegundos
-    if (duration !== limit) {
-      return { error: "Para checar a reserva, ela deve ter exatamente 1 hora" };
-    }
-
-    return null;
+    return null; // Remove a validação da duração fixa de 1 hora
   },
 
   // Verifica se há conflito de horário para uma sala, data e horários informados
@@ -84,10 +78,10 @@ module.exports = {
     const values = [
       id_sala,
       data,
-      hora_inicio, hora_inicio,
-      hora_inicio, hora_fim,
-      hora_inicio, hora_fim,
-      hora_inicio, hora_fim,
+      hora_inicio, hora_inicio, // Verifica se o início da nova reserva está dentro de alguma existente
+      hora_inicio, hora_fim,   // Verifica se a nova reserva engloba alguma existente
+      hora_inicio, hora_fim,   // Verifica se algum horário existente começa dentro da nova reserva
+      hora_inicio, hora_fim,   // Verifica se algum horário existente termina dentro da nova reserva
     ];
 
     return new Promise((resolve, reject) => {

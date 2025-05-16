@@ -34,9 +34,6 @@ const criarDataHora = (data, hora) => {
   return dataHora;
 };
 
-// Função auxiliar para criar um objeto Date com base somente no horário (fixando a data em 1970-01-01)
-const criarHorario = (hora) => new Date(`1970-01-01T${hora}`);
-
 module.exports = {
   // Valida os campos obrigatórios e regras de negócio para criação de reserva
   validarCamposReserva: function ({
@@ -76,6 +73,7 @@ module.exports = {
 
     const inicioHour = inicioTime.getHours();
     const fimHour = fimTime.getHours();
+    
     if (inicioHour < 7 || inicioHour > 23 || fimHour < 7 || fimHour > 23) {
       return {
         error:

@@ -48,53 +48,53 @@ module.exports = class salaController {
     }
   }
 
-  static async getSalasDisponiveisHorario(req, res) {
-    const { data, hora_inicio, hora_fim } = req.body;
+ static async getSalasDisponiveisHorario(req, res) {
+  const { data, hora_inicio, hora_fim } = req.body;
 
-    // Valida os dados de data/hora informados
-    const validationError = validateSala.validateHorario({ data, hora_inicio, hora_fim });
-    if (validationError) {
-      return res.status(400).json(validationError);
-    }
-  
-
-    // Obtém todas as salas
-    const querySalas = `
-      SELECT s.id_sala, s.nome, s.descricao, s.bloco, s.tipo, s.capacidade
-      FROM sala s
-    `;
-
-    try {
-      const todasSalas = await queryAsync(querySalas);
-      const salasDisponiveisFinal = [];
-
-      // Para cada sala, verifica se há conflito de horários
-      for (const sala of todasSalas) {
-        const conflito = await validateSala.verificarConflitoHorarioSala(
-          sala.id_sala,
-          data,
-          hora_inicio,
-          hora_fim
-        );
-        if (!conflito) {
-          salasDisponiveisFinal.push(sala);
-        }
-      }
-
-      if (salasDisponiveisFinal.length === 0) {
-        return res.status(404).json({
-          error: "Não há salas disponíveis para o horário solicitado",
-        });
-      }
-      return res.status(200).json({
-        message: "Salas Disponiveis",
-        salas: salasDisponiveisFinal,
-      });
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: "Erro ao obter as salas disponíveis" });
-    }
+  // Valida os dados de data/hora informados
+  const validationError = validateSala.validateHorario({ data, hora_inicio, hora_fim });
+  if (validationError) {
+    return res.status(400).json(validationError);
   }
+
+
+  // Obtém todas as salas
+  const querySalas = `
+    SELECT s.id_sala, s.nome, s.descricao, s.bloco, s.tipo, s.capacidade
+    FROM sala s
+  `;
+
+  try {
+    const todasSalas = await queryAsync(querySalas);
+    const salasDisponiveisFinal = [];
+
+    // Para cada sala, verifica se há conflito de horários
+    for (const sala of todasSalas) {
+      const conflito = await validateSala.verificarConflitoHorarioSala(
+        sala.id_sala,
+        data,
+        hora_inicio,
+        hora_fim
+      );
+      if (!conflito) {
+        salasDisponiveisFinal.push(sala);
+      }
+    }
+
+    if (salasDisponiveisFinal.length === 0) {
+      return res.status(404).json({
+        error: "Não há salas disponíveis para o horário solicitado",
+      });
+    }
+    return res.status(200).json({
+      message: "Salas Disponiveis",
+      salas: salasDisponiveisFinal,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Erro ao obter as salas disponíveis" });
+  }
+ }
 
   static async updateSala(req, res) {
     const { nome, descricao, bloco, tipo, capacidade } = req.body;
