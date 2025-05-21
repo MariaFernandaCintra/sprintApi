@@ -6,8 +6,8 @@
 
 SET GLOBAL log_bin_trust_function_creators = 1;
 
--- CREATE DATABASE rs; 
--- USE rs;
+CREATE DATABASE rs; 
+USE rs;
 
 CREATE TABLE usuario(
      id_usuario INT PRIMARY KEY AUTO_INCREMENT,
