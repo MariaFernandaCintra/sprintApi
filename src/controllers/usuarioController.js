@@ -306,7 +306,7 @@ module.exports = class usuarioController {
     const id_usuario = req.userId;
 
     const query = `
-      SELECT * FROM historico_delecao_reserva
+      SELECT * FROM logreserva
       WHERE fk_id_usuario = ?
       ORDER BY data DESC
     `;

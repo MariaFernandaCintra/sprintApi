@@ -21,3 +21,5 @@ Expose 5000
 
 ## Executa o comando para iniciar o script que está no package.json
 CMD npm start
+
+

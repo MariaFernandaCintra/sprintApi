@@ -6,8 +6,8 @@
 
 SET GLOBAL log_bin_trust_function_creators = 1;
 
--- CREATE DATABASE rs; 
--- USE rs;
+CREATE DATABASE rs; 
+USE rs;
 
 CREATE TABLE usuario(
      id_usuario INT PRIMARY KEY AUTO_INCREMENT,
@@ -224,7 +224,7 @@ DELIMITER ;
 
 -- Criação de tabela para armazenar os dados
 
-CREATE TABLE historicoDelecaoReserva (
+CREATE TABLE logreserva (
   id_historico INT AUTO_INCREMENT PRIMARY KEY,
   nome_sala VARCHAR(100),
   data DATE,
@@ -245,7 +245,7 @@ BEGIN
 
   SELECT nome INTO nomeSala FROM sala WHERE id_sala = OLD.fk_id_sala;
 
-  INSERT INTO historicoDelecaoReserva (
+  INSERT INTO logreserva (
     nome_sala,
     data,
     hora_inicio,
