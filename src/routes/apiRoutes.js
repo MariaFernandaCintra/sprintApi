@@ -13,8 +13,8 @@ router.put("/usuario/:id_usuario", verifyJWT, usuarioController.updateUsuario);
 router.delete("/usuario/:id_usuario", verifyJWT, usuarioController.deleteUsuario);
 router.get("/usuario/perfil/:id_usuario", verifyJWT, usuarioController.getUsuarioById);
 router.get("/usuario/perfil/:id_usuario/reservas", verifyJWT, usuarioController.getUsuarioReservas);
-router.get("/usuarios/historico/:id_usuario", verifyJWT, usuarioController.getHistoricoReservas);
-router.get("/usuarios/historico/delecao/:id_usuario", verifyJWT, usuarioController.getHistoricoDelecao);
+router.get("/usuario/historico/:id_usuario", verifyJWT, usuarioController.getHistoricoReservas);
+router.get("/usuario/historico/delecao/:id_usuario", verifyJWT, usuarioController.getHistoricoDelecao);
 
 router.post("/reserva", verifyJWT, reservaController.createReservas);
 router.get("/reservas", verifyJWT, reservaController.getAllReservas);
