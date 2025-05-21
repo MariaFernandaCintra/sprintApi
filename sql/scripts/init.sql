@@ -6,8 +6,8 @@
 
 SET GLOBAL log_bin_trust_function_creators = 1;
 
-CREATE DATABASE rs; 
-USE rs;
+-- CREATE DATABASE rs; 
+-- USE rs;
 
 CREATE TABLE usuario(
      id_usuario INT PRIMARY KEY AUTO_INCREMENT,
@@ -112,7 +112,12 @@ INSERT INTO reserva (data, hora_inicio, hora_fim, dia_semana, fk_id_usuario, fk_
 ('2025-12-31', '08:00:00', '09:00:00', 'Quarta-Feira', 1, 1),
 ('2025-12-31', '09:00:00', '10:00:00', 'Quarta-Feira', 1, 1),
 ('2025-12-31', '10:00:00', '11:00:00', 'Quarta-Feira', 1, 1),
-('2025-12-31', '11:00:00', '12:00:00', 'Quarta-Feira', 1, 1);
+('2025-12-31', '11:00:00', '12:00:00', 'Quarta-Feira', 1, 1),
+('2025-01-01', '07:00:00', '08:00:00', 'Quarta-Feira', 1, 1),
+('2025-01-01', '08:00:00', '09:00:00', 'Quarta-Feira', 1, 1),
+('2025-01-01', '09:00:00', '10:00:00', 'Quarta-Feira', 1, 1),
+('2025-01-01', '10:00:00', '11:00:00', 'Quarta-Feira', 1, 1),
+('2025-01-01', '11:00:00', '12:00:00', 'Quarta-Feira', 1, 1);
 
 -- ================================
 --  Views
