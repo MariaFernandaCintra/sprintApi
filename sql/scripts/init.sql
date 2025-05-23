@@ -1,41 +1,41 @@
 -- ================================
---  Criação do BCD e Tabelas
+--    Criação do BCD e Tabelas
 -- ================================
 
 -- Permite que usuários sem privilégio SUPER criem funções armazenadas mesmo com o log binário ativado
 
 SET GLOBAL log_bin_trust_function_creators = 1;
 
-CREATE DATABASE rs; 
+CREATE DATABASE IF NOT EXISTS rs;
 USE rs;
 
-CREATE TABLE usuario(
-     id_usuario INT PRIMARY KEY AUTO_INCREMENT,
-     nome VARCHAR(255) NOT NULL, 
-     email VARCHAR(255) UNIQUE NOT NULL,
-     NIF CHAR(7) UNIQUE NOT NULL,
-     senha VARCHAR(255) NOT NULL
+CREATE TABLE IF NOT EXISTS usuario(
+    id_usuario INT PRIMARY KEY AUTO_INCREMENT,
+    nome VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    NIF CHAR(7) UNIQUE NOT NULL,
+    senha VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE sala(
-     id_sala INT PRIMARY KEY AUTO_INCREMENT,
-     nome VARCHAR(255) UNIQUE NOT NULL,
-     descricao VARCHAR(255) NOT NULL, 
-     bloco VARCHAR(1) NOT NULL, 
-     tipo VARCHAR(255) NOT NULL,
-     capacidade INT NOT NULL
+CREATE TABLE IF NOT EXISTS sala(
+    id_sala INT PRIMARY KEY AUTO_INCREMENT,
+    nome VARCHAR(255) UNIQUE NOT NULL,
+    descricao VARCHAR(255) NOT NULL,
+    bloco VARCHAR(1) NOT NULL,
+    tipo VARCHAR(255) NOT NULL,
+    capacidade INT NOT NULL
 );
 
-CREATE TABLE reserva(
-     id_reserva INT PRIMARY KEY AUTO_INCREMENT,
-     fk_id_sala INT NOT NULL,
-     fk_id_usuario INT NOT NULL,
-     dia_semana VARCHAR(20) NOT NULL,
-     data DATE NOT NULL,
-     hora_inicio TIME NOT NULL,
-     hora_fim TIME NOT NULL,
-     FOREIGN KEY (fk_id_sala) REFERENCES sala(id_sala),
-     FOREIGN KEY (fk_id_usuario) REFERENCES usuario(id_usuario)
+CREATE TABLE IF NOT EXISTS reserva(
+    id_reserva INT PRIMARY KEY AUTO_INCREMENT,
+    fk_id_sala INT NOT NULL,
+    fk_id_usuario INT NOT NULL,
+    dia_semana VARCHAR(20) NOT NULL,
+    data DATE NOT NULL,
+    hora_inicio TIME NOT NULL,
+    hora_fim TIME NOT NULL,
+    FOREIGN KEY (fk_id_sala) REFERENCES sala(id_sala),
+    FOREIGN KEY (fk_id_usuario) REFERENCES usuario(id_usuario)
 );
 
 CREATE INDEX idx_reserva_dia_semana ON reserva(dia_semana);
@@ -43,10 +43,10 @@ CREATE INDEX idx_reserva_hora_inicio ON reserva(hora_inicio);
 CREATE INDEX idx_reserva_hora_fim ON reserva(hora_fim);
 
 -- ================================
---  Inserção dos Dados
+--    Inserção dos Dados
 -- ================================
 
-INSERT INTO usuario (nome, email, senha, NIF) VALUES
+INSERT IGNORE INTO usuario (nome, email, senha, NIF) VALUES
 ('João Silva', 'joao.silva@docente.senai.br', 'joao.6789', '3456789'),
 ('Maria Oliveira', 'maria.oliveira@docente.senai.br', 'maria.4321', '7654321'),
 ('Carlos Pereira', 'carlos.pereira@docente.senai.br', 'carlos.7456', '3987456'),
@@ -68,7 +68,7 @@ INSERT INTO usuario (nome, email, senha, NIF) VALUES
 ('Fábio Freitas', 'fabio.freitas@docente.senai.br', 'fabio.7258', '9147258'),
 ('Isabela Cardoso', 'isabela.cardoso@docente.senai.br', 'isabela.9147', '8369147');
 
-INSERT INTO sala (nome, descricao, bloco, tipo, capacidade) VALUES
+INSERT IGNORE INTO sala (nome, descricao, bloco, tipo, capacidade) VALUES
 ('AMA - Automotiva', 'Alta Mogiana Automotiva', 'A', 'Oficina', 16),
 ('AMS - Desenvolvimento', 'Alta Mogiana Desenvolvimento de Sistema', 'A', 'Sala', 16),
 ('AME - Eletroeletrônica', 'Alta Mogiana Eletroeletrônica', 'A', 'Laboratório', 16),
@@ -107,7 +107,7 @@ INSERT INTO sala (nome, descricao, bloco, tipo, capacidade) VALUES
 ('OFI - MARCENARIA', 'Ferramentas de Marcenaria', 'O', 'Oficina', 16),
 ('OFI - LIXAMENTO', 'Lixadeiras e Polidoras', 'O', 'Oficina', 16);
 
-INSERT INTO reserva (data, hora_inicio, hora_fim, dia_semana, fk_id_usuario, fk_id_sala) VALUES
+INSERT IGNORE INTO reserva (data, hora_inicio, hora_fim, dia_semana, fk_id_usuario, fk_id_sala) VALUES
 ('2025-12-31', '07:00:00', '08:00:00', 'Quarta-Feira', 1, 1),
 ('2025-12-31', '08:00:00', '09:00:00', 'Quarta-Feira', 1, 1),
 ('2025-12-31', '09:00:00', '10:00:00', 'Quarta-Feira', 1, 1),
@@ -120,44 +120,44 @@ INSERT INTO reserva (data, hora_inicio, hora_fim, dia_semana, fk_id_usuario, fk_
 ('2025-01-01', '11:00:00', '12:00:00', 'Quarta-Feira', 1, 1);
 
 -- ================================
---  Views
+--    Views
 -- ================================
 
 -- VIEW: conta quantas reservas cada usuário tem
 
-CREATE VIEW cru AS
-SELECT 
-    u.id_usuario, 
-    u.nome, 
+CREATE OR REPLACE VIEW cru AS
+SELECT
+    u.id_usuario,
+    u.nome,
     COUNT(r.id_reserva) AS total_reservas
-FROM 
+FROM
     usuario u
-LEFT JOIN 
+LEFT JOIN
     reserva r ON u.id_usuario = r.fk_id_usuario
-GROUP BY 
+GROUP BY
     u.id_usuario, u.nome;
 
 -- VIEW: lista as reservas de forma mais detalhada
 
-CREATE VIEW rd AS 
-SELECT 
+CREATE OR REPLACE VIEW rd AS
+SELECT
     r.id_reserva,
     r.data,
     r.dia_semana,
-    r.hora_inicio, 
+    r.hora_inicio,
     r.hora_fim,
-    s.id_sala AS sala_id_sala, 
-    s.nome AS sala_nome, 
+    s.id_sala AS sala_id_sala,
+    s.nome AS sala_nome,
     u.nome AS usuario_nome
-FROM 
+FROM
     reserva r
-JOIN 
+JOIN
     sala s ON r.fk_id_sala = s.id_sala
-JOIN 
+JOIN
     usuario u ON r.fk_id_usuario = u.id_usuario;
 
 -- ================================
---  Functions
+--    Functions
 -- ================================
 
 -- FUNCTION: total de reservas em uma determinada sala para um determinado dia
@@ -165,9 +165,11 @@ JOIN
 DELIMITER //
 
 CREATE FUNCTION TotalReservasPorSalaEDia(salaId INT, dataReserva DATE)
+
 RETURNS INT
 NOT DETERMINISTIC
 READS SQL DATA
+
 BEGIN
     DECLARE total INT;
 
@@ -181,7 +183,7 @@ END; //
 DELIMITER ;
 
 -- ================================
---  Procedures
+--    Procedures
 -- ================================
 
 -- PROCEDURE: listar histórico de reservas de um usuário
@@ -189,84 +191,129 @@ DELIMITER ;
 DELIMITER //
 
 CREATE PROCEDURE HistoricoReservaUsuario (p_id_usuario INT)
+
 BEGIN
     SELECT data, hora_inicio, hora_fim, fk_id_sala
     FROM reserva
     WHERE p_id_usuario = fk_id_usuario AND data < CURDATE();
 END; //
 
+-- PROCEDURE: filtro de salas pelo nome ou descrição
+
 CREATE PROCEDURE buscarSalasNome (IN p_termo VARCHAR(100))
+
 BEGIN
     SELECT *
     FROM sala
     WHERE nome LIKE CONCAT('%', p_termo, '%')
-       OR descricao LIKE CONCAT('%', p_termo, '%');
+        OR descricao LIKE CONCAT('%', p_termo, '%');
 END; //
 
 DELIMITER ;
 
--- PROCEDURE: filtro de salas pelo nome ou descrição
+-- ===================================
+--    Triggers e Tabela de Histórico
+-- ===================================
 
-DELIMITER //
+-- Criação da tabela para armazenar os logs de criação e deleção
 
-CREATE PROCEDURE buscarSalasNome (
-  IN p_termo VARCHAR(100)
-)
-
-BEGIN
-  SELECT *
-  FROM sala
-  WHERE nome LIKE CONCAT('%', p_termo, '%')
-     OR descricao LIKE CONCAT('%', p_termo, '%');
-
-END //
-
-DELIMITER ;
-
--- ================================
---  Triggers e Tabela de histórico
--- ================================
-
--- Criação de tabela para armazenar os dados
-
-CREATE TABLE logreserva (
-  id_historico INT AUTO_INCREMENT PRIMARY KEY,
-  nome_sala VARCHAR(100),
-  data DATE,
-  hora_inicio TIME,
-  hora_fim TIME,
-  data_delecao DATETIME
+CREATE TABLE IF NOT EXISTS logreservas (
+    id_log INT AUTO_INCREMENT PRIMARY KEY,
+    id_reserva INT NOT NULL,
+    fk_id_sala INT NOT NULL,
+    fk_id_usuario INT NOT NULL,
+    data_reserva DATE NOT NULL,
+    hora_inicio_reserva TIME NOT NULL,
+    hora_fim_reserva TIME NOT NULL,
+    tipo_operacao TINYINT NOT NULL,
+    data_hora_log DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- TRIGGER: armazenar histórico de deleção de reservas
+-- TRIGGER: Armazenar histórico de criação de reservas (tipo = 1)
 
 DELIMITER //
 
-CREATE TRIGGER salvarHistoricoDelecao
-AFTER DELETE ON reserva
+CREATE TRIGGER logreservacriacao
+
+AFTER INSERT ON reserva
 FOR EACH ROW
+
 BEGIN
-  DECLARE nomeSala VARCHAR(100);
-
-  SELECT nome INTO nomeSala FROM sala WHERE id_sala = OLD.fk_id_sala;
-
-  INSERT INTO logreserva (
-    nome_sala,
-    data,
-    hora_inicio,
-    hora_fim,
-    data_delecao,
-    fk_id_usuario
-  )
-  VALUES (
-    nomeSala,
-    OLD.data,
-    OLD.hora_inicio,
-    OLD.hora_fim,
-    NOW(),
-    OLD.fk_id_usuario
-  );
+    INSERT INTO logreservas (
+        id_reserva,
+        fk_id_sala,
+        fk_id_usuario,
+        data_reserva,
+        hora_inicio_reserva,
+        hora_fim_reserva,
+        tipo_operacao
+    )
+    VALUES (
+        NEW.id_reserva,
+        NEW.fk_id_sala,
+        NEW.fk_id_usuario,
+        NEW.data,
+        NEW.hora_inicio,
+        NEW.hora_fim,
+        1
+    );
 END; //
 
 DELIMITER ;
 
+-- TRIGGER: Armazenar histórico de deleção de reservas (tipo = 0)
+
+DELIMITER //
+
+CREATE TRIGGER logreservadelecao
+
+AFTER DELETE ON reserva
+FOR EACH ROW
+
+BEGIN
+    INSERT INTO logreservas (
+        id_reserva,
+        fk_id_sala,
+        fk_id_usuario,
+        data_reserva,
+        hora_inicio_reserva,
+        hora_fim_reserva,
+        tipo_operacao
+    )
+    VALUES (
+        OLD.id_reserva,
+        OLD.fk_id_sala,
+        OLD.fk_id_usuario,
+        OLD.data,
+        OLD.hora_inicio,
+        OLD.hora_fim,
+        0
+    );
+END; //
+
+DELIMITER ;
+
+-- ===================================
+--    Retro­população de logreservas
+-- ===================================
+
+INSERT INTO logreservas (
+    id_reserva,
+    fk_id_sala,
+    fk_id_usuario,
+    data_reserva,
+    hora_inicio_reserva,
+    hora_fim_reserva,
+    tipo_operacao,
+    data_hora_log
+)
+SELECT
+    id_reserva,
+    fk_id_sala,
+    fk_id_usuario,
+    data        AS data_reserva,
+    hora_inicio AS hora_inicio_reserva,
+    hora_fim    AS hora_fim_reserva,
+    1           AS tipo_operacao,
+    NOW()       AS data_hora_log
+FROM reserva;

@@ -74,7 +74,6 @@ module.exports = class usuarioController {
       const usuario = results[0];
 
       if (usuario.senha === senha) {
-        
         // Gera o token
         const token = criarToken({
           id: usuario.id_usuario,
@@ -193,11 +192,9 @@ module.exports = class usuarioController {
       return res.status(400).json(idValidationError);
     }
     if (Number(id_usuario) !== Number(token)) {
-      return res
-        .status(400)
-        .json({
-          message: "Você não pode visualizar as informações de outro usuário",
-        });
+      return res.status(400).json({
+        message: "Você não pode visualizar as informações de outro usuário",
+      });
     }
     const query = `SELECT * FROM usuario WHERE id_usuario = ?`;
     try {
@@ -231,11 +228,9 @@ module.exports = class usuarioController {
       return res.status(400).json(idValidationError);
     }
     if (Number(id_usuario) !== Number(token)) {
-      return res
-        .status(400)
-        .json({
-          message: "Você não pode visualizar as reservas de outro usuário",
-        });
+      return res.status(400).json({
+        message: "Você não pode visualizar as reservas de outro usuário",
+      });
     }
     const queryReservas = `
       SELECT r.id_reserva, s.nome, r.data, r.hora_inicio, r.hora_fim, r.dia_semana
@@ -275,11 +270,9 @@ module.exports = class usuarioController {
       return res.status(400).json(idValidationError);
     }
     if (Number(id_usuario) !== Number(token)) {
-      return res
-        .status(400)
-        .json({
-          message: "Você não pode visualizar o histórico de outro usuário",
-        });
+      return res.status(400).json({
+        message: "Você não pode visualizar o histórico de outro usuário",
+      });
     }
 
     try {
@@ -303,19 +296,41 @@ module.exports = class usuarioController {
   }
 
   static async getHistoricoDelecao(req, res) {
-    const id_usuario = req.userId;
+    const token = req.userId;
+    const id_usuario = req.params.id_usuario;
+
+    // Valida ID e token (somente o próprio usuário pode ver seu histórico)
+    const idValidationError = validateUsuario.validateUsuarioId(id_usuario);
+    if (idValidationError) {
+      return res.status(400).json(idValidationError);
+    }
+    if (Number(id_usuario) !== Number(token)) {
+      return res.status(400).json({
+        message: "Você não pode visualizar o histórico de outro usuário",
+      });
+    }
 
     const query = `
-      SELECT * FROM logreserva
-      WHERE fk_id_usuario = ?
-      ORDER BY data DESC
-    `;
+    SELECT 
+      id_log,
+      id_reserva,
+      fk_id_sala,
+      fk_id_usuario,
+      data_reserva,
+      hora_inicio_reserva,
+      hora_fim_reserva,
+      data_hora_log
+    FROM logreservas
+    WHERE fk_id_usuario = ?
+      AND tipo_operacao = 0
+    ORDER BY data_hora_log DESC
+  `;
 
     try {
       const results = await queryAsync(query, [id_usuario]);
-      res.status(200).json({ historico: results });
+      res.status(200).json({ historicoDelecao: results });
     } catch (error) {
-      console.error(error);
+      console.error("Erro ao buscar histórico de deleções:", error);
       res.status(500).json({ error: "Erro ao buscar histórico de deleções" });
     }
   }
