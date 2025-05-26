@@ -113,6 +113,30 @@ curl --location 'http://localhost:5000/reservas/v1/usuario/perfil/{idUsuario}/re
 --header 'Authorization: {tokenUsuario}'
 ```
 
+### * *Histórico* de Reservas do Usuário pelo (id_usuario)*
+
+#### Retornar as reservas de um usuário específico
+```http
+GET /reservas/v1/usuario/perfil/{idUsuario}/reservas'
+```
+##### Exemplo de requisição:
+```sh
+curl --location 'http://localhost:5000/reservas/v1/usuario/historico/{idUsuario}' \
+--header 'Authorization: {tokenUsuario}'
+```
+
+### * *Histórico* de Reservas **Deletadas** do Usuário pelo (id_usuario)*
+
+#### Retornar as reservas de um usuário específico
+```http
+GET /reservas/v1/usuario/perfil/{idUsuario}/reservas'
+```
+##### Exemplo de requisição:
+```sh
+curl --location 'http://localhost:5000/reservas/v1/usuario/historico/delecao/{idUsuario}' \
+--header 'Authorization: {tokenUsuario}'
+```
+
 ## - *Reservas*
 
 #### - createReserva

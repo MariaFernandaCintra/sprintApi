@@ -4,7 +4,7 @@ services:
   app:
   ## O "." indica que a imagem do docker será construida no diretório atual 
     build: .
-    command: ["npm", "start"]
+    command: /bin/sh -c "npm install && npm start"
     ## Mapeia porta 5000 do container para a porta 5000 da máquina 
     ports:
       - "5000:5000" 
@@ -20,11 +20,11 @@ services:
     ##Configura o container para reiniciar automaticamente caso ele pare.
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: rs
+      MYSQL_ROOT_PASSWORD: root
       ## Mapeia a porta 3306 do container para a porta 3306 da maquina 
     ports:
-       - "3307:3307"
+       - "3307:3306"
     volumes: 
        - db_data:/var/lib/mysql
        - ./sql/docker:/docker-entrypoint-initdb.d

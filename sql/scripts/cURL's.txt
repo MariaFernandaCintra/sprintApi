@@ -45,6 +45,20 @@ curl --location 'http://localhost:5000/reservas/v1/usuario/perfil/1/reservas' \
 
 -------------------------------------------------------------------------------------------------
 
+ - GET - HISTORICORESERVASBYUSUARIOID:
+
+curl --location 'http://localhost:5000/reservas/v1/usuario/historico/1' \
+--header 'Authorization: {tokenUsuario}'
+
+-------------------------------------------------------------------------------------------------
+
+ - GET - RESERVASDELETADASBYUSUARIOID:
+
+curl --location 'http://localhost:5000/reservas/v1/usuario/historico/delecao/1' \
+--header 'Authorization: {tokenUsuario}'
+
+-------------------------------------------------------------------------------------------------
+
  - PUT:
 
 curl --location --request PUT 'http://localhost:5000/reservas/v1/usuario/1' \

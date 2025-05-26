@@ -6,9 +6,6 @@
 
 SET GLOBAL log_bin_trust_function_creators = 1;
 
-CREATE DATABASE rs; 
-USE rs;
-
 CREATE TABLE usuario(
      id_usuario INT PRIMARY KEY AUTO_INCREMENT,
      nome VARCHAR(255) NOT NULL, 
@@ -201,6 +198,8 @@ END; //
 DELIMITER ;
 
 -- PROCEDURE: filtro de salas pelo nome ou descrição
+
+DROP PROCEDURE IF EXISTS buscarSalasNome;
 
 DELIMITER //
 
