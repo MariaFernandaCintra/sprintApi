@@ -105,7 +105,7 @@ curl --location --request DELETE 'http://localhost:5000/reservas/v1/usuario/{idU
 
 #### Retornar as reservas de um usuário específico
 ```http
-GET /reservas/v1/usuario/perfil/{idUsuario}/reservas'
+GET /reservas/v1/usuario/perfil/{idUsuario}/reservas
 ```
 ##### Exemplo de requisição:
 ```sh
@@ -117,7 +117,7 @@ curl --location 'http://localhost:5000/reservas/v1/usuario/perfil/{idUsuario}/re
 
 #### Retornar as reservas de um usuário específico
 ```http
-GET /reservas/v1/usuario/perfil/{idUsuario}/reservas'
+GET /reservas/v1/usuario/historico/{idUsuario}
 ```
 ##### Exemplo de requisição:
 ```sh
@@ -129,7 +129,7 @@ curl --location 'http://localhost:5000/reservas/v1/usuario/historico/{idUsuario}
 
 #### Retornar as reservas de um usuário específico
 ```http
-GET /reservas/v1/usuario/perfil/{idUsuario}/reservas'
+GET /reservas/v1/usuario/historico/delecao/{idUsuario}
 ```
 ##### Exemplo de requisição:
 ```sh
