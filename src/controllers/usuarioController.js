@@ -332,7 +332,7 @@ static async updateUsuario(req, res) {
       hora_inicio_reserva,
       hora_fim_reserva,
       data_hora_log
-    FROM logreservas
+    FROM logreserva
     WHERE fk_id_usuario = ?
       AND tipo_operacao = 0
     ORDER BY data_hora_log DESC
