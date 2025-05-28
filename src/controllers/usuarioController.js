@@ -142,7 +142,7 @@ static async updateUsuario(req, res) {
       usuarioAtual.nome === nome;
 
     if (dadosIguais) {
-      return res.status(400).json({ message: "Nenhuma alteração detectada nos dados enviados" });
+      return res.status(400).json({ error: "Nenhuma alteração detectada nos dados enviados" });
     }
 
     const updateQuery = `UPDATE usuario SET email = ?, senha = ?, nome = ? WHERE id_usuario = ?`;
