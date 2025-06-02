@@ -24,7 +24,7 @@ services:
       MYSQL_ROOT_PASSWORD: root
       ## Mapeia a porta 3306 do container para a porta 3306 da maquina 
     ports:
-       - "3307:3306"
+       - "3307:3307"
     volumes: 
        - db_data:/var/lib/mysql
        - ./sql/docker:/docker-entrypoint-initdb.d
