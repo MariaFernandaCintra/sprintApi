@@ -107,60 +107,108 @@ module.exports = class usuarioController {
     }
   }
 
-static async updateUsuario(req, res) {
-  const { email, senha, nome } = req.body;
-  const usuarioId = req.params.id_usuario;
-  const token = req.userId;
+  static async verifyUsuarioSenha(req, res) {
+    const { senha } = req.body;
+    const id_usuario = req.params.id_usuario;
+    const token = req.userId;
 
-  const updateValidationError = validateUsuario.validateUpdateUsuario({
-    email,
-    senha,
-    nome,
-  });
-  if (Number(usuarioId) !== Number(token)) {
-    return res.status(400).json({ message: "Você não pode atualizar outro usuário" });
-  }
-  if (updateValidationError) {
-    return res.status(400).json(updateValidationError);
-  }
-  const idValidationError = validateUsuario.validateUsuarioId(usuarioId);
-  if (idValidationError) {
-    return res.status(400).json(idValidationError);
-  }
-
-  try {
-    const selectQuery = `SELECT email, senha, nome FROM usuario WHERE id_usuario = ?`;
-    const [usuarioAtual] = await queryAsync(selectQuery, [usuarioId]);
-
-    if (!usuarioAtual) {
-      return res.status(404).json({ error: "Usuário não encontrado" });
+    const idValidationError = validateUsuario.validateUsuarioId(id_usuario);
+    if (idValidationError) {
+      return res.status(400).json(idValidationError);
     }
 
-    const dadosIguais =
-      usuarioAtual.email === email &&
-      usuarioAtual.senha === senha &&
-      usuarioAtual.nome === nome;
-
-    if (dadosIguais) {
-      return res.status(400).json({ error: "Nenhuma alteração detectada nos dados enviados" });
+    if (Number(id_usuario) !== Number(token)) {
+      return res.status(403).json({ error: "Acesso Negado" });
     }
 
-    const updateQuery = `UPDATE usuario SET email = ?, senha = ?, nome = ? WHERE id_usuario = ?`;
-    const results = await queryAsync(updateQuery, [email, senha, nome, usuarioId]);
+    try {
+      const query = `SELECT senha FROM usuario WHERE id_usuario = ?`;
+      const results = await queryAsync(query, [id_usuario]);
 
-    if (results.affectedRows === 0) {
-      return res.status(404).json({ error: "Usuário não encontrado" });
-    }
+      if (results.length === 0) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
 
-    return res.status(200).json({ message: "Usuário atualizado com sucesso" });
-  } catch (error) {
-    console.error(error);
-    if (error.code === "ER_DUP_ENTRY") {
-      return res.status(400).json({ error: "O email já está vinculado a outro usuário" });
+      const usuario = results[0];
+
+      if (usuario.senha === senha) {
+        return res.status(200).json({ valido: true });
+      } else {
+        return res.status(401).json({ valido: false, error: "Senha incorreta" });
+      }
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Erro interno do servidor" });
     }
-    return res.status(500).json({ error: "Erro interno no servidor" });
   }
-}
+
+  static async updateUsuario(req, res) {
+    const { email, senha, nome } = req.body;
+    const usuarioId = req.params.id_usuario;
+    const token = req.userId;
+
+    const updateValidationError = validateUsuario.validateUpdateUsuario({
+      email,
+      senha,
+      nome,
+    });
+    if (Number(usuarioId) !== Number(token)) {
+      return res
+        .status(400)
+        .json({ message: "Você não pode atualizar outro usuário" });
+    }
+    if (updateValidationError) {
+      return res.status(400).json(updateValidationError);
+    }
+    const idValidationError = validateUsuario.validateUsuarioId(usuarioId);
+    if (idValidationError) {
+      return res.status(400).json(idValidationError);
+    }
+
+    try {
+      const selectQuery = `SELECT email, senha, nome FROM usuario WHERE id_usuario = ?`;
+      const [usuarioAtual] = await queryAsync(selectQuery, [usuarioId]);
+
+      if (!usuarioAtual) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      const dadosIguais =
+        usuarioAtual.email === email &&
+        usuarioAtual.senha === senha &&
+        usuarioAtual.nome === nome;
+
+      if (dadosIguais) {
+        return res
+          .status(400)
+          .json({ error: "Nenhuma alteração detectada nos dados enviados" });
+      }
+
+      const updateQuery = `UPDATE usuario SET email = ?, senha = ?, nome = ? WHERE id_usuario = ?`;
+      const results = await queryAsync(updateQuery, [
+        email,
+        senha,
+        nome,
+        usuarioId,
+      ]);
+
+      if (results.affectedRows === 0) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      return res
+        .status(200)
+        .json({ message: "Usuário atualizado com sucesso" });
+    } catch (error) {
+      console.error(error);
+      if (error.code === "ER_DUP_ENTRY") {
+        return res
+          .status(400)
+          .json({ error: "O email já está vinculado a outro usuário" });
+      }
+      return res.status(500).json({ error: "Erro interno no servidor" });
+    }
+  }
 
   static async deleteUsuario(req, res) {
     const usuarioId = req.params.id_usuario;
