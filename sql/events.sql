@@ -1,13 +1,15 @@
-create event if not exists excluir_reservas_antigas
-    on schedule every 1 week 
-    starts current_timestamp + interval 1 minute 
-    on completion preserve
+
+-- ===================================
+--    Events
+-- ===================================
+
+-- EVENT: Exclui registros antigos da tabela de logs de reservas (1 ano)
+
+CREATE EVENT IF NOT EXISTS excluirReservasAntigas
+    ON SCHEDULE EVERY 1 WEEK 
+    STARTS CURRENT_TIMESTAMP + INTERVAL 1 MINUTE 
+    ON COMPLETION PRESERVE
     ENABLE
-do
-    delete from logreservas
-    where data_reserva < now() - interval 1 year ;
-
-
-
-     insert into reserva (fk_id_usuario, fk_id_sala, data, hora_inicio, hora_fim, dia_semana) values 
-     (1, 1, "2001-01-01", "12:00:00", "13:00:00", "segunda-feira");
+DO
+    DELETE FROM logreservas
+    WHERE data_reserva < NOW() - INTERVAL 1 YEAR;

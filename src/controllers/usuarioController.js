@@ -185,11 +185,6 @@ static async updateUsuario(req, res) {
       return res.status(200).json({ message: "Usuário excluído com sucesso" });
     } catch (error) {
       console.error(error);
-      if (error.code === "ER_ROW_IS_REFERENCED") {
-        return res.status(400).json({
-          error: "Usuário não pode ser excluído, pois tem uma reserva",
-        });
-      }
       return res.status(500).json({ error: "Erro interno do servidor" });
     }
   }

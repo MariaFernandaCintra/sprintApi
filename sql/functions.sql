@@ -1,6 +1,10 @@
--- FUNCTIONS: total de reservas em uma determinada sala para um determinado dia
+-- ================================
+--    Functions
+-- ================================
 
-DELIMITER $$
+-- FUNCTION: Total de reservas em uma determinada sala para um determinado dia
+
+DELIMITER //
 
 CREATE FUNCTION TotalReservasPorSalaEDia(salaId INT, dataReserva DATE)
 
@@ -16,8 +20,6 @@ BEGIN
     WHERE fk_id_sala = salaId AND data = dataReserva;
 
     RETURN total;
-END$$
+END; //
 
 DELIMITER ;
-
-SELECT TotalReservasPorSalaEDia(2, '2025-12-31');
