@@ -1,6 +1,15 @@
 ## Baixa e executa a imagem do node na versão Alpine (versão simplificada)
 FROM node:alpine
 
+# --- ADIÇÕES PARA FUSO HORÁRIO ---
+# Instala o pacote tzdata para Alpine, que contém as informações de fuso horário.
+RUN apk add --no-cache tzdata
+
+# Define a variável de ambiente TZ para o fuso horário de São Paulo (que é UTC-3).
+# Isso garante que a aplicação dentro do container use o fuso horário correto.
+ENV TZ=America/Sao_Paulo
+# --- FIM DAS ADIÇÕES ---
+
 ## Define o local onde o app ira ficar no disco do container 
 ## O caminho o DEV quem escolhe
 WORKDIR /usr/app

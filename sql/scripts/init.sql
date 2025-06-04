@@ -6,6 +6,8 @@
 
 SET GLOBAL log_bin_trust_function_creators = 1;
 
+SET NAMES 'utf8mb4';
+
 CREATE DATABASE IF NOT EXISTS rs;
 USE rs;
 

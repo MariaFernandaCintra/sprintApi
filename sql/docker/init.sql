@@ -6,6 +6,8 @@
 
 SET GLOBAL log_bin_trust_function_creators = 1;
 
+SET NAMES 'utf8mb4';
+
 CREATE TABLE IF NOT EXISTS usuario(
     id_usuario INT PRIMARY KEY AUTO_INCREMENT,
     nome VARCHAR(255) NOT NULL,

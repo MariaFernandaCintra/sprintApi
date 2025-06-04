@@ -25,7 +25,7 @@ A Sprint API foi desenvolvida utilizando Node.js e Express, oferecendo endpoints
   - `.gitignore`
   - `package.json`
 
-## Como Executar o Projeto
+## Como Executar o Projeto 
 
 ### Pré-requisitos
 
@@ -46,7 +46,14 @@ A Sprint API foi desenvolvida utilizando Node.js e Express, oferecendo endpoints
     cd sprintApi
    ```
 
-3. **Instalar as Dependências**
+3. **Executar o projeto via Docker**
+- Com o Docker Desktop aberto
+- Criar o .env (use o .env.example como exemplo)
+- abra o terminal e rodar a seguinte linha de código 
+
+docker-compose up --build  
+
+4. **Instalar as Dependências**
 
 - Se estiver usando npm, execute:
 
@@ -54,7 +61,7 @@ A Sprint API foi desenvolvida utilizando Node.js e Express, oferecendo endpoints
     npm i
   ```
 
-4. **Iniciar o Servidor de Desenvolvimento**
+4.1. **Iniciar o Servidor de Desenvolvimento**
 
 - Com npm, execute:
   ```bash
