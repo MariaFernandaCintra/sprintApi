@@ -214,7 +214,7 @@ DELIMITER ;
 --    Triggers e Tabela de Histórico
 -- ===================================
 
--- Criação da tabela para armazenar os logs de criação e deleção
+-- Criação da tabela para armazenar os logs de criação e deleção das Reservas
 
 CREATE TABLE IF NOT EXISTS logreservas (
     id_log INT AUTO_INCREMENT PRIMARY KEY,
@@ -224,6 +224,18 @@ CREATE TABLE IF NOT EXISTS logreservas (
     data_reserva DATE NOT NULL,
     hora_inicio_reserva TIME NOT NULL,
     hora_fim_reserva TIME NOT NULL,
+    tipo_operacao TINYINT NOT NULL,
+    data_hora_log DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Criação da tabela para armazenar os logs de criação e deleção dos Usuários
+
+CREATE TABLE IF NOT EXISTS logusuarios (
+    id_log INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    nome VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    NIF CHAR(7) NOT NULL,
     tipo_operacao TINYINT NOT NULL,
     data_hora_log DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -292,9 +304,74 @@ END; //
 
 DELIMITER ;
 
--- ===================================
---    Retro­população de logreservas
--- ===================================
+-- TRIGGER: Armazenar histórico de criação de um usuário (tipo = 1)
+
+DELIMITER //
+
+CREATE TRIGGER logusuariocriacao
+AFTER INSERT ON usuario
+FOR EACH ROW
+BEGIN
+    INSERT INTO logusuarios (
+        id_usuario,
+        nome,
+        email,
+        NIF,
+        tipo_operacao
+    )
+    VALUES (
+        NEW.id_usuario,
+        NEW.nome,
+        NEW.email,
+        NEW.NIF,
+        1
+    );
+END; //
+
+DELIMITER ;
+
+-- TRIGGER: Armazenar histórico de deleção de um usuário (tipo = 0)
+
+DELIMITER //
+
+CREATE TRIGGER logusuariodelecao
+BEFORE DELETE ON usuario
+FOR EACH ROW
+BEGIN
+    INSERT INTO logusuarios (
+        id_usuario,
+        nome,
+        email,
+        NIF,
+        tipo_operacao
+    )
+    VALUES (
+        OLD.id_usuario,
+        OLD.nome,
+        OLD.email,
+        OLD.NIF,
+        0
+    );
+END; //
+
+DELIMITER ;
+
+-- TRIGGER: Deleta todas as reservas associadas ao usuário que está sendo deletado
+
+DELIMITER //
+
+CREATE TRIGGER deleteusuario
+BEFORE DELETE ON usuario
+FOR EACH ROW
+BEGIN
+    DELETE FROM reserva WHERE fk_id_usuario = OLD.id_usuario;
+END; //
+
+DELIMITER ;
+
+-- ================================================
+--    Retro­população de logreservas e logusuarios
+-- ================================================
 
 INSERT INTO logreservas (
     id_reserva,
@@ -316,3 +393,21 @@ SELECT
     1           AS tipo_operacao,
     NOW()       AS data_hora_log
 FROM reserva;
+
+INSERT INTO logusuarios (
+    id_usuario,
+    nome,
+    email,
+    NIF,
+    tipo_operacao,
+    data_hora_log
+)
+SELECT
+    id_usuario,
+    nome,
+    email,
+    NIF,
+    1 AS tipo_operacao,
+    NOW() AS data_hora_log
+FROM
+    usuario;

@@ -107,22 +107,62 @@ module.exports = class usuarioController {
     }
   }
 
+  static async verifyUsuarioSenha(req, res) {
+    const { senha } = req.body;
+    const id_usuario = req.params.id_usuario;
+    const token = req.userId;
+
+    const idValidationError = validateUsuario.validateUsuarioId(id_usuario);
+    if (idValidationError) {
+      return res.status(400).json(idValidationError);
+    }
+
+    if (Number(id_usuario) !== Number(token)) {
+      return res.status(403).json({ error: "Acesso Negado" });
+    }
+
+    try {
+      const query = `SELECT senha FROM usuario WHERE id_usuario = ?`;
+      const results = await queryAsync(query, [id_usuario]);
+
+      if (results.length === 0) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      const usuario = results[0];
+
+      if (usuario.senha === senha) {
+        return res.status(200).json({ valido: true });
+      } else {
+        return res.status(401).json({ valido: false, error: "Senha incorreta" });
+      }
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  }
+
 static async updateUsuario(req, res) {
   const { email, senha, nome } = req.body;
   const usuarioId = req.params.id_usuario;
   const token = req.userId;
 
-  const updateValidationError = validateUsuario.validateUpdateUsuario({
-    email,
-    senha,
-    nome,
-  });
   if (Number(usuarioId) !== Number(token)) {
     return res.status(400).json({ message: "Você não pode atualizar outro usuário" });
   }
+
+  // Prepara dados para validação (ignora campos vazios)
+  const dataToValidate = {
+    email: email && email.trim() !== "" ? email : undefined,
+    senha: senha && senha.trim() !== "" ? senha : undefined,
+    nome: nome && nome.trim() !== "" ? nome : undefined,
+  };
+
+  const updateValidationError = validateUsuario.validateUpdateUsuario(dataToValidate);
   if (updateValidationError) {
     return res.status(400).json(updateValidationError);
   }
+
   const idValidationError = validateUsuario.validateUsuarioId(usuarioId);
   if (idValidationError) {
     return res.status(400).json(idValidationError);
@@ -136,17 +176,20 @@ static async updateUsuario(req, res) {
       return res.status(404).json({ error: "Usuário não encontrado" });
     }
 
-    const dadosIguais =
-      usuarioAtual.email === email &&
-      usuarioAtual.senha === senha &&
-      usuarioAtual.nome === nome;
+    const novoEmail = dataToValidate.email ?? usuarioAtual.email;
+    const novaSenha = dataToValidate.senha ?? usuarioAtual.senha;
+    const novoNome = dataToValidate.nome ?? usuarioAtual.nome;
 
-    if (dadosIguais) {
+    if (
+      usuarioAtual.email === novoEmail &&
+      usuarioAtual.senha === novaSenha &&
+      usuarioAtual.nome === novoNome
+    ) {
       return res.status(400).json({ error: "Nenhuma alteração detectada nos dados enviados" });
     }
 
     const updateQuery = `UPDATE usuario SET email = ?, senha = ?, nome = ? WHERE id_usuario = ?`;
-    const results = await queryAsync(updateQuery, [email, senha, nome, usuarioId]);
+    const results = await queryAsync(updateQuery, [novoEmail, novaSenha, novoNome, usuarioId]);
 
     if (results.affectedRows === 0) {
       return res.status(404).json({ error: "Usuário não encontrado" });
@@ -154,7 +197,6 @@ static async updateUsuario(req, res) {
 
     return res.status(200).json({ message: "Usuário atualizado com sucesso" });
   } catch (error) {
-    console.error(error);
     if (error.code === "ER_DUP_ENTRY") {
       return res.status(400).json({ error: "O email já está vinculado a outro usuário" });
     }
@@ -185,11 +227,6 @@ static async updateUsuario(req, res) {
       return res.status(200).json({ message: "Usuário excluído com sucesso" });
     } catch (error) {
       console.error(error);
-      if (error.code === "ER_ROW_IS_REFERENCED") {
-        return res.status(400).json({
-          error: "Usuário não pode ser excluído, pois tem uma reserva",
-        });
-      }
       return res.status(500).json({ error: "Erro interno do servidor" });
     }
   }
