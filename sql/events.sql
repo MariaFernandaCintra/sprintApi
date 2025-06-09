@@ -13,3 +13,8 @@ CREATE EVENT IF NOT EXISTS excluirReservasAntigas
 DO
     DELETE FROM logreservas
     WHERE data_reserva < NOW() - INTERVAL 1 YEAR;
+
+
+
+INSERT IGNORE INTO reserva (data, hora_inicio, hora_fim, dia_semana, fk_id_usuario, fk_id_sala) VALUES
+('2020-12-31', '07:00:00', '08:00:00', 'Quarta-Feira', 1, 1);

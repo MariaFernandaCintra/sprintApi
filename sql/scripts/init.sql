@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS reserva(
     hora_fim TIME NOT NULL,
     FOREIGN KEY (fk_id_sala) REFERENCES sala(id_sala),
     FOREIGN KEY (fk_id_usuario) REFERENCES usuario(id_usuario)
+    ON DELETE CASCADE
 );
 
 CREATE INDEX idx_reserva_dia_semana ON reserva(dia_semana);
@@ -49,26 +50,7 @@ CREATE INDEX idx_reserva_hora_fim ON reserva(hora_fim);
 -- ================================
 
 INSERT IGNORE INTO usuario (nome, email, senha, NIF) VALUES
-('João Silva', 'joao.silva@docente.senai.br', 'joao.6789', '3456789'),
-('Maria Oliveira', 'maria.oliveira@docente.senai.br', 'maria.4321', '7654321'),
-('Carlos Pereira', 'carlos.pereira@docente.senai.br', 'carlos.7456', '3987456'),
-('Ana Souza', 'ana.souza@docente.senai.br', 'ana.3789', '6123789'),
-('Pedro Costa', 'pedro.costa@docente.senai.br', 'pedro.3456', '9123456'),
-('Laura Lima', 'laura.lima@docente.senai.br', 'laura.4987', '1654987'),
-('Lucas Alves', 'lucas.alves@docente.senai.br', 'lucas.1987', '4321987'),
-('Fernanda Rocha', 'fernanda.rocha@docente.senai.br', 'fernanda.2963', '1852963'),
-('Rafael Martins', 'rafael.martins@docente.senai.br', 'rafael.8147', '9258147'),
-('Juliana Nunes', 'juliana.nunes@docente.senai.br', 'juliana.7369', '8147369'),
-('Paulo Araujo', 'paulo.araujo@docente.senai.br', 'paulo.3486', '9753486'),
-('Beatriz Melo', 'beatriz.melo@docente.senai.br', 'beatriz.9753', '6159753'),
-('Renato Dias', 'renato.dias@docente.senai.br', 'renato.6159', '3486159'),
-('Camila Ribeiro', 'camila.ribeiro@docente.senai.br', 'camila.2741', '3852741'),
-('Thiago Teixeira', 'thiago.teixeira@docente.senai.br', 'thiago.1963', '2741963'),
-('Patrícia Fernandes', 'patricia.fernandes@docente.senai.br', 'patricia.3852', '1963852'),
-('Rodrigo Gomes', 'rodrigo.gomes@docente.senai.br', 'rodrigo.1852', '3741852'),
-('Mariana Batista', 'mariana.batista@docente.senai.br', 'mariana.8369', '7258369'),
-('Fábio Freitas', 'fabio.freitas@docente.senai.br', 'fabio.7258', '9147258'),
-('Isabela Cardoso', 'isabela.cardoso@docente.senai.br', 'isabela.9147', '8369147');
+('João Silva', 'joao.silva@docente.senai.br', '$2b$12$j/zX1Wjtyg.IJkWCYh35P.r4YfngvCyuZOCd4pxjD5eMI1adiFMdm', '3456789');
 
 INSERT IGNORE INTO sala (nome, descricao, bloco, tipo, capacidade) VALUES
 ('AMA - Automotiva', 'Alta Mogiana Automotiva', 'A', 'Oficina', 16),
@@ -212,6 +194,19 @@ BEGIN
 END; //
 
 DELIMITER ;
+
+-- ==================================
+--   Events
+-- ==================================
+
+CREATE EVENT IF NOT EXISTS excluirReservasAntigas
+    ON SCHEDULE EVERY 1 WEEK 
+    STARTS CURRENT_TIMESTAMP + INTERVAL 1 MINUTE 
+    ON COMPLETION PRESERVE
+    ENABLE
+DO
+    DELETE FROM logreservas
+    WHERE data_reserva < NOW() - INTERVAL 1 YEAR;
 
 -- ===================================
 --    Triggers e Tabela de Histórico

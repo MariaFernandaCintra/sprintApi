@@ -143,16 +143,3 @@ BEGIN
 END; //
 
 DELIMITER ;
-
--- TRIGGER: Deleta todas as reservas associadas ao usuário que está sendo deletado
-
-DELIMITER //
-
-CREATE TRIGGER deleteusuario
-BEFORE DELETE ON usuario
-FOR EACH ROW
-BEGIN
-    DELETE FROM reserva WHERE fk_id_usuario = OLD.id_usuario;
-END; //
-
-DELIMITER ;

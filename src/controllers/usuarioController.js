@@ -1,5 +1,6 @@
 const validateUsuario = require("../services/validateUsuario");
 const { queryAsync, formatarData, criarToken } = require("../utils/functions");
+const bcrypt = require("bcrypt");
 
 module.exports = class usuarioController {
   static async createUsuarios(req, res) {
@@ -21,8 +22,11 @@ module.exports = class usuarioController {
         return res.status(400).json(nifEmailValidationError);
       }
 
+      const saltRounds = Number(process.env.SALT_ROUNDS);
+      const hashedPassword = bcrypt.hashSync(senha, saltRounds);
+
       const queryInsert = `INSERT INTO usuario (nome, email, NIF, senha) VALUES (?, ?, ?, ?)`;
-      const valuesInsert = [nome, email, NIF, senha];
+      const valuesInsert = [nome, email, NIF, hashedPassword];
       await queryAsync(queryInsert, valuesInsert);
 
       // Busca o usuário recém-cadastrado
@@ -72,22 +76,23 @@ module.exports = class usuarioController {
       }
 
       const usuario = results[0];
+      const senhaOK = bcrypt.compareSync(senha, usuario.senha);
 
-      if (usuario.senha === senha) {
-        // Gera o token
-        const token = criarToken({
-          id: usuario.id_usuario,
-          email: usuario.email,
-        });
-
-        return res.status(200).json({
-          message: "Login Bem-sucedido",
-          usuario,
-          token,
-        });
-      } else {
-        return res.status(401).json({ error: "Senha ou E-mail incorreto" });
+      if (!senhaOK) {
+        return res.status(401).json({ error: "Senha Incorreta" });
       }
+
+      // Gera o token
+      const token = criarToken({
+        id: usuario.id_usuario,
+        email: usuario.email,
+      });
+
+      return res.status(200).json({
+        message: "Login Bem-sucedido",
+        usuario,
+        token,
+      });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Erro Interno do Servidor" });
@@ -131,10 +136,14 @@ module.exports = class usuarioController {
 
       const usuario = results[0];
 
-      if (usuario.senha === senha) {
+      const senhaOK = bcrypt.compareSync(senha, usuario.senha);
+
+      if (senhaOK) {
         return res.status(200).json({ valido: true });
       } else {
-        return res.status(401).json({ valido: false, error: "Senha incorreta" });
+        return res
+          .status(401)
+          .json({ valido: false, error: "Senha incorreta" });
       }
     } catch (error) {
       console.error(error);
@@ -142,67 +151,84 @@ module.exports = class usuarioController {
     }
   }
 
-static async updateUsuario(req, res) {
-  const { email, senha, nome } = req.body;
-  const usuarioId = req.params.id_usuario;
-  const token = req.userId;
-
-  if (Number(usuarioId) !== Number(token)) {
-    return res.status(400).json({ message: "Você não pode atualizar outro usuário" });
-  }
-
-  // Prepara dados para validação (ignora campos vazios)
-  const dataToValidate = {
-    email: email && email.trim() !== "" ? email : undefined,
-    senha: senha && senha.trim() !== "" ? senha : undefined,
-    nome: nome && nome.trim() !== "" ? nome : undefined,
-  };
-
-  const updateValidationError = validateUsuario.validateUpdateUsuario(dataToValidate);
-  if (updateValidationError) {
-    return res.status(400).json(updateValidationError);
-  }
-
-  const idValidationError = validateUsuario.validateUsuarioId(usuarioId);
-  if (idValidationError) {
-    return res.status(400).json(idValidationError);
-  }
-
-  try {
-    const selectQuery = `SELECT email, senha, nome FROM usuario WHERE id_usuario = ?`;
-    const [usuarioAtual] = await queryAsync(selectQuery, [usuarioId]);
-
-    if (!usuarioAtual) {
-      return res.status(404).json({ error: "Usuário não encontrado" });
+  static async updateUsuario(req, res) {
+    const { email, senha, nome } = req.body;
+    const usuarioId = req.params.id_usuario;
+    const token = req.userId;
+  
+    if (Number(usuarioId) !== Number(token)) {
+      return res.status(400).json({ message: "Você não pode atualizar outro usuário" });
     }
-
-    const novoEmail = dataToValidate.email ?? usuarioAtual.email;
-    const novaSenha = dataToValidate.senha ?? usuarioAtual.senha;
-    const novoNome = dataToValidate.nome ?? usuarioAtual.nome;
-
-    if (
-      usuarioAtual.email === novoEmail &&
-      usuarioAtual.senha === novaSenha &&
-      usuarioAtual.nome === novoNome
-    ) {
-      return res.status(400).json({ error: "Nenhuma alteração detectada nos dados enviados" });
+  
+    const idValidationError = validateUsuario.validateUsuarioId(usuarioId);
+    if (idValidationError) {
+      return res.status(400).json(idValidationError);
     }
-
-    const updateQuery = `UPDATE usuario SET email = ?, senha = ?, nome = ? WHERE id_usuario = ?`;
-    const results = await queryAsync(updateQuery, [novoEmail, novaSenha, novoNome, usuarioId]);
-
-    if (results.affectedRows === 0) {
-      return res.status(404).json({ error: "Usuário não encontrado" });
+  
+    try {
+      const selectQuery = `SELECT email, senha, nome FROM usuario WHERE id_usuario = ?`;
+      const [usuarioAtual] = await queryAsync(selectQuery, [usuarioId]);
+  
+      if (!usuarioAtual) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+  
+      // Substitui campos vazios pelos valores atuais
+      const novoEmail = email && email.trim() !== "" ? email.trim() : usuarioAtual.email;
+      const novoNome = nome && nome.trim() !== "" ? nome.trim() : usuarioAtual.nome;
+      const novaSenha = senha && senha.trim() !== "" ? senha.trim() : null;
+  
+      const dataFinalParaValidar = {
+        email: novoEmail,
+        nome: novoNome,
+      };
+  
+      if (novaSenha) {
+        dataFinalParaValidar.senha = novaSenha;
+      }
+      
+      const updateValidationError = validateUsuario.validateUpdateUsuario(dataFinalParaValidar);
+      if (updateValidationError) {
+        return res.status(400).json(updateValidationError);
+      }
+  
+      // Define se houve alteração
+      const houveAlteracao =
+        usuarioAtual.email !== novoEmail ||
+        usuarioAtual.nome !== novoNome ||
+        novaSenha;
+  
+      if (!houveAlteracao) {
+        return res.status(400).json({ error: "Nenhuma alteração detectada nos dados enviados" });
+      }
+  
+      // Hash da nova senha, se houver
+      const senhaFinal = novaSenha
+        ? bcrypt.hashSync(novaSenha, Number(process.env.SALT_ROUNDS))
+        : usuarioAtual.senha;
+  
+      // Atualiza no banco
+      const updateQuery = `UPDATE usuario SET email = ?, senha = ?, nome = ? WHERE id_usuario = ?`;
+      const results = await queryAsync(updateQuery, [
+        novoEmail,
+        senhaFinal,
+        novoNome,
+        usuarioId,
+      ]);
+  
+      if (results.affectedRows === 0) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+  
+      return res.status(200).json({ message: "Usuário atualizado com sucesso" });
+    } catch (error) {
+      if (error.code === "ER_DUP_ENTRY") {
+        return res.status(400).json({ error: "O email já está vinculado a outro usuário" });
+      }
+      return res.status(500).json({ error: "Erro interno no servidor" });
     }
-
-    return res.status(200).json({ message: "Usuário atualizado com sucesso" });
-  } catch (error) {
-    if (error.code === "ER_DUP_ENTRY") {
-      return res.status(400).json({ error: "O email já está vinculado a outro usuário" });
-    }
-    return res.status(500).json({ error: "Erro interno no servidor" });
   }
-}
+  
 
   static async deleteUsuario(req, res) {
     const usuarioId = req.params.id_usuario;
