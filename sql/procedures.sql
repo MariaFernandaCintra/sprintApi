@@ -14,6 +14,10 @@ BEGIN
     WHERE p_id_usuario = fk_id_usuario AND data < CURDATE();
 END; //
 
+
+
+
+
 -- PROCEDURE: Filtro de salas pelo nome ou descrição
 
 CREATE PROCEDURE buscarSalasNome (IN p_termo VARCHAR(100))
