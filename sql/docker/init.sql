@@ -1,6 +1,6 @@
--- ================================
---    Criação do BCD e Tabelas
--- ================================
+-- =============================================
+--    -- Criação do Banco de Dados e Tabelas
+-- =============================================
 
 -- Permite que usuários sem privilégio SUPER criem funções armazenadas mesmo com o log binário ativado
 
@@ -29,13 +29,26 @@ CREATE TABLE IF NOT EXISTS reserva(
     id_reserva INT PRIMARY KEY AUTO_INCREMENT,
     fk_id_sala INT NOT NULL,
     fk_id_usuario INT NOT NULL,
-    dia_semana VARCHAR(20) NOT NULL,
+    dia_semana SET('1','2','3','4','5','6','7') NOT NULL,
     data DATE NOT NULL,
     hora_inicio TIME NOT NULL,
     hora_fim TIME NOT NULL,
     FOREIGN KEY (fk_id_sala) REFERENCES sala(id_sala),
     FOREIGN KEY (fk_id_usuario) REFERENCES usuario(id_usuario)
     ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS reservasperiodicas (
+    id_reservaperiodica INT PRIMARY KEY AUTO_INCREMENT,
+    fk_id_usuario INT NOT NULL,
+    fk_id_sala INT NOT NULL,
+    data_inicio DATE NOT NULL,
+    data_fim DATE NOT NULL,
+    dias_semana SET('1','2','3','4','5','6','7') NOT NULL,
+    hora_inicio TIME NOT NULL,
+    hora_fim TIME NOT NULL,
+    FOREIGN KEY (fk_id_usuario) REFERENCES usuario(id_usuario),
+    FOREIGN KEY (fk_id_sala) REFERENCES sala(id_sala)
 );
 
 CREATE INDEX idx_reserva_dia_semana ON reserva(dia_semana);
@@ -89,16 +102,24 @@ INSERT IGNORE INTO sala (nome, descricao, bloco, tipo, capacidade) VALUES
 ('OFI - LIXAMENTO', 'Lixadeiras e Polidoras', 'O', 'Oficina', 16);
 
 INSERT IGNORE INTO reserva (data, hora_inicio, hora_fim, dia_semana, fk_id_usuario, fk_id_sala) VALUES
-('2025-12-31', '07:00:00', '08:00:00', 'Quarta-Feira', 1, 1),
-('2025-12-31', '08:00:00', '09:00:00', 'Quarta-Feira', 1, 1),
-('2025-12-31', '09:00:00', '10:00:00', 'Quarta-Feira', 1, 1),
-('2025-12-31', '10:00:00', '11:00:00', 'Quarta-Feira', 1, 1),
-('2025-12-31', '11:00:00', '12:00:00', 'Quarta-Feira', 1, 1),
-('2025-01-01', '07:00:00', '08:00:00', 'Quarta-Feira', 1, 1),
-('2025-01-01', '08:00:00', '09:00:00', 'Quarta-Feira', 1, 1),
-('2025-01-01', '09:00:00', '10:00:00', 'Quarta-Feira', 1, 1),
-('2025-01-01', '10:00:00', '11:00:00', 'Quarta-Feira', 1, 1),
-('2025-01-01', '11:00:00', '12:00:00', 'Quarta-Feira', 1, 1);
+('2025-12-31', '07:00:00', '08:00:00', '1', 1, 1),
+('2025-12-31', '08:00:00', '09:00:00', '1', 1, 1),
+('2025-12-31', '09:00:00', '10:00:00', '1', 1, 1),
+('2025-12-31', '10:00:00', '11:00:00', '1', 1, 1),
+('2025-12-31', '11:00:00', '12:00:00', '1', 1, 1),
+('2025-01-01', '07:00:00', '08:00:00', '1', 1, 1),
+('2025-01-01', '08:00:00', '09:00:00', '1', 1, 1),
+('2025-01-01', '09:00:00', '10:00:00', '1', 1, 1),
+('2025-01-01', '10:00:00', '11:00:00', '1', 1, 1),
+('2025-01-01', '11:00:00', '12:00:00', '1', 1, 1);
+
+INSERT INTO reservasperiodicas (fk_id_usuario, fk_id_sala, data_inicio, data_fim, dias_semana, hora_inicio, hora_fim) VALUES
+(1, 1, '2024-01-01', '2024-03-31', '2', '08:00:00', '10:00:00'),
+(1, 1, '2024-02-01', '2024-04-30', '4', '14:00:00', '16:00:00'),
+(1, 1, '2024-01-15', '2024-05-15', '6', '09:00:00', '11:00:00'),
+(1, 1, '2025-07-01', '2025-09-30', '3', '10:00:00', '12:00:00'),
+(1, 1, '2025-08-01', '2025-10-31', '5', '13:00:00', '15:00:00'),
+(1, 1, '2025-09-01', '2025-12-31', '7', '08:00:00', '10:00:00');
 
 -- ================================
 --    Views
@@ -222,6 +243,22 @@ CREATE TABLE IF NOT EXISTS logusuarios (
     data_hora_log DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Criação da tabela para armazenar os logs de criação e deleção das Reservas Periódicas
+
+CREATE TABLE IF NOT EXISTS logreservasperiodicas (
+    id_log INT PRIMARY KEY AUTO_INCREMENT,
+    id_reservaperiodica INT NOT NULL,
+    fk_id_usuario INT NOT NULL,
+    fk_id_sala INT NOT NULL,
+    data_inicio DATE NOT NULL,
+    data_fim DATE NOT NULL,
+    dias_semana SET('1','2','3','4','5','6','7') NOT NULL,
+    hora_inicio TIME NOT NULL,
+    hora_fim TIME NOT NULL,
+    tipo_operacao TINYINT NOT NULL,
+    data_hora_log DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 -- TRIGGER: Armazenar histórico de criação de reservas (tipo = 1)
 
 DELIMITER //
@@ -317,7 +354,7 @@ DELIMITER ;
 DELIMITER //
 
 CREATE TRIGGER logusuariodelecao
-BEFORE DELETE ON usuario
+AFTER DELETE ON usuario
 FOR EACH ROW
 BEGIN
     INSERT INTO logusuarios (
@@ -338,9 +375,81 @@ END; //
 
 DELIMITER ;
 
--- ================================================
---    Retro­população de logreservas e logusuarios
--- ================================================
+-- TRIGGER: Armazenar histórico de criação de reservas periódicas
+
+DELIMITER //
+
+CREATE TRIGGER logreservaperiodicacriacao
+
+AFTER INSERT ON reservasperiodicas
+FOR EACH ROW
+
+BEGIN
+    INSERT INTO logreservasperiodicas (
+        id_reservaperiodica,
+        fk_id_usuario,
+        fk_id_sala,
+        data_inicio,
+        data_fim,
+        dias_semana,
+        hora_inicio,
+        hora_fim,
+        tipo_operacao
+    )
+    VALUES (
+        NEW.id_reservaperiodica,
+        NEW.fk_id_usuario,
+        NEW.fk_id_sala,
+        NEW.data_inicio,
+        NEW.data_fim,
+        NEW.dias_semana,
+        NEW.hora_inicio,
+        NEW.hora_fim,
+        1
+    );
+END; //
+
+DELIMITER ;
+
+-- TRIGGER: Armazenar histórico de deleção de reservas periódicas
+
+DELIMITER //
+
+CREATE TRIGGER logreservaperiodicadelecao
+
+AFTER DELETE ON reservasperiodicas
+FOR EACH ROW
+
+BEGIN
+    INSERT INTO logreservasperiodicas (
+        id_reservaperiodica,
+        fk_id_usuario,
+        fk_id_sala,
+        data_inicio,
+        data_fim,
+        dias_semana,
+        hora_inicio,
+        hora_fim,
+        tipo_operacao
+    )
+    VALUES (
+        OLD.id_reservaperiodica,
+        OLD.fk_id_usuario,
+        OLD.fk_id_sala,
+        OLD.data_inicio,
+        OLD.data_fim,
+        OLD.dias_semana,
+        OLD.hora_inicio,
+        OLD.hora_fim,
+        0
+    );
+END; //
+
+DELIMITER ;
+
+-- ==========================================================================
+--    Retro­população de logreservas e logusuarios e logreservasperiodicas
+-- ==========================================================================
 
 INSERT INTO logreservas (
     id_reserva,
@@ -381,6 +490,31 @@ SELECT
 FROM
     usuario;
 
+INSERT INTO logreservasperiodicas (
+    id_reservaperiodica,
+    fk_id_usuario,
+    fk_id_sala,
+    data_inicio,
+    data_fim,
+    dias_semana,
+    hora_inicio,
+    hora_fim,
+    tipo_operacao,
+    data_hora_log
+)
+SELECT
+    id_reservaperiodica,
+    fk_id_usuario,
+    fk_id_sala,
+    data_inicio,
+    data_fim,
+    dias_semana,
+    hora_inicio,
+    hora_fim,
+    1,
+    NOW()
+FROM reservasperiodicas;
+
 -- ==================================
 --   Events
 -- ==================================
@@ -393,3 +527,12 @@ CREATE EVENT IF NOT EXISTS excluirReservasAntigas
 DO
     DELETE FROM logreservas
     WHERE data_reserva < NOW() - INTERVAL 1 YEAR;
+
+CREATE EVENT IF NOT EXISTS excluirReservasPeriodicasAntigas
+    ON SCHEDULE EVERY 1 WEEK 
+    STARTS CURRENT_TIMESTAMP + INTERVAL 1 MINUTE 
+    ON COMPLETION PRESERVE
+    ENABLE
+DO
+    DELETE FROM logreservasperiodicas
+    WHERE data_inicio < NOW() - INTERVAL 1 YEAR;

@@ -28,18 +28,9 @@ const formatarHorario = (dateObj) => {
 };
 
 function getDiaSemana(data) {
-  const [year, month, day] = data.split("-").map(Number);
-  const date = new Date(year, month - 1, day);
-  const diasSemana = [
-    "Domingo",
-    "Segunda-Feira",
-    "Terça-Feira",
-    "Quarta-Feira",
-    "Quinta-Feira",
-    "Sexta-Feira",
-    "Sábado",
-  ];
-  return diasSemana[date.getDay()];
+  const date = new Date(data);
+  let dia = date.getDay();
+  return dia === 0 ? 1 : dia + 1;
 }
 
 function formatarDataParaComparar(dateInput) {
