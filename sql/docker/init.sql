@@ -192,19 +192,6 @@ END; //
 
 DELIMITER ;
 
--- ==================================
---   Events
--- ==================================
-
-CREATE EVENT IF NOT EXISTS excluirReservasAntigas
-    ON SCHEDULE EVERY 1 WEEK 
-    STARTS CURRENT_TIMESTAMP + INTERVAL 1 MINUTE 
-    ON COMPLETION PRESERVE
-    ENABLE
-DO
-    DELETE FROM logreservas
-    WHERE data_reserva < NOW() - INTERVAL 1 YEAR;
-
 -- ===================================
 --    Triggers e Tabela de Histórico
 -- ===================================
@@ -351,19 +338,6 @@ END; //
 
 DELIMITER ;
 
--- TRIGGER: Deleta todas as reservas associadas ao usuário que está sendo deletado
-
-DELIMITER //
-
-CREATE TRIGGER deleteusuario
-BEFORE DELETE ON usuario
-FOR EACH ROW
-BEGIN
-    DELETE FROM reserva WHERE fk_id_usuario = OLD.id_usuario;
-END; //
-
-DELIMITER ;
-
 -- ================================================
 --    Retro­população de logreservas e logusuarios
 -- ================================================
@@ -406,3 +380,16 @@ SELECT
     NOW() AS data_hora_log
 FROM
     usuario;
+
+-- ==================================
+--   Events
+-- ==================================
+
+CREATE EVENT IF NOT EXISTS excluirReservasAntigas
+    ON SCHEDULE EVERY 1 WEEK 
+    STARTS CURRENT_TIMESTAMP + INTERVAL 1 MINUTE 
+    ON COMPLETION PRESERVE
+    ENABLE
+DO
+    DELETE FROM logreservas
+    WHERE data_reserva < NOW() - INTERVAL 1 YEAR;
