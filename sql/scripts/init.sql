@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS reservasperiodicas (
     hora_fim TIME NOT NULL,
     FOREIGN KEY (fk_id_usuario) REFERENCES usuario(id_usuario),
     FOREIGN KEY (fk_id_sala) REFERENCES sala(id_sala)
+    ON DELETE CASCADE
 );
 
 CREATE INDEX idx_reserva_dia_semana ON reserva(dia_semana);

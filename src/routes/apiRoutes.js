@@ -1,6 +1,7 @@
 const router = require("express").Router(); //importando o módolo express
 
 const reservaController = require("../controllers/reservaController");
+const reservaPeriodicaController = require("../controllers/reservaPeriodicaController");
 const usuarioController = require("../controllers/usuarioController");
 const salaController = require("../controllers/salaController");
 const verifyJWT = require("../middlewares/verifyJWT");
@@ -24,6 +25,11 @@ router.post("/reserva", verifyJWT, reservaController.createReservas);
 router.get("/reservas", verifyJWT, reservaController.getAllReservas);
 router.put("/reserva/:id_reserva", verifyJWT, reservaController.updateReserva);
 router.delete("/reserva/:id_reserva/:id_usuario", verifyJWT, reservaController.deleteReserva);
+
+router.post("/reservaperiodica", verifyJWT, reservaPeriodicaController.createReservasPeriodicas);
+// router.get("/reservasperiodicas", verifyJWT, reservaController.getAllReservasPeriodicas);
+// router.put("/reservaperiodica/:id_reservaperiodica", verifyJWT, reservaController.updateReservaPeriodica);
+// router.delete("/reservaperiodica/:id_reservaperiodica/:id_usuario", verifyJWT, reservaController.deleteReservaPeriodica);
 
 router.post("/sala", salaController.createSalas);
 router.get("/salas", verifyJWT, salaController.getAllSalasTabela);
