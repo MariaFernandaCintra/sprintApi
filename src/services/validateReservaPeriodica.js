@@ -1,4 +1,3 @@
-// validateReservaPeriodica.js
 const connect = require("../db/connect");
 const { criarDataHora } = require("../utils/functions");
 
@@ -64,72 +63,94 @@ module.exports = {
     return null;
   },
 
-  // Função unificada para duplicata e conflito
-  verificarConflitosEDuplicatas: async function ({
-    fk_id_usuario,
+  verificarConflitos: async function (
     fk_id_sala,
     data_inicio,
     data_fim,
     dias_semana,
     hora_inicio,
-    hora_fim,
-  }) {
-    // Consulta reservas periódicas com algum dia e horário sobrepostos
-    const query = `
-      SELECT * FROM reservasperiodicas
-      WHERE fk_id_sala = ?
-        AND data_inicio <= ? AND data_fim >= ?
+    hora_fim
+  ) {
+    // Verifica conflitos contra reservas simples e reservas periódicas
+
+    const diasSet = new Set(dias_semana.map(Number));
+
+    // Consulta reservas simples entre data_inicio e data_fim
+    const queryReservasSimples = `
+      SELECT data, hora_inicio, hora_fim FROM reserva
+      WHERE fk_id_sala = ? AND data BETWEEN ? AND ?
     `;
 
-    const values = [fk_id_sala, data_fim, data_inicio];
+    // Consulta reservas periódicas que se sobrepõem no período e compartilham dia da semana
+    const queryReservasPeriodicas = `
+      SELECT data_inicio, data_fim, dias_semana, hora_inicio, hora_fim
+      FROM reservasperiodicas
+      WHERE fk_id_sala = ?
+        AND data_fim >= ?
+        AND data_inicio <= ?
+    `;
 
-    return new Promise((resolve, reject) => {
-      connect.query(query, values, (err, results) => {
+    const reservasSimples = await new Promise((resolve, reject) => {
+      connect.query(queryReservasSimples, [fk_id_sala, data_inicio, data_fim], (err, results) => {
         if (err) return reject(err);
-
-        const conflitos = [];
-        const diasNovoSet = new Set(dias_semana.map(Number));
-
-        const novoInicio = criarDataHora("2025-01-01", hora_inicio).getTime();
-        const novoFim = criarDataHora("2025-01-01", hora_fim).getTime();
-
-        for (const reserva of results) {
-          // converte dias_semana string para array numérica
-          const diasExistentes = reserva.dias_semana.split(",").map(Number);
-
-          // verifica se tem dia da semana em comum
-          const diasComuns = diasExistentes.filter((d) => diasNovoSet.has(d));
-          if (diasComuns.length === 0) continue;
-
-          // checa conflito de horário
-          const inicioExistente = criarDataHora("2025-01-01", reserva.hora_inicio).getTime();
-          const fimExistente = criarDataHora("2025-01-01", reserva.hora_fim).getTime();
-
-          // duplicata exata: mesmo usuário, mesmo período, mesmos dias e horários
-          const isDuplicata =
-            reserva.fk_id_usuario === fk_id_usuario &&
-            reserva.data_inicio.toISOString().slice(0,10) === data_inicio &&
-            reserva.data_fim.toISOString().slice(0,10) === data_fim &&
-            reserva.dias_semana === dias_semana.join(",") &&
-            reserva.hora_inicio === hora_inicio &&
-            reserva.hora_fim === hora_fim;
-
-          // conflito se horários se sobrepõem
-          const isConflito = novoInicio < fimExistente && novoFim > inicioExistente;
-
-          if (isDuplicata) {
-            return resolve({ tipo: "duplicata", reserva });
-          }
-          if (isConflito) {
-            conflitos.push(reserva);
-          }
-        }
-
-        if (conflitos.length > 0) {
-          return resolve({ tipo: "conflito", conflitos });
-        }
-        return resolve({ tipo: "ok" });
+        resolve(results);
       });
     });
+
+    const reservasPeriodicas = await new Promise((resolve, reject) => {
+      connect.query(queryReservasPeriodicas, [fk_id_sala, data_inicio, data_fim], (err, results) => {
+        if (err) return reject(err);
+        resolve(results);
+      });
+    });
+
+    const conflitos = [];
+
+    const hInicio = criarDataHora("2025-01-01", hora_inicio).getTime();
+    const hFim = criarDataHora("2025-01-01", hora_fim).getTime();
+
+    // Verifica conflitos em reservas simples
+    for (const r of reservasSimples) {
+      let dia = new Date(r.data).getDay();
+      dia = dia === 0 ? 7 : dia; // Domingo como 7
+      if (!diasSet.has(dia)) continue;
+
+      const rInicio = criarDataHora("2025-01-01", r.hora_inicio).getTime();
+      const rFim = criarDataHora("2025-01-01", r.hora_fim).getTime();
+
+      if (hInicio < rFim && hFim > rInicio) {
+        conflitos.push({
+          tipo: "reserva",
+          data: r.data,
+          hora_inicio: r.hora_inicio,
+          hora_fim: r.hora_fim,
+        });
+      }
+    }
+
+    // Verifica conflitos em reservas periódicas
+    for (const rp of reservasPeriodicas) {
+      // verifica se dia da semana bate com algum dia da reserva periódica
+      const diasRP = rp.dias_semana.split(",").map(Number);
+      if (!diasRP.some((d) => diasSet.has(d))) continue;
+
+      // Verifica horário
+      const rpInicio = criarDataHora("2025-01-01", rp.hora_inicio).getTime();
+      const rpFim = criarDataHora("2025-01-01", rp.hora_fim).getTime();
+
+      if (hInicio < rpFim && hFim > rpInicio) {
+        conflitos.push({
+          tipo: "reserva_periodica",
+          data_inicio: rp.data_inicio,
+          data_fim: rp.data_fim,
+          dias_semana: rp.dias_semana,
+          hora_inicio: rp.hora_inicio,
+          hora_fim: rp.hora_fim,
+        });
+      }
+    }
+
+    if (conflitos.length > 0) return { conflito: true, conflitos };
+    return { conflito: false };
   },
 };
