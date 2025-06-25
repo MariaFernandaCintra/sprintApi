@@ -58,6 +58,11 @@ function getDiaSemana(data) {
   return dia === 0 ? 1 : dia + 1;
 }
 
+function timeToMinutes(timeStr) {
+  const [hours, minutes] = timeStr.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
 const jwt = require("jsonwebtoken");
 
 const tokenSecret = process.env.SECRET;
@@ -71,4 +76,4 @@ function validarSenha(senha) {
   return regex.test(senha);
 }
 
-module.exports = { queryAsync, criarDataHora, formatarDataHoraAtual, formatarData, getDiaSemana, validarSenha, criarToken };
+module.exports = { queryAsync, criarDataHora, formatarDataHoraAtual, formatarData, getDiaSemana, timeToMinutes, validarSenha, criarToken };
