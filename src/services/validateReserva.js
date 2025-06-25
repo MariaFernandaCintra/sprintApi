@@ -1,12 +1,6 @@
 // services/validateReserva.js
 const connect = require("../db/connect");
-const { criarDataHora } = require("../utils/functions"); // Assumindo que criarDataHora está definido aqui
-
-// Função auxiliar para converter uma string de hora (HH:MM:SS) em minutos desde a meia-noite.
-function timeToMinutes(timeStr) {
-  const [hours, minutes] = timeStr.split(":").map(Number);
-  return hours * 60 + minutes;
-}
+const { criarDataHora, timeToMinutes } = require("../utils/functions");
 
 module.exports = {
   validarUsuario: async function (fk_id_usuario) {
@@ -225,7 +219,8 @@ module.exports = {
       hora_inicio,
       hora_fim
     FROM reserva
-    WHERE fk_id_sala = ?
+    WHERE data_fim >= CURDATE()
+      AND fk_id_sala = ?
       AND data_fim >= ?
       AND data_inicio <= ?
   `;
@@ -254,7 +249,9 @@ module.exports = {
       );
 
       // Verifica se há sobreposição de dias da semana
-      const hasDayOverlap = novosDiasSet.has([...existingDiasSet][0]);
+      const hasDayOverlap = [...novosDiasSet].some((dia) =>
+        existingDiasSet.has(dia)
+      );
 
       if (!hasDayOverlap) {
         continue;
@@ -308,7 +305,7 @@ module.exports = {
     if (diaSemana === 0) {
       return {
         conflito: true,
-        erros: [
+        conflitos: [
           {
             error:
               "Reservas não são permitidas no domingo. Por favor, escolha um dia entre segunda e sábado.",
@@ -332,7 +329,8 @@ module.exports = {
     hora_inicio,
     hora_fim
   FROM reserva
-  WHERE fk_id_sala = ?
+  WHERE data_fim >= CURDATE()
+    AND fk_id_sala = ?
     AND data_fim >= ?
     AND data_inicio <= ?
     AND id_reserva != ?
@@ -361,7 +359,8 @@ module.exports = {
         existingReserva.data_fim === nova_data_fim &&
         existingReserva.hora_inicio === nova_hora_inicio &&
         existingReserva.hora_fim === nova_hora_fim &&
-        existingReserva.dias_semana === novos_dias_semana.join(",")
+        existingReserva.dias_semana.split(",").map(Number).sort().join(",") ===
+          novos_dias_semana.map(Number).sort().join(",")
       ) {
         return {
           conflito: true,
@@ -380,7 +379,9 @@ module.exports = {
       const existingDiasSet = new Set(existingDiasArr);
 
       // Verifica se há sobreposição de dias da semana
-      const hasDayOverlap = novosDiasSet.has([...existingDiasSet][0]);
+      const hasDayOverlap = [...novosDiasSet].some((dia) =>
+        existingDiasSet.has(dia)
+      );
 
       if (!hasDayOverlap) {
         continue;

@@ -4,7 +4,7 @@ const { queryAsync } = require("../utils/functions");
 module.exports = class salaController {
   static async createSalas(req, res) {
     const { nome, descricao, bloco, tipo, capacidade } = req.body;
-  
+
     const validationError = validateSala.validateCreateSala({
       nome,
       descricao,
@@ -15,15 +15,15 @@ module.exports = class salaController {
     if (validationError) {
       return res.status(400).json(validationError);
     }
-  
+
     const query = `INSERT INTO sala (nome, descricao, bloco, tipo, capacidade) VALUES (?, ?, ?, ?, ?)`;
     const values = [nome, descricao, bloco, tipo, capacidade];
-  
+
     try {
       const result = await queryAsync(query, values);
       return res.status(200).json({
         message: "Sala cadastrada com sucesso!",
-        salaId: result.insertId
+        salaId: result.insertId,
       });
     } catch (error) {
       console.error(error);
@@ -31,70 +31,85 @@ module.exports = class salaController {
         return res.status(400).json({ error: "O nome da sala já existe" });
       }
       if (error.code === "ER_DATA_TOO_LONG") {
-        return res.status(400).json({ error: "O bloco deve ter somente uma letra" });
+        return res
+          .status(400)
+          .json({ error: "O bloco deve ter somente uma letra" });
       }
       return res.status(500).json({ error: "Erro interno do servidor" });
     }
-  }  
+  }
 
   static async getAllSalasTabela(req, res) {
     const query = `SELECT * FROM sala`;
     try {
       const results = await queryAsync(query);
-      return res.status(200).json({ message: "Obtendo todas as salas", salas: results });
+      return res
+        .status(200)
+        .json({ message: "Obtendo todas as salas", salas: results });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Erro interno do servidor" });
     }
   }
 
- static async getSalasDisponiveisHorario(req, res) {
-  const { data, hora_inicio, hora_fim } = req.body;
+  static async getSalasDisponiveisHorario(req, res) {
+    const { data_inicio, data_fim, hora_inicio, hora_fim, dias_semana } =
+      req.body;
 
-  // Valida os dados de data/hora informados
-  const validationError = validateSala.validateHorario({ data, hora_inicio, hora_fim });
-  if (validationError) {
-    return res.status(400).json(validationError);
-  }
+    // Valida os dados enviados
+    const validationError = validateSala.validateHorario({
+      data_inicio,
+      data_fim,
+      hora_inicio,
+      hora_fim,
+      dias_semana,
+    });
+    if (validationError) return res.status(400).json(validationError);
 
-
-  // Obtém todas as salas
-  const querySalas = `
-    SELECT s.id_sala, s.nome, s.descricao, s.bloco, s.tipo, s.capacidade
-    FROM sala s
+    // Busca todas as salas
+    const querySalas = `
+    SELECT id_sala, nome, descricao, bloco, tipo, capacidade
+    FROM sala
   `;
 
-  try {
-    const todasSalas = await queryAsync(querySalas);
-    const salasDisponiveisFinal = [];
+    try {
+      const todasSalas = await queryAsync(querySalas);
+      const salasDisponiveis = [];
 
-    // Para cada sala, verifica se há conflito de horários
-    for (const sala of todasSalas) {
-      const conflito = await validateSala.verificarConflitoHorarioSala(
-        sala.id_sala,
-        data,
-        hora_inicio,
-        hora_fim
-      );
-      if (!conflito) {
-        salasDisponiveisFinal.push(sala);
+      for (const sala of todasSalas) {
+        const conflito =
+          await validateSala.verificarConflitoHorarioSala(
+            sala.id_sala,
+            data_inicio,
+            data_fim,
+            hora_inicio,
+            hora_fim,
+            dias_semana
+          );
+
+        if (!conflito) salasDisponiveis.push(sala);
       }
-    }
 
-    if (salasDisponiveisFinal.length === 0) {
-      return res.status(404).json({
-        error: "Não há salas disponíveis para o horário solicitado",
+      if (salasDisponiveis.length === 0) {
+        return res
+          .status(404)
+          .json({
+            error:
+              "Não há salas disponíveis para o período e horários informados.",
+          });
+      }
+
+      return res.status(200).json({
+        message: "Salas disponíveis",
+        salas: salasDisponiveis,
       });
+    } catch (error) {
+      console.error(error);
+      return res
+        .status(500)
+        .json({ error: "Erro ao buscar salas disponíveis" });
     }
-    return res.status(200).json({
-      message: "Salas Disponiveis",
-      salas: salasDisponiveisFinal,
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Erro ao obter as salas disponíveis" });
   }
- }
 
   static async updateSala(req, res) {
     const { nome, descricao, bloco, tipo, capacidade } = req.body;

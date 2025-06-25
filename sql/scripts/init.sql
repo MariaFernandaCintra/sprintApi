@@ -79,37 +79,28 @@ INSERT IGNORE INTO sala (nome, descricao, bloco, tipo, capacidade) VALUES
 ('C3 - MODELAGEM', 'Máquinas de Costura', 'C', 'Oficina', 20),
 ('C4 - MODELAGEM', 'Equipamentos de Modelagem', 'C', 'Oficina', 20),
 ('C5 - AULA', 'Materiais Didáticos', 'C', 'Sala', 16),
-('D1 - MODELAGEM', 'Ferramentas de Modelagem', 'D', 'Oficina', 16),
-('D2 - MODELAGEM', 'Estações de Trabalho de Modelagem', 'D', 'Oficina', 20),
-('D3 - AULA', 'Quadro e Projetor', 'D', 'Sala', 16),
-('D4 - CRIAÇÃO', 'Materiais de Artesanato', 'D', 'Oficina', 18),
-('LAB - ALIMENTOS', 'Equipamentos de Cozinha', 'L', 'Laboratório', 16),
-('OFI - AJUSTAGEM/FRESAGEM', 'Máquinas de Fresagem', 'O', 'Oficina', 16),
-('OFI - COMANDOS ELÉTRICOS', 'Circuitos Elétricos', 'O', 'Oficina', 16),
-('OFI - TORNEARIA', 'Torno Mecânico', 'O', 'Oficina', 20),
-('OFI - SOLDAGEM', 'Equipamentos de Solda', 'O', 'Oficina', 16),
-('OFI - MARCENARIA', 'Ferramentas de Marcenaria', 'O', 'Oficina', 16),
-('OFI - LIXAMENTO', 'Lixadeiras e Polidoras', 'O', 'Oficina', 16);
+('D1 - MODELAGEM', 'Ferramentas de Modelagem', 'C', 'Oficina', 16),
+('D2 - MODELAGEM', 'Estações de Trabalho de Modelagem', 'C', 'Oficina', 20),
+('D3 - AULA', 'Quadro e Projetor', 'C', 'Sala', 16),
+('D4 - CRIAÇÃO', 'Materiais de Artesanato', 'C', 'Oficina', 18),
+('LAB - ALIMENTOS', 'Equipamentos de Cozinha', 'C', 'Laboratório', 16),
+('OFI - AJUSTAGEM/FRESAGEM', 'Máquinas de Fresagem', 'C', 'Oficina', 16),
+('OFI - COMANDOS ELÉTRICOS', 'Circuitos Elétricos', 'C', 'Oficina', 16),
+('OFI - TORNEARIA', 'Torno Mecânico', 'C', 'Oficina', 20),
+('OFI - SOLDAGEM', 'Equipamentos de Solda', 'C', 'Oficina', 16),
+('OFI - MARCENARIA', 'Ferramentas de Marcenaria', 'C', 'Oficina', 16),
+('OFI - LIXAMENTO', 'Lixadeiras e Polidoras', 'C', 'Oficina', 16);
 
 INSERT IGNORE INTO reserva (data_inicio, data_fim, hora_inicio, hora_fim, dias_semana, fk_id_usuario, fk_id_sala) VALUES
 ('2025-12-31', '2025-12-31', '07:00:00', '08:00:00', '3', 1, 1),
 ('2025-12-31', '2025-12-31', '08:00:00', '09:00:00', '3', 1, 1),
-('2025-12-31', '2025-12-31', '09:00:00', '10:00:00', '3', 1, 1),
-('2025-12-31', '2025-12-31', '10:00:00', '11:00:00', '3', 1, 1),
-('2025-12-31', '2025-12-31', '11:00:00', '12:00:00', '3', 1, 1),
 ('2025-01-01', '2025-01-01', '07:00:00', '08:00:00', '3', 1, 1),
-('2025-01-01', '2025-01-01', '08:00:00', '09:00:00', '3', 1, 1),
-('2025-01-01', '2025-01-01', '09:00:00', '10:00:00', '3', 1, 1),
-('2025-01-01', '2025-01-01', '10:00:00', '11:00:00', '3', 1, 1),
-('2025-01-01', '2025-01-01', '11:00:00', '12:00:00', '3', 1, 1);
+('2025-01-01', '2025-01-01', '08:00:00', '09:00:00', '3', 1, 1);
 
 INSERT IGNORE INTO reserva (fk_id_usuario, fk_id_sala, data_inicio, data_fim, dias_semana, hora_inicio, hora_fim) VALUES
-(1, 1, '2025-01-06', '2025-01-11', '1,2,3,4,5,6', '07:00:00', '12:00:00'),
-(1, 1, '2025-01-13', '2025-01-18', '1,2,3,4,5,6', '07:00:00', '12:00:00'),
-(1, 1, '2025-01-20', '2025-01-25', '1,2,3,4,5,6', '07:00:00', '12:00:00'),
-(1, 1, '2025-12-01', '2025-12-06', '1,2,3,4,5,6', '07:00:00', '12:00:00'),
-(1, 1, '2025-12-08', '2025-12-14', '1,2,3,4,5,6', '07:00:00', '12:00:00'),
-(1, 1, '2025-12-15', '2025-12-21', '1,2,3,4,5,6', '07:00:00', '12:00:00');
+(1, 2, '2025-01-01', '2025-12-31', '1,2,3,4,5,6', '07:00:00', '12:00:00'),
+(1, 1, '2025-01-01', '2025-01-04', '3,4,5,6', '07:00:00', '12:00:00'),
+(1, 1, '2025-12-29', '2025-12-31', '1,2,3', '07:00:00', '12:00:00');
 
 -- ================================
 --    Views
@@ -128,8 +119,6 @@ LEFT JOIN
     reserva r ON u.id_usuario = r.fk_id_usuario
 GROUP BY
     u.id_usuario, u.nome;
-
--- VIEW: Lista as reservas de forma mais detalhada
 
 -- VIEW: Lista as reservas de forma mais detalhada
 
