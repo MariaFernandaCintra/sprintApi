@@ -27,9 +27,9 @@ router.put("/reserva/:id_reserva", verifyJWT, reservaController.updateReserva);
 router.delete("/reserva/:id_reserva/:id_usuario", verifyJWT, reservaController.deleteReserva);
 
 router.post("/reservaperiodica", verifyJWT, reservaPeriodicaController.createReservasPeriodicas);
-// router.get("/reservasperiodicas", verifyJWT, reservaController.getAllReservasPeriodicas);
-// router.put("/reservaperiodica/:id_reservaperiodica", verifyJWT, reservaController.updateReservaPeriodica);
-// router.delete("/reservaperiodica/:id_reservaperiodica/:id_usuario", verifyJWT, reservaController.deleteReservaPeriodica);
+router.get("/reservasperiodicas", verifyJWT, reservaPeriodicaController.getAllReservasPeriodicas);
+router.put("/reservaperiodica/:id_reservaperiodica", verifyJWT, reservaPeriodicaController.updateReservaPeriodica);
+router.delete("/reservaperiodica/:id_reservaperiodica/:id_usuario", verifyJWT, reservaPeriodicaController.deleteReservaPeriodica);
 
 router.post("/sala", salaController.createSalas);
 router.get("/salas", verifyJWT, salaController.getAllSalasTabela);

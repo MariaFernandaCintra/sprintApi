@@ -3,7 +3,7 @@ const { criarDataHora, formatarDataHoraAtual } = require("../utils/functions");
 
 module.exports = {
   // Valida os campos obrigatórios e regras de negócio para criação de reserva
-  validarCamposReserva: function ({
+  validarCamposCreate: function ({
     fk_id_usuario,
     fk_id_sala,
     data,
@@ -64,7 +64,7 @@ module.exports = {
   },
 
   // Valida os campos para atualização da reserva
-  validarCamposAtualizacao: function (
+  validarCamposUpdate: function (
     { fk_id_usuario, data, hora_inicio, hora_fim },
     reservaAtual = null
   ) {
@@ -131,7 +131,7 @@ module.exports = {
   },
 
   // Verifica se o usuário existe no banco de dados
-  verificarUsuario: async function (fk_id_usuario) {
+  validarUsuario: async function (fk_id_usuario) {
     const query = `SELECT id_usuario FROM usuario WHERE id_usuario = ?`;
     const values = [fk_id_usuario];
     return new Promise((resolve, reject) => {
@@ -143,7 +143,7 @@ module.exports = {
   },
 
   // Verifica se a sala existe no banco de dados
-  verificarSala: async function (fk_id_sala) {
+  validarSala: async function (fk_id_sala) {
     const query = `SELECT id_sala FROM sala WHERE id_sala = ?`;
     const values = [fk_id_sala];
     return new Promise((resolve, reject) => {
@@ -222,7 +222,7 @@ module.exports = {
     return { conflito: false };
   },
 
-  validarConflitoReservaAtualizacao: async function (
+  validarConflitoReservaUpdate: async function (
     id_reserva,
     fk_id_sala,
     data,

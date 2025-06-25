@@ -9,7 +9,7 @@ module.exports = class ReservaController {
     const { fk_id_usuario, fk_id_sala, data, hora_inicio, hora_fim } = req.body;
     const token = req.userId;
 
-    const erroValidacao = validateReserva.validarCamposReserva({
+    const erroValidacao = validateReserva.validarCamposCreate({
       fk_id_usuario,
       fk_id_sala,
       data,
@@ -19,7 +19,7 @@ module.exports = class ReservaController {
     if (erroValidacao) return res.status(400).json(erroValidacao);
 
     try {
-      const usuarioExiste = await validateReserva.verificarUsuario(
+      const usuarioExiste = await validateReserva.validarUsuario(
         fk_id_usuario
       );
       if (!usuarioExiste)
@@ -31,7 +31,7 @@ module.exports = class ReservaController {
           .json({ error: "Você não pode reservar para outro usuário" });
       }
 
-      const salaExiste = await validateReserva.verificarSala(fk_id_sala);
+      const salaExiste = await validateReserva.validarSala(fk_id_sala);
       if (!salaExiste)
         return res.status(404).json({ error: "Sala não encontrada" });
 
@@ -105,7 +105,7 @@ module.exports = class ReservaController {
       const reservaAtual = resultado[0];
 
       // Validação com dados da reserva atual para checar alterações
-      const erroValidacao = validateReserva.validarCamposAtualizacao(
+      const erroValidacao = validateReserva.validarCamposUpdate(
         { fk_id_usuario, data, hora_inicio, hora_fim },
         reservaAtual
       );
@@ -114,7 +114,7 @@ module.exports = class ReservaController {
       const { fk_id_sala } = reservaAtual;
 
       const conflitoResult =
-        await validateReserva.validarConflitoReservaAtualizacao(
+        await validateReserva.validarConflitoReservaUpdate(
           id_reserva,
           fk_id_sala,
           data,
