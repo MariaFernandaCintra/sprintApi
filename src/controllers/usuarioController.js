@@ -155,58 +155,65 @@ module.exports = class usuarioController {
     const { email, senha, nome } = req.body;
     const usuarioId = req.params.id_usuario;
     const token = req.userId;
-  
+
     if (Number(usuarioId) !== Number(token)) {
-      return res.status(400).json({ message: "Você não pode atualizar outro usuário" });
+      return res
+        .status(400)
+        .json({ message: "Você não pode atualizar outro usuário" });
     }
-  
+
     const idValidationError = validateUsuario.validateUsuarioId(usuarioId);
     if (idValidationError) {
       return res.status(400).json(idValidationError);
     }
-  
+
     try {
       const selectQuery = `SELECT email, senha, nome FROM usuario WHERE id_usuario = ?`;
       const [usuarioAtual] = await queryAsync(selectQuery, [usuarioId]);
-  
+
       if (!usuarioAtual) {
         return res.status(404).json({ error: "Usuário não encontrado" });
       }
-  
+
       // Substitui campos vazios pelos valores atuais
-      const novoEmail = email && email.trim() !== "" ? email.trim() : usuarioAtual.email;
-      const novoNome = nome && nome.trim() !== "" ? nome.trim() : usuarioAtual.nome;
+      const novoEmail =
+        email && email.trim() !== "" ? email.trim() : usuarioAtual.email;
+      const novoNome =
+        nome && nome.trim() !== "" ? nome.trim() : usuarioAtual.nome;
       const novaSenha = senha && senha.trim() !== "" ? senha.trim() : null;
-  
+
       const dataFinalParaValidar = {
         email: novoEmail,
         nome: novoNome,
       };
-  
+
       if (novaSenha) {
         dataFinalParaValidar.senha = novaSenha;
       }
-      
-      const updateValidationError = validateUsuario.validateUpdateUsuario(dataFinalParaValidar);
+
+      const updateValidationError =
+        validateUsuario.validateUpdateUsuario(dataFinalParaValidar);
       if (updateValidationError) {
         return res.status(400).json(updateValidationError);
       }
-  
+
       // Define se houve alteração
       const houveAlteracao =
         usuarioAtual.email !== novoEmail ||
         usuarioAtual.nome !== novoNome ||
         novaSenha;
-  
+
       if (!houveAlteracao) {
-        return res.status(400).json({ error: "Nenhuma alteração detectada nos dados enviados" });
+        return res
+          .status(400)
+          .json({ error: "Nenhuma alteração detectada nos dados enviados" });
       }
-  
+
       // Hash da nova senha, se houver
       const senhaFinal = novaSenha
         ? bcrypt.hashSync(novaSenha, Number(process.env.SALT_ROUNDS))
         : usuarioAtual.senha;
-  
+
       // Atualiza no banco
       const updateQuery = `UPDATE usuario SET email = ?, senha = ?, nome = ? WHERE id_usuario = ?`;
       const results = await queryAsync(updateQuery, [
@@ -215,20 +222,23 @@ module.exports = class usuarioController {
         novoNome,
         usuarioId,
       ]);
-  
+
       if (results.affectedRows === 0) {
         return res.status(404).json({ error: "Usuário não encontrado" });
       }
-  
-      return res.status(200).json({ message: "Usuário atualizado com sucesso" });
+
+      return res
+        .status(200)
+        .json({ message: "Usuário atualizado com sucesso" });
     } catch (error) {
       if (error.code === "ER_DUP_ENTRY") {
-        return res.status(400).json({ error: "O email já está vinculado a outro usuário" });
+        return res
+          .status(400)
+          .json({ error: "O email já está vinculado a outro usuário" });
       }
       return res.status(500).json({ error: "Erro interno no servidor" });
     }
   }
-  
 
   static async deleteUsuario(req, res) {
     const usuarioId = req.params.id_usuario;
@@ -297,116 +307,125 @@ module.exports = class usuarioController {
     const id_usuario = req.params.id_usuario;
     const token = req.userId;
 
-    // Valida se o ID foi fornecido
     const idValidationError = validateUsuario.validateUsuarioId(id_usuario);
     if (idValidationError) {
       return res.status(400).json(idValidationError);
     }
+
     if (Number(id_usuario) !== Number(token)) {
-      return res.status(400).json({
+      return res.status(403).json({
         message: "Você não pode visualizar as reservas de outro usuário",
       });
     }
+
     const queryReservas = `
-      SELECT r.id_reserva, s.nome, r.data, r.hora_inicio, r.hora_fim, r.dia_semana
-      FROM reserva r
-      JOIN sala s ON r.fk_id_sala = s.id_sala
-      WHERE r.fk_id_usuario = ?
-    `;
+    SELECT r.id_reserva, r.fk_id_usuario, r.fk_id_sala, r.data_inicio, r.data_fim, r.dias_semana, r.hora_inicio, r.hora_fim, s.nome
+    FROM reserva r
+    JOIN sala s ON r.fk_id_sala = s.id_sala
+    WHERE r.fk_id_usuario = ?
+  `;
+
     try {
-      const results = await queryAsync(queryReservas, [id_usuario]);
-      const reservas = results.map((reserva) => ({
+      const resultados = await queryAsync(queryReservas, [id_usuario]);
+
+      const reservas = resultados.map((reserva) => ({
+        tipo:
+          reserva.data_inicio === reserva.data_fim ? "simples" : "periodica",
         id_reserva: reserva.id_reserva,
         sala: reserva.nome,
-        dia_semana: reserva.dia_semana,
-        data: reserva.data ? formatarData(new Date(reserva.data)) : null,
+        data_inicio: formatarData(new Date(reserva.data_inicio)),
+        data_fim: formatarData(new Date(reserva.data_fim)),
+        dias_semana: reserva.dias_semana ? reserva.dias_semana.split(",") : [],
         hora_inicio: reserva.hora_inicio,
         hora_fim: reserva.hora_fim,
       }));
+
       if (reservas.length === 0) {
         return res
           .status(404)
-          .json({ error: "Nenhuma reserva encontrada para este usuário" });
+          .json({ message: "Nenhuma reserva encontrada para este usuário" });
       }
-      return res.status(200).json({ reservas });
+
+      return res.status(200).json(reservas);
     } catch (error) {
       console.error("Erro ao buscar reservas:", error);
-      return res.status(500).json({ error: "Erro interno do servidor" });
+      return res.status(500).json({ message: "Erro interno do servidor" });
     }
   }
 
-  static async getHistoricoReservas(req, res) {
-    const id_usuario = req.params.id_usuario;
-    const token = req.userId;
+static async getHistoricoReservas(req, res) {
+  const id_usuario = req.params.id_usuario;
+  const token = req.userId;
 
-    // Valida ID e token (somente o próprio usuário pode ver seu histórico)
-    const idValidationError = validateUsuario.validateUsuarioId(id_usuario);
-    if (idValidationError) {
-      return res.status(400).json(idValidationError);
-    }
-    if (Number(id_usuario) !== Number(token)) {
-      return res.status(400).json({
-        message: "Você não pode visualizar o histórico de outro usuário",
-      });
-    }
-
-    try {
-      const query = `CALL HistoricoReservaUsuario(?)`;
-      const [results] = await queryAsync(query, [id_usuario]);
-
-      // Atenção: MySQL retorna um array de arrays quando se usa CALL
-      const historico = results;
-
-      if (historico.length === 0) {
-        return res
-          .status(404)
-          .json({ message: "Nenhuma reserva anterior encontrada." });
-      }
-
-      return res.status(200).json({ historico });
-    } catch (error) {
-      console.error("Erro ao buscar histórico de reservas:", error);
-      return res.status(500).json({ error: "Erro interno do servidor" });
-    }
+  const idValidationError = validateUsuario.validateUsuarioId(id_usuario);
+  if (idValidationError) {
+    return res.status(400).json(idValidationError);
   }
+
+  if (Number(id_usuario) !== Number(token)) {
+    return res.status(403).json({
+      message: "Você não pode visualizar o histórico de outro usuário",
+    });
+  }
+
+  try {
+    const query = `CALL HistoricoReservaUsuario(?)`;
+
+    const [historicoReservas] = await queryAsync(query, [id_usuario]);
+
+    if (historicoReservas.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "Nenhuma reserva anterior encontrada." });
+    }
+
+    // Retorna o array completo de históricos
+    return res.status(200).json({ historico: historicoReservas });
+  } catch (error) {
+    console.error("Erro ao buscar histórico de reservas:", error);
+    return res.status(500).json({ message: "Erro interno do servidor" });
+  }
+}
 
   static async getHistoricoDelecao(req, res) {
     const token = req.userId;
     const id_usuario = req.params.id_usuario;
 
-    // Valida ID e token (somente o próprio usuário pode ver seu histórico)
+    // Validação do ID do usuário
     const idValidationError = validateUsuario.validateUsuarioId(id_usuario);
     if (idValidationError) {
       return res.status(400).json(idValidationError);
     }
+
+    // Verifica se o usuário está tentando acessar seu próprio histórico
     if (Number(id_usuario) !== Number(token)) {
-      return res.status(400).json({
-        message: "Você não pode visualizar o histórico de outro usuário",
+      return res.status(403).json({
+        message:
+          "Você não pode visualizar o histórico de deleções de outro usuário",
       });
     }
 
-    const query = `
-    SELECT 
-      id_log,
-      id_reserva,
-      fk_id_sala,
-      fk_id_usuario,
-      data_reserva,
-      hora_inicio_reserva,
-      hora_fim_reserva,
-      data_hora_log
-    FROM logreservas
-    WHERE fk_id_usuario = ?
-      AND tipo_operacao = 0
-    ORDER BY data_hora_log DESC
-  `;
+    const call = "CALL HistoricoDelecaoUsuario(?)";
 
     try {
-      const results = await queryAsync(query, [id_usuario]);
-      res.status(200).json({ historicoDelecao: results });
+      // Chama a procedure para pegar o histórico de deleções
+      const [results] = await queryAsync(call, [id_usuario]);
+
+      // Caso não haja resultados, retorna uma mensagem de 'não encontrado'
+      const historicoDelecao = results.length > 0 ? results[0] : [];
+
+      if (historicoDelecao.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "Nenhum histórico de deleção encontrado." });
+      }
+
+      return res.status(200).json({ historicoDelecao });
     } catch (error) {
       console.error("Erro ao buscar histórico de deleções:", error);
-      res.status(500).json({ error: "Erro ao buscar histórico de deleções" });
+      return res
+        .status(500)
+        .json({ message: "Erro interno ao buscar histórico de deleções" });
     }
   }
 };

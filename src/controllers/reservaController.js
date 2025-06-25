@@ -1,193 +1,557 @@
 const validateReserva = require("../services/validateReserva");
-const {
-  queryAsync,
-  formatarHorario,
-  getDiaSemana,
-  formatarDataParaComparar,
-} = require("../utils/functions");
+const { queryAsync } = require("../utils/functions");
+
+const diasSemanaTexto = {
+  1: "Segunda-feira",
+  2: "Terça-feira",
+  3: "Quarta-feira",
+  4: "Quinta-feira",
+  5: "Sexta-feira",
+  6: "Sábado",
+};
+
+function formatarDiasSemanaEmTexto(diasArray) {
+  if (!diasArray || diasArray.length === 0) return "";
+  const nomesDias = diasArray.map(
+    (dia) => diasSemanaTexto[dia] || dia.toString()
+  );
+  if (nomesDias.length === 1) return nomesDias[0];
+  if (nomesDias.length === 2) return `${nomesDias[0]} e ${nomesDias[1]}`;
+  return `${nomesDias.slice(0, -1).join(", ")} e ${
+    nomesDias[nomesDias.length - 1]
+  }`;
+}
 
 module.exports = class ReservaController {
-  static async createReservas(req, res) {
-    const { fk_id_usuario, fk_id_sala, data, hora_inicio, hora_fim } = req.body;
-    const token = req.userId;
-
-    const erroValidacao = validateReserva.validarCamposReserva({
+  static async createReservasSimples(req, res) {
+    const {
       fk_id_usuario,
       fk_id_sala,
       data,
       hora_inicio,
       hora_fim,
+    } = req.body;
+
+    const data_inicio = data;
+    const data_fim = data;
+    const dataLocal = new Date(data + "T00:00:00");
+    const diaSemana = dataLocal.getDay();
+    const dias_semana = [diaSemana];
+
+    const erroValidacao = validateReserva.validarCamposCreate({
+      fk_id_usuario,
+      fk_id_sala,
+      data_inicio,
+      data_fim,
+      dias_semana,
+      hora_inicio,
+      hora_fim,
     });
-    if (erroValidacao) return res.status(400).json(erroValidacao);
+
+    if (erroValidacao) {
+      return res.status(400).json(erroValidacao);
+    }
 
     try {
-      const usuarioExiste = await validateReserva.verificarUsuario(fk_id_usuario);
-      if (!usuarioExiste) return res.status(404).json({ error: "Usuário não encontrado" });
+      const usuarioExiste = await validateReserva.validarUsuario(fk_id_usuario);
+      const salaExiste = await validateReserva.validarSala(fk_id_sala);
 
-      if (Number(fk_id_usuario) !== Number(token)) {
-        return res.status(400).json({ message: "Você não pode reservar para outro usuário" });
+      if (!usuarioExiste || !salaExiste) {
+        return res
+          .status(404)
+          .json({ error: "Sala ou usuário não encontrado." });
       }
 
-      const salaExiste = await validateReserva.verificarSala(fk_id_sala);
-      if (!salaExiste) return res.status(404).json({ error: "Sala não encontrada" });
-
-      const conflitoResult = await validateReserva.validarConflitoReserva(
+      // Verificação de conflito de reserva
+      const conflito = await validateReserva.validarConflitoReserva(
         fk_id_sala,
-        data,
+        data_inicio,
+        data_fim,
+        dias_semana,
         hora_inicio,
         hora_fim
       );
 
-      if (conflitoResult.conflito) {
-        if (conflitoResult.disponivel) {
-          const { inicioDisponivel, fimDisponivel } = conflitoResult;
-          return res.status(400).json({
-            error: `A sala já está reservada neste horário. O próximo horário disponível é de ${formatarHorario(
-              inicioDisponivel
-            )} até ${formatarHorario(fimDisponivel)}`,
-          });
-        } else {
-          return res.status(400).json({
-            error: "Não há horários disponíveis para uma reserva de ao menos 30 minutos neste dia.",
-          });
-        }
+      if (conflito.conflito) {
+        return res.status(409).json({
+          error: "Conflitos encontrados com reservas existentes:",
+          conflitos: conflito.conflitos,
+        });
       }
 
-      const dia_semana = getDiaSemana(data);
-      const queryInsert = `
-        INSERT INTO reserva (fk_id_usuario, fk_id_sala, dia_semana, data, hora_inicio, hora_fim)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `;
-      await queryAsync(queryInsert, [
+      const insertQuery = `
+      INSERT INTO reserva (
+        fk_id_usuario, fk_id_sala, data_inicio, data_fim, dias_semana, hora_inicio, hora_fim
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+
+      await queryAsync(insertQuery, [
         fk_id_usuario,
         fk_id_sala,
-        dia_semana,
-        data,
+        data_inicio,
+        data_fim,
+        dias_semana.join(","),
         hora_inicio,
         hora_fim,
       ]);
 
-      return res.status(201).json({ message: "Sala reservada com sucesso!" });
+      const diaTexto = diasSemanaTexto[dias_semana[0]] || dias_semana[0];
+      const mensagem = `Reserva simples criada com sucesso. Ela vai acontecer no dia ${data_inicio}, toda ${diaTexto}, das ${hora_inicio} até ${hora_fim}.`;
+
+      return res.status(201).json({ message: mensagem });
     } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: "Erro ao criar reserva" });
+      return res.status(500).json({ error: "Erro interno ao criar reserva." });
+    }
+  }
+
+  static async createReservasPeriodicas(req, res) {
+    const {
+      fk_id_usuario,
+      fk_id_sala,
+      data_inicio,
+      data_fim,
+      dias_semana,
+      hora_inicio,
+      hora_fim,
+    } = req.body;
+
+    const diasSemanaArray = Array.isArray(dias_semana)
+      ? dias_semana
+      : String(dias_semana).split(",").map(Number);
+
+    const erroValidacao = validateReserva.validarCamposCreate({
+      fk_id_usuario,
+      fk_id_sala,
+      data_inicio,
+      data_fim,
+      dias_semana: diasSemanaArray,
+      hora_inicio,
+      hora_fim,
+    });
+
+    if (erroValidacao) {
+      return res.status(400).json(erroValidacao);
+    }
+
+    try {
+      const usuarioExiste = await validateReserva.validarUsuario(fk_id_usuario);
+      const salaExiste = await validateReserva.validarSala(fk_id_sala);
+
+      if (!usuarioExiste || !salaExiste) {
+        return res
+          .status(404)
+          .json({ error: "Sala ou usuário não encontrado." });
+      }
+
+      // Verificação de conflito de reserva
+      const conflito = await validateReserva.validarConflitoReserva(
+        fk_id_sala,
+        data_inicio,
+        data_fim,
+        diasSemanaArray,
+        hora_inicio,
+        hora_fim
+      );
+
+      if (conflito.conflito) {
+        return res.status(409).json({
+          error: "Conflitos encontrados com reservas existentes:",
+          conflitos: conflito.conflitos,
+        });
+      }
+
+      const insertQuery = `
+      INSERT INTO reserva (
+        fk_id_usuario, fk_id_sala, data_inicio, data_fim, dias_semana, hora_inicio, hora_fim
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+
+      await queryAsync(insertQuery, [
+        fk_id_usuario,
+        fk_id_sala,
+        data_inicio,
+        data_fim,
+        diasSemanaArray.join(","),
+        hora_inicio,
+        hora_fim,
+      ]);
+
+      const diasTexto = formatarDiasSemanaEmTexto(diasSemanaArray);
+      const mensagem = `Reserva periódica criada com sucesso. Ela vai acontecer de ${data_inicio} até ${data_fim}, todas as ${diasTexto}, começando sempre às ${hora_inicio} até ${hora_fim}.`;
+
+      return res.status(201).json({ message: mensagem });
+    } catch (error) {
+      return res.status(500).json({ error: "Erro interno ao criar reserva." });
     }
   }
 
   static async getAllReservas(req, res) {
-    const query = `SELECT * FROM reserva`;
     try {
-      const results = await queryAsync(query);
+      const query = `
+        SELECT
+          id_reserva,
+          fk_id_usuario,
+          fk_id_sala,
+          data_inicio,
+          data_fim,
+          dias_semana,
+          hora_inicio,
+          hora_fim
+        FROM reserva
+        ORDER BY data_inicio DESC
+      `;
+
+      const reservas = await queryAsync(query);
+
       return res.status(200).json({
         message: "Obtendo todas as reservas",
-        reservas: results,
+        reservas,
       });
     } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: "Erro Interno do Servidor" });
+      console.error("Erro ao buscar reservas:", error);
+      return res.status(500).json({
+        error: "Erro ao buscar reservas.",
+      });
     }
   }
 
-  static async updateReserva(req, res) {
-    const { fk_id_usuario, data, hora_inicio, hora_fim } = req.body;
-    const id_reserva = req.params.id_reserva;
-    const token = req.userId;
+  static async getAllReservasSimples(req, res) {
+    try {
+      const query = `
+      SELECT
+        id_reserva,
+        fk_id_usuario,
+        fk_id_sala,
+        data_inicio,
+        data_fim,
+        dias_semana,
+        hora_inicio,
+        hora_fim
+      FROM reserva
+      WHERE data_inicio = data_fim
+      ORDER BY data_inicio DESC
+    `;
 
-    const erroValidacao = validateReserva.validarCamposAtualizacao({
-      fk_id_usuario,
-      data,
-      hora_inicio,
-      hora_fim,
-    });
-    if (erroValidacao) return res.status(400).json(erroValidacao);
+      const reservasSimples = await queryAsync(query);
 
-    if (Number(fk_id_usuario) !== Number(token)) {
-      return res.status(400).json({
-        message: "Você não pode atualizar as reservas de outro usuário",
+      return res.status(200).json({
+        message: "Obtendo todas as reservas simples",
+        reservas: reservasSimples,
       });
+    } catch (error) {
+      console.error("Erro ao buscar reservas simples:", error);
+      return res.status(500).json({
+        error: "Erro ao buscar reservas simples.",
+      });
+    }
+  }
+
+  static async getAllReservasPeriodicas(req, res) {
+    try {
+      const query = `
+      SELECT
+        id_reserva,
+        fk_id_usuario,
+        fk_id_sala,
+        data_inicio,
+        data_fim,
+        dias_semana,
+        hora_inicio,
+        hora_fim
+      FROM reserva
+      WHERE data_inicio != data_fim
+      ORDER BY data_inicio DESC
+    `;
+
+      const reservasPeriodicas = await queryAsync(query);
+
+      return res.status(200).json({
+        message: "Obtendo todas as reservas periódicas",
+        reservas: reservasPeriodicas,
+      });
+    } catch (error) {
+      console.error("Erro ao buscar reservas periódicas:", error);
+      return res.status(500).json({
+        error: "Erro ao buscar reservas periódicas.",
+      });
+    }
+  }
+
+  static async updateReservasSimples(req, res) {
+    const { id_reserva } = req.params;
+    const { fk_id_usuario, fk_id_sala, data, hora_inicio, hora_fim } = req.body;
+
+    const dataLocal = new Date(data + "T00:00:00");
+    const diaSemana = dataLocal.getDay();
+    const dias_semana = [diaSemana];
+
+    let reservaAtual;
+
+    try {
+      const querySelect = `
+    SELECT
+      id_reserva,
+      fk_id_usuario,
+      fk_id_sala,
+      data_inicio,
+      data_fim,
+      dias_semana,
+      hora_inicio,
+      hora_fim
+    FROM reserva
+    WHERE id_reserva = ?
+  `;
+      const resultados = await queryAsync(querySelect, [id_reserva]);
+      if (resultados.length === 0) {
+        return res
+          .status(404)
+          .json({ error: "Reserva não encontrada para atualização." });
+      }
+      reservaAtual = resultados[0];
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ error: "Erro interno ao buscar reserva para atualização." });
+    }
+
+    // Validação dos campos da reserva
+    const erroValidacao = validateReserva.validarCamposUpdate(
+      {
+        fk_id_usuario,
+        fk_id_sala,
+        data_inicio: data,
+        data_fim: data,
+        dias_semana: dias_semana,
+        hora_inicio,
+        hora_fim,
+      },
+      reservaAtual
+    );
+    if (erroValidacao) {
+      return res.status(400).json(erroValidacao);
     }
 
     try {
-      const querySelect = `SELECT fk_id_sala, data, hora_inicio, hora_fim FROM reserva WHERE id_reserva = ?`;
-      const resultado = await queryAsync(querySelect, [id_reserva]);
-
-      if (resultado.length === 0) return res.status(404).json({ error: "Reserva não encontrada" });
-
-      const reservaAtual = resultado[0];
-
-      const dataAtualFormatada = formatarDataParaComparar(reservaAtual.data);
-      const dataEnviadaFormatada = data; // já no formato "YYYY-MM-DD"
-
-      if (
-        dataAtualFormatada === dataEnviadaFormatada &&
-        reservaAtual.hora_inicio === hora_inicio &&
-        reservaAtual.hora_fim === hora_fim
-      ) {
-        return res.status(400).json({
-          error: "Os dados informados são iguais aos da reserva atual. Nenhuma alteração foi feita.",
-        });
+      // Verificação de existência de usuário e sala
+      const usuarioExiste = await validateReserva.validarUsuario(fk_id_usuario);
+      const salaExiste = await validateReserva.validarSala(fk_id_sala);
+      if (!usuarioExiste || !salaExiste) {
+        return res
+          .status(404)
+          .json({ error: "Sala ou usuário não encontrado." });
       }
 
-      const { fk_id_sala } = reservaAtual;
-
-      const conflitoResult = await validateReserva.validarConflitoReservaAtualizacao(
+      // Verificando conflitos de reservas
+      const conflito = await validateReserva.validarConflitoReservaUpdate(
         id_reserva,
         fk_id_sala,
         data,
+        data,
+        dias_semana, // Passando o dia da semana corretamente
         hora_inicio,
         hora_fim
       );
 
-      if (conflitoResult.conflito) {
-        const { inicioDisponivel, fimDisponivel } = conflitoResult;
-        return res.status(400).json({
-          error: `A sala já está reservada neste horário. O maior intervalo disponível é de ${formatarHorario(
-            inicioDisponivel
-          )} até ${formatarHorario(fimDisponivel)}`,
+      if (conflito.conflito) {
+        return res.status(409).json({
+          error: "Conflitos encontrados com outras reservas existentes:",
+          conflitos: conflito.conflitos,
         });
       }
 
-      const dia_semana = getDiaSemana(data);
-      const queryUpdate = `
-        UPDATE reserva 
-        SET data = ?, hora_inicio = ?, hora_fim = ?, dia_semana = ?
-        WHERE id_reserva = ?
-      `;
-
-      await queryAsync(queryUpdate, [
+      // Atualizando a reserva
+      const updateQuery = `
+    UPDATE reserva SET
+      fk_id_usuario = ?,
+      fk_id_sala = ?,
+      data_inicio = ?,
+      data_fim = ?,
+      dias_semana = ?,
+      hora_inicio = ?,
+      hora_fim = ?
+    WHERE id_reserva = ?
+  `;
+      await queryAsync(updateQuery, [
+        fk_id_usuario,
+        fk_id_sala,
         data,
+        data,
+        dias_semana.join(","), // Certifique-se de armazenar o valor correto para os dias
         hora_inicio,
         hora_fim,
-        dia_semana,
         id_reserva,
       ]);
 
-      return res.status(200).json({ message: "Reserva atualizada com sucesso!" });
+      // Convertendo o dia da semana para o nome por extenso
+      const diaSemanaTexto = formatarDiasSemanaEmTexto(dias_semana);
+      const mensagem = `Reserva simples atualizada com sucesso. Ela vai acontecer na ${diaSemanaTexto}, dia ${data}, das ${hora_inicio} até ${hora_fim}.`;
+
+      return res.status(200).json({ message: mensagem });
     } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: "Erro ao atualizar reserva" });
+      return res
+        .status(500)
+        .json({ error: "Erro interno ao atualizar reserva." });
+    }
+  }
+
+  static async updateReservasPeriodicas(req, res) {
+    const { id_reserva } = req.params;
+    const {
+      fk_id_usuario,
+      fk_id_sala,
+      data_inicio,
+      data_fim,
+      dias_semana,
+      hora_inicio,
+      hora_fim,
+    } = req.body;
+
+    const diasSemanaArray = Array.isArray(dias_semana)
+      ? dias_semana
+      : String(dias_semana).split(",").map(Number);
+
+    let reservaAtual;
+
+    try {
+      const querySelect = `
+      SELECT
+        id_reserva,
+        fk_id_usuario,
+        fk_id_sala,
+        data_inicio,
+        data_fim,
+        dias_semana,
+        hora_inicio,
+        hora_fim
+      FROM reserva
+      WHERE id_reserva = ?
+    `;
+      const resultados = await queryAsync(querySelect, [id_reserva]);
+      if (resultados.length === 0) {
+        return res
+          .status(404)
+          .json({ error: "Reserva não encontrada para atualização." });
+      }
+      reservaAtual = resultados[0];
+    } catch (error) {
+      console.error("Erro ao buscar reserva atual para atualização:", error);
+      return res
+        .status(500)
+        .json({ error: "Erro interno ao buscar reserva para atualização." });
+    }
+
+    const erroValidacao = validateReserva.validarCamposUpdate(
+      {
+        fk_id_usuario,
+        fk_id_sala,
+        data_inicio,
+        data_fim,
+        dias_semana: diasSemanaArray,
+        hora_inicio,
+        hora_fim,
+      },
+      reservaAtual
+    );
+    if (erroValidacao) {
+      return res.status(400).json(erroValidacao);
+    }
+
+    try {
+      const usuarioExiste = await validateReserva.validarUsuario(fk_id_usuario);
+      const salaExiste = await validateReserva.validarSala(fk_id_sala);
+      if (!usuarioExiste || !salaExiste) {
+        return res
+          .status(404)
+          .json({ error: "Sala ou usuário não encontrado." });
+      }
+
+      const conflito = await validateReserva.validarConflitoReservaUpdate(
+        id_reserva,
+        fk_id_sala,
+        data_inicio,
+        data_fim,
+        diasSemanaArray,
+        hora_inicio,
+        hora_fim
+      );
+
+      if (conflito.conflito) {
+        return res.status(409).json({
+          error: "Conflitos encontrados com outras reservas existentes:",
+          conflitos: conflito.conflitos,
+        });
+      }
+
+      const updateQuery = `
+      UPDATE reserva SET
+        fk_id_usuario = ?,
+        fk_id_sala = ?,
+        data_inicio = ?,
+        data_fim = ?,
+        dias_semana = ?,
+        hora_inicio = ?,
+        hora_fim = ?
+      WHERE id_reserva = ?
+    `;
+      await queryAsync(updateQuery, [
+        fk_id_usuario,
+        fk_id_sala,
+        data_inicio,
+        data_fim,
+        diasSemanaArray.join(","),
+        hora_inicio,
+        hora_fim,
+        id_reserva,
+      ]);
+
+      const diasTexto = formatarDiasSemanaEmTexto(diasSemanaArray);
+      const mensagem = `Reserva periódica atualizada com sucesso. Ela vai acontecer de ${data_inicio} até ${data_fim}, todas as ${diasTexto}, começando sempre às ${hora_inicio} até ${hora_fim}.`;
+      return res.status(200).json({ message: mensagem });
+    } catch (error) {
+      console.error("Erro ao atualizar reserva:", error);
+      return res
+        .status(500)
+        .json({ error: "Erro interno ao atualizar reserva." });
     }
   }
 
   static async deleteReserva(req, res) {
-    const id_reserva = req.params.id_reserva;
+    const { id_reserva } = req.params;
     const usuarioId = req.params.id_usuario;
     const token = req.userId;
 
     if (Number(usuarioId) !== Number(token)) {
-      return res.status(400).json({
-        message: "Você não pode deletar as reservar de outro usuário",
+      return res.status(403).json({
+        message:
+          "Você não tem permissão para deletar as reservas de outro usuário.",
       });
     }
-    const query = `DELETE FROM reserva WHERE id_reserva = ?`;
+
+    const selectQuery = `SELECT fk_id_usuario FROM reserva WHERE id_reserva = ?`;
     try {
-      const results = await queryAsync(query, [id_reserva]);
-      if (results.affectedRows === 0) {
-        return res.status(404).json({ error: "Reserva não encontrada" });
+      const rows = await queryAsync(selectQuery, [id_reserva]);
+      if (rows.length === 0) {
+        return res
+          .status(404)
+          .json({ error: "Reserva não encontrada para deleção." });
       }
+      if (rows[0].fk_id_usuario !== Number(usuarioId)) {
+        return res
+          .status(403)
+          .json({ error: "Você não tem permissão para deletar esta reserva." });
+      }
+
+      const deleteQuery = `DELETE FROM reserva WHERE id_reserva = ?`;
+      const results = await queryAsync(deleteQuery, [id_reserva]);
+      if (results.affectedRows === 0) {
+        return res
+          .status(404)
+          .json({ error: "Reserva não encontrada ou já deletada." });
+      }
+
       return res.status(200).json({ message: "Reserva excluída com sucesso" });
     } catch (error) {
-      console.error(error);
+      console.error("Erro ao deletar reserva:", error);
       return res.status(500).json({ error: "Erro interno no servidor" });
     }
   }

@@ -12,6 +12,38 @@ const queryAsync = (query, values = []) => {
   });
 };
 
+const criarDataHora = (data, hora) => {
+  if (!data || !hora || !hora.includes(":")) {
+    console.log("Data ou hora inválida:", data, hora);
+    return new Date("invalid");
+  }
+
+  const [ano, mes, dia] = data.split("-").map(Number);
+  const [h, m, s = "00"] = hora.split(":").map(Number);
+
+  const dataHora = new Date(ano, mes - 1, dia, h, m, s);
+
+  if (isNaN(dataHora.getTime())) {
+    console.log("Data inválida montada:", ano, mes, dia, h, m, s);
+  }
+
+  return dataHora;
+};
+
+const formatarDataHoraAtual = () => {
+  const now = new Date();
+  now.setSeconds(0); // Zera os segundos
+  now.setMilliseconds(0); // Zera os milissegundos
+
+  const day = String(now.getDate()).padStart(2, "0");
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const year = now.getFullYear();
+  const hour = String(now.getHours()).padStart(2, "0");
+  const minute = String(now.getMinutes()).padStart(2, "0");
+
+  return `${day}-${month}-${year} ${hour}:${minute}:00`;
+};
+
 const formatarData = (data) => {
   const dataConvertida = typeof data === "string" ? new Date(data) : data;
   const day = String(dataConvertida.getDate()).padStart(2, "0");
@@ -20,34 +52,10 @@ const formatarData = (data) => {
   return `${day}-${month}-${year}`;
 };
 
-const formatarHorario = (dateObj) => {
-  const horas = String(dateObj.getHours()).padStart(2, "0");
-  const minutos = String(dateObj.getMinutes()).padStart(2, "0");
-  const segundos = String(dateObj.getSeconds()).padStart(2, "0");
-  return `${horas}:${minutos}:${segundos}`;
-};
-
 function getDiaSemana(data) {
-  const [year, month, day] = data.split("-").map(Number);
-  const date = new Date(year, month - 1, day);
-  const diasSemana = [
-    "Domingo",
-    "Segunda-Feira",
-    "Terça-Feira",
-    "Quarta-Feira",
-    "Quinta-Feira",
-    "Sexta-Feira",
-    "Sábado",
-  ];
-  return diasSemana[date.getDay()];
-}
-
-function formatarDataParaComparar(dateInput) {
-  const d = new Date(dateInput);
-  const ano = d.getFullYear();
-  const mes = String(d.getMonth() + 1).padStart(2, "0");
-  const dia = String(d.getDate()).padStart(2, "0");
-  return `${ano}-${mes}-${dia}`;
+  const date = new Date(data);
+  let dia = date.getDay();
+  return dia === 0 ? 1 : dia + 1;
 }
 
 const jwt = require("jsonwebtoken");
@@ -63,4 +71,4 @@ function validarSenha(senha) {
   return regex.test(senha);
 }
 
-module.exports = { queryAsync, formatarData, formatarHorario, getDiaSemana, formatarDataParaComparar, validarSenha, criarToken };
+module.exports = { queryAsync, criarDataHora, formatarDataHoraAtual, formatarData, getDiaSemana, validarSenha, criarToken };

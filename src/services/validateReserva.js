@@ -1,374 +1,420 @@
+// services/validateReserva.js
 const connect = require("../db/connect");
+const { criarDataHora } = require("../utils/functions"); // Assumindo que criarDataHora está definido aqui
 
-// Função auxiliar para formatar a data e hora atuais no padrão "DD-MM-YYYY HH:MM:SS"
-const formatarDataHoraAtual = () => {
-  const now = new Date();
-  now.setSeconds(0); // Zera os segundos
-  now.setMilliseconds(0); // Zera os milissegundos
-
-  const day = String(now.getDate()).padStart(2, "0");
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const year = now.getFullYear();
-  const hour = String(now.getHours()).padStart(2, "0");
-  const minute = String(now.getMinutes()).padStart(2, "0");
-
-  return `${day}-${month}-${year} ${hour}:${minute}:00`;
-};
-
-// Função auxiliar para criar um objeto Date a partir de data e horário
-const criarDataHora = (data, hora) => {
-  if (!data || !hora || !hora.includes(":")) {
-    console.log("Data ou hora inválida:", data, hora);
-    return new Date("invalid");
-  }
-
-  const [ano, mes, dia] = data.split("-").map(Number);
-  const [h, m, s = "00"] = hora.split(":").map(Number);
-
-  const dataHora = new Date(ano, mes - 1, dia, h, m, s);
-
-  if (isNaN(dataHora.getTime())) {
-    console.log("Data inválida montada:", ano, mes, dia, h, m, s);
-  }
-
-  return dataHora;
-};
+// Função auxiliar para converter uma string de hora (HH:MM:SS) em minutos desde a meia-noite.
+function timeToMinutes(timeStr) {
+  const [hours, minutes] = timeStr.split(":").map(Number);
+  return hours * 60 + minutes;
+}
 
 module.exports = {
-  // Valida os campos obrigatórios e regras de negócio para criação de reserva
-  validarCamposReserva: function ({
-    fk_id_usuario,
-    fk_id_sala,
-    data,
-    hora_inicio,
-    hora_fim,
-  }) {
-    if (!fk_id_usuario || !fk_id_sala || !data || !hora_inicio || !hora_fim) {
-      return { error: "Todos os campos devem ser preenchidos" };
-    }
-
-    const inicioTime = criarDataHora(data, hora_inicio);
-    const fimTime = criarDataHora(data, hora_fim);
-    const now = new Date();
-    const nowFormatado = formatarDataHoraAtual();
-    const [year, month, day] = data.split("-").map(Number);
-    const date = new Date(year, month - 1, day);
-
-    // Remove segundos e milissegundos da hora
-    inicioTime.setSeconds(0, 0);
-    fimTime.setSeconds(0, 0);
-    now.setSeconds(0, 0);
-
-    if (inicioTime < now) {
-      return { error: "A reserva deve ser depois de: " + nowFormatado };
-    }
-
-    if (fimTime <= inicioTime) {
-      return { error: "A hora de início deve ser antes da hora de fim" };
-    }
-
-    if (date.getDay() === 0) {
-      return { error: "A reserva não pode ser feita em um domingo" };
-    }
-
-    const inicioHour = inicioTime.getHours();
-    const fimHour = fimTime.getHours();
-    
-    if (inicioHour < 7 || inicioHour > 23 || fimHour < 7 || fimHour > 23) {
-      return {
-        error:
-          "A reserva deve ser feita no horário de funcionamento do SENAI. Entre 7:00 e 23:00",
-      };
-    }
-
-    // Verifica se inicioTime e fimTime são válidos
-    if (isNaN(inicioTime.getTime()) || isNaN(fimTime.getTime())) {
-      return { error: "Hora de início ou Hora de Fim Inválida" };
-    }
-
-    const duracao = fimTime - inicioTime;
-    const limite = 30 * 60 * 1000;
-
-    if (duracao < limite) {
-      return { error: "A reserva deve ter no mínimo 30 minutos" };
-    }
-
-    return null;
-  },
-
-  // Valida os campos para atualização da reserva
-  validarCamposAtualizacao: function ({
-    fk_id_usuario,
-    data,
-    hora_inicio,
-    hora_fim,
-  }) {
-    if (!fk_id_usuario || !data || !hora_inicio || !hora_fim) {
-      return { error: "Todos os campos devem ser preenchidos" };
-    }
-
-    const inicioTime = criarDataHora(data, hora_inicio);
-    const fimTime = criarDataHora(data, hora_fim);
-    const now = new Date();
-    const nowFormatado = formatarDataHoraAtual();
-
-    if (inicioTime < now) {
-      return { error: "A reserva deve ser depois de: " + nowFormatado };
-    }
-
-    if (fimTime <= inicioTime) {
-      return { error: "A hora de início deve ser antes da hora de fim" };
-    }
-
-    const inicioHour = inicioTime.getHours();
-    const fimHour = fimTime.getHours();
-    if (inicioHour < 7 || inicioHour > 23 || fimHour < 7 || fimHour > 23) {
-      return {
-        error:
-          "A reserva deve ser feita no horário de funcionamento do SENAI. Entre 7:00 e 23:00",
-      };
-    }
-
-    return null;
-  },
-
-  // Verifica se o usuário existe no banco de dados
-  verificarUsuario: async function (fk_id_usuario) {
+  validarUsuario: async function (fk_id_usuario) {
     const query = `SELECT id_usuario FROM usuario WHERE id_usuario = ?`;
     const values = [fk_id_usuario];
     return new Promise((resolve, reject) => {
       connect.query(query, values, (err, results) => {
-        if (err) return reject(err);
+        if (err) {
+          console.error("Erro em validarUsuario:", err);
+          return reject(err);
+        }
         resolve(results.length > 0);
       });
     });
   },
 
-  // Verifica se a sala existe no banco de dados
-  verificarSala: async function (fk_id_sala) {
+  validarSala: async function (fk_id_sala) {
     const query = `SELECT id_sala FROM sala WHERE id_sala = ?`;
     const values = [fk_id_sala];
     return new Promise((resolve, reject) => {
       connect.query(query, values, (err, results) => {
-        if (err) return reject(err);
+        if (err) {
+          console.error("Erro em validarSala:", err);
+          return reject(err);
+        }
         resolve(results.length > 0);
       });
     });
   },
 
-  // Valida conflitos de horário para criação de reserva e, se houver, tenta obter o próximo horário disponível
-  validarConflitoReserva: async function (
+  validarCamposCreate: function ({
+    fk_id_usuario,
     fk_id_sala,
-    data,
+    data_inicio,
+    data_fim,
+    dias_semana,
     hora_inicio,
-    hora_fim
-  ) {
-    const query = `
-      SELECT hora_inicio, hora_fim
-      FROM reserva
-      WHERE fk_id_sala = ? AND data = ?
-      ORDER BY hora_inicio ASC
-    `;
-    const values = [fk_id_sala, data];
+    hora_fim,
+  }) {
+    const diasSemanaArray = Array.isArray(dias_semana)
+      ? dias_semana
+      : String(dias_semana).split(",").map(Number);
 
-    return new Promise((resolve, reject) => {
-      connect.query(query, values, (err, reservas) => {
-        if (err) return reject(err);
+    if (
+      !fk_id_usuario ||
+      !fk_id_sala ||
+      !data_inicio ||
+      !data_fim ||
+      !diasSemanaArray ||
+      diasSemanaArray.length === 0 ||
+      !hora_inicio ||
+      !hora_fim
+    ) {
+      return { error: "Todos os campos devem ser preenchidos" };
+    }
 
-        // Função para criar um horário sem segundos e milissegundos
-        function truncarSegundosEms(date) {
-          const novaData = new Date(date);
-          novaData.setSeconds(0, 0); // Remove segundos e milissegundos
-          return novaData;
-        }
+    if (!Array.isArray(diasSemanaArray)) {
+      return { error: "dias_semana deve ser um array de números" };
+    }
 
-        // Função para criar o horário de forma consistente
-        function criarHorario(horaStr) {
-          const [hour, minute, second] = horaStr.split(":").map(Number);
-          const now = new Date();
-          now.setHours(hour, minute, second, 0); // Sem milissegundos
-          return now;
-        }
+    const inicio = criarDataHora(data_inicio, hora_inicio);
+    const fim = criarDataHora(data_fim, hora_fim);
+    const now = new Date();
 
-        const uReservaInicio = truncarSegundosEms(criarHorario(hora_inicio));
-        const uReservaFim = truncarSegundosEms(criarHorario(hora_fim));
+    if (inicio.getTime() < now.getTime()) {
+      return { error: "A data e hora de início devem ser no futuro" };
+    }
+    if (fim.getTime() <= inicio.getTime()) {
+      return { error: "A data e hora de fim devem ser após a de início" };
+    }
 
-        let conflito = false;
+    const horaIni = criarDataHora("2000-01-01", hora_inicio);
+    const horaFim = criarDataHora("2000-01-01", hora_fim);
 
-        // Verifica se há conflito com alguma reserva existente
-        for (const reserva of reservas) {
-          const reservaInicio = truncarSegundosEms(
-            criarHorario(reserva.hora_inicio)
-          );
-          const reservaFim = truncarSegundosEms(criarHorario(reserva.hora_fim));
+    if (horaIni.getTime() >= horaFim.getTime()) {
+      return { error: "Hora de início deve ser antes da de fim" };
+    }
 
-          // Verifica o conflito de horários
-          if (uReservaInicio < reservaFim && uReservaFim > reservaInicio) {
-            conflito = true;
-            break;
-          }
-        }
+    const hInicio = horaIni.getHours();
+    const hFim = horaFim.getHours();
 
-        // Se não houver conflito, retorna o resultado
-        if (!conflito) {
-          return resolve({ conflito: false });
-        }
+    if (hInicio < 7 || hFim > 23 || (hFim === 23 && horaFim.getMinutes() > 0)) {
+      return { error: "A reserva deve estar entre 07:00 e 23:00" };
+    }
 
-        // Se houver conflito, procura o primeiro intervalo livre com mínimo de 30 minutos
-        const duracaoMinimaMs = 30 * 60 * 1000;
-        let inicioDisponivel = uReservaInicio;
-        const fimDoDia = truncarSegundosEms(criarHorario("23:00:00"));
-
-        let proximoInicioDisponivel = fimDoDia; // Inicializa com o fim do dia
-
-        for (const reserva of reservas) {
-          const reservaInicio = truncarSegundosEms(
-            criarHorario(reserva.hora_inicio)
-          );
-          const reservaFim = truncarSegundosEms(criarHorario(reserva.hora_fim));
-
-          // Verifica se há um espaço livre de pelo menos 30 minutos
-          if (
-            inicioDisponivel.getTime() + duracaoMinimaMs <=
-            reservaInicio.getTime()
-          ) {
-            proximoInicioDisponivel = reservaInicio;
-            break; // Encontrou um intervalo disponível
-          } else if (inicioDisponivel < reservaFim) {
-            inicioDisponivel = reservaFim;
-          }
-        }
-
-        // Define o fimDisponivel como o início da próxima reserva ou o fim do dia
-        const fimDisponivel = proximoInicioDisponivel;
-
-        // Verifica se o horário disponível tem pelo menos 30 minutos
-        if (
-          fimDisponivel.getTime() - inicioDisponivel.getTime() <
-          duracaoMinimaMs
-        ) {
-          return resolve({ conflito: true, disponivel: false });
-        }
-
-        return resolve({
-          conflito: true,
-          disponivel: true,
-          inicioDisponivel,
-          fimDisponivel,
-        });
-      });
-    });
+    const duracao = horaFim.getTime() - horaIni.getTime();
+    const limite = 30 * 60 * 1000;
+    if (duracao < limite) {
+      return { error: "A duração mínima por reserva é de 30 minutos" };
+    }
+    return null;
   },
 
-  validarConflitoReservaAtualizacao: async function (
-    id_reserva,
-    fk_id_sala,
-    data,
-    hora_inicio,
-    hora_fim
+  validarCamposUpdate: function (
+    {
+      fk_id_usuario,
+      fk_id_sala,
+      data_inicio,
+      data_fim,
+      dias_semana,
+      hora_inicio,
+      hora_fim,
+    },
+    reservaAtual = null
   ) {
-    const query = `
-    SELECT hora_inicio, hora_fim
+    // Validação de campos obrigatórios (chama a função de validação do create)
+    const erroCamposObrigatorios = this.validarCamposCreate({
+      fk_id_usuario,
+      fk_id_sala,
+      data_inicio,
+      data_fim,
+      dias_semana,
+      hora_inicio,
+      hora_fim,
+    });
+    if (erroCamposObrigatorios) return erroCamposObrigatorios;
+
+    const diasSemanaArray = Array.isArray(dias_semana)
+      ? dias_semana
+      : String(dias_semana).split(",").map(Number);
+
+    // Verificação se algum campo foi alterado
+    if (reservaAtual) {
+      const reservaAtualDias = reservaAtual.dias_semana
+        .split(",")
+        .map(String)
+        .sort();
+      const novosDias = diasSemanaArray.map(String).sort();
+
+      const mesmosCampos =
+        reservaAtual.fk_id_usuario === fk_id_usuario &&
+        reservaAtual.fk_id_sala === fk_id_sala &&
+        reservaAtual.data_inicio === data_inicio &&
+        reservaAtual.data_fim === data_fim &&
+        JSON.stringify(reservaAtualDias) === JSON.stringify(novosDias) &&
+        reservaAtual.hora_inicio === hora_inicio &&
+        reservaAtual.hora_fim === hora_fim;
+
+      if (mesmosCampos) {
+        return { error: "Nenhuma alteração foi feita na reserva atual." };
+      }
+    }
+
+    const inicio = criarDataHora(data_inicio, hora_inicio);
+    const fim = criarDataHora(data_fim, hora_fim);
+    const now = new Date();
+
+    if (inicio.getTime() < now.getTime()) {
+      return { error: "A data e hora de início devem ser no futuro" };
+    }
+    if (fim.getTime() <= inicio.getTime()) {
+      return { error: "A data e hora de fim devem ser após a de início" };
+    }
+
+    const horaIni = criarDataHora("2000-01-01", hora_inicio);
+    const horaFim = criarDataHora("2000-01-01", hora_fim);
+
+    if (horaIni.getTime() >= horaFim.getTime()) {
+      return { error: "Hora de início deve ser antes da de fim" };
+    }
+
+    const hInicio = horaIni.getHours();
+    const hFim = horaFim.getHours();
+
+    if (hInicio < 7 || hFim > 23 || (hFim === 23 && horaFim.getMinutes() > 0)) {
+      return { error: "A reserva deve estar entre 07:00 e 23:00" };
+    }
+
+    const duracao = horaFim.getTime() - horaIni.getTime();
+    const limite = 30 * 60 * 1000;
+    if (duracao < limite) {
+      return { error: "A duração mínima por reserva é de 30 minutos" };
+    }
+
+    return null;
+  },
+
+  validarConflitoReserva: async function (
+    fk_id_sala,
+    nova_data_inicio,
+    nova_data_fim,
+    novos_dias_semana,
+    nova_hora_inicio,
+    nova_hora_fim
+  ) {
+    // Converte horários da nova reserva para minutos desde a meia-noite (local)
+    const novaHoraInicioMinutos = timeToMinutes(nova_hora_inicio);
+    const novaHoraFimMinutos = timeToMinutes(nova_hora_fim);
+
+    // Criação de um Set com os novos dias da semana para verificar os conflitos
+    const novosDiasSet = new Set(novos_dias_semana.map(Number));
+
+    const dataLocal = new Date(nova_data_inicio + "T00:00:00");
+    const diaSemana = dataLocal.getDay();
+
+    // Verificação para garantir que não seja domingo (0)
+    if (diaSemana === 0) {
+      return {
+        conflito: true,
+        conflitos: [
+          {
+            error:
+              "Reservas não são permitidas no domingo. Por favor, escolha um dia entre segunda e sábado.",
+          },
+        ],
+      };
+    }
+
+    // Consulta SQL para buscar reservas existentes para a mesma sala
+    const queryReservasExistentes = `
+    SELECT
+      id_reserva,
+      data_inicio,
+      data_fim,
+      dias_semana,
+      hora_inicio,
+      hora_fim
     FROM reserva
-    WHERE fk_id_sala = ? AND data = ? AND id_reserva != ?
-    ORDER BY hora_inicio ASC
+    WHERE fk_id_sala = ?
+      AND data_fim >= ?
+      AND data_inicio <= ?
   `;
 
-    const values = [fk_id_sala, data, id_reserva];
-
-    return new Promise((resolve, reject) => {
-      connect.query(query, values, (err, reservasExistentes) => {
-        if (err) return reject(err);
-
-        const truncarSegundos = (date) => {
-          const novaData = new Date(date);
-          novaData.setSeconds(0, 0);
-          return novaData;
-        };
-
-        const criarHorario = (horaStr) => {
-          const [h, m, s] = horaStr.split(":").map(Number);
-          const date = new Date();
-          date.setHours(h, m, s || 0, 0);
-          return date;
-        };
-
-        const uInicio = truncarSegundos(criarHorario(hora_inicio));
-        const uFim = truncarSegundos(criarHorario(hora_fim));
-
-        const duracaoMinimaMs = 30 * 60 * 1000;
-        const inicioDia = truncarSegundos(criarHorario("07:00:00"));
-        const fimDia = truncarSegundos(criarHorario("23:00:00"));
-
-        for (const reserva of reservasExistentes) {
-          const rInicio = truncarSegundos(criarHorario(reserva.hora_inicio));
-          const rFim = truncarSegundos(criarHorario(reserva.hora_fim));
-
-          if (uInicio < rFim && uFim > rInicio) {
-            // Conflito encontrado
-
-            let maiorInicio = null;
-            let maiorFim = null;
-
-            // Inclui todos os intervalos possíveis
-            const intervalosLivres = [];
-
-            let anteriorFim = inicioDia;
-
-            for (const res of reservasExistentes) {
-              const atualInicio = truncarSegundos(
-                criarHorario(res.hora_inicio)
-              );
-
-              if (
-                anteriorFim.getTime() + duracaoMinimaMs <=
-                atualInicio.getTime()
-              ) {
-                intervalosLivres.push({
-                  inicio: new Date(anteriorFim),
-                  fim: new Date(atualInicio),
-                });
-              }
-
-              anteriorFim = truncarSegundos(criarHorario(res.hora_fim));
-            }
-
-            // Verifica intervalo final do último fim até 23h
-            if (anteriorFim.getTime() + duracaoMinimaMs <= fimDia.getTime()) {
-              intervalosLivres.push({
-                inicio: new Date(anteriorFim),
-                fim: new Date(fimDia),
-              });
-            }
-
-            // Seleciona o maior intervalo livre
-            if (intervalosLivres.length > 0) {
-              const maior = intervalosLivres.reduce((a, b) => {
-                const durA = a.fim.getTime() - a.inicio.getTime();
-                const durB = b.fim.getTime() - b.inicio.getTime();
-                return durA >= durB ? a : b;
-              });
-
-              maiorInicio = maior.inicio;
-              maiorFim = maior.fim;
-            }
-
-            if (maiorInicio && maiorFim) {
-              return resolve({
-                conflito: true,
-                disponivel: true,
-                inicioDisponivel: maiorInicio,
-                fimDisponivel: maiorFim,
-              });
-            }
-
-            return resolve({ conflito: true, disponivel: false });
+    // Executando a consulta para buscar as reservas existentes
+    const reservasExistentes = await new Promise((resolve, reject) => {
+      connect.query(
+        queryReservasExistentes,
+        [fk_id_sala, nova_data_inicio, nova_data_fim],
+        (err, results) => {
+          if (err) {
+            return reject(err);
           }
+          resolve(results);
         }
-
-        // Sem conflitos
-        return resolve({ conflito: false });
-      });
+      );
     });
+
+    const conflitosEncontrados = [];
+
+    // Verificando cada reserva existente
+    for (const existingReserva of reservasExistentes) {
+      // Convertendo os dias da semana da reserva existente para um Set
+      const existingDiasSet = new Set(
+        existingReserva.dias_semana.split(",").map(Number)
+      );
+
+      // Verifica se há sobreposição de dias da semana
+      const hasDayOverlap = novosDiasSet.has([...existingDiasSet][0]);
+
+      if (!hasDayOverlap) {
+        continue;
+      }
+
+      // Convertendo os horários das reservas existentes para minutos desde a meia-noite (local)
+      const existingHoraInicioMinutos = timeToMinutes(
+        existingReserva.hora_inicio
+      );
+      const existingHoraFimMinutos = timeToMinutes(existingReserva.hora_fim);
+
+      // Verifica se há sobreposição de horários
+      const hasTimeOverlap =
+        novaHoraInicioMinutos < existingHoraFimMinutos &&
+        novaHoraFimMinutos > existingHoraInicioMinutos;
+
+      if (hasTimeOverlap) {
+        conflitosEncontrados.push({
+          tipo:
+            existingReserva.data_inicio === existingReserva.data_fim
+              ? "reservasimples"
+              : "reservaperiodica", // Verificação do tipo de reserva
+          id_reserva: existingReserva.id_reserva, // ID do conflito
+          data_conflito: nova_data_inicio, // Data do conflito
+        });
+      }
+    }
+
+    // Retorna os conflitos encontrados ou sucesso
+    if (conflitosEncontrados.length > 0) {
+      return { conflito: true, conflitos: conflitosEncontrados };
+    }
+
+    return { conflito: false };
+  },
+
+  validarConflitoReservaUpdate: async function (
+    id_reserva_atual,
+    fk_id_sala,
+    nova_data_inicio,
+    nova_data_fim,
+    novos_dias_semana,
+    nova_hora_inicio,
+    nova_hora_fim
+  ) {
+    // Converte a data para garantir que seja 00:00:00 (hora local)
+    const dataLocal = new Date(nova_data_inicio + "T00:00:00");
+    const diaSemana = dataLocal.getDay();
+
+    // Verificação para garantir que não seja domingo (0)
+    if (diaSemana === 0) {
+      return {
+        conflito: true,
+        erros: [
+          {
+            error:
+              "Reservas não são permitidas no domingo. Por favor, escolha um dia entre segunda e sábado.",
+          },
+        ],
+      };
+    }
+
+    // Converte horários da nova reserva para minutos desde a meia-noite (local)
+    const novaHoraInicioMinutos = timeToMinutes(nova_hora_inicio);
+    const novaHoraFimMinutos = timeToMinutes(nova_hora_fim);
+    const novosDiasSet = new Set(novos_dias_semana.map(Number));
+
+    // Consulta SQL para buscar as reservas existentes para a mesma sala
+    const queryReservasExistentes = `
+  SELECT
+    id_reserva,
+    data_inicio,
+    data_fim,
+    dias_semana,
+    hora_inicio,
+    hora_fim
+  FROM reserva
+  WHERE fk_id_sala = ?
+    AND data_fim >= ?
+    AND data_inicio <= ?
+    AND id_reserva != ?
+`;
+
+    const reservasExistentes = await new Promise((resolve, reject) => {
+      connect.query(
+        queryReservasExistentes,
+        [fk_id_sala, nova_data_inicio, nova_data_fim, id_reserva_atual],
+        (err, results) => {
+          if (err) {
+            return reject(err);
+          }
+          resolve(results);
+        }
+      );
+    });
+
+    const conflitosEncontrados = [];
+
+    // Verificando cada reserva existente
+    for (const existingReserva of reservasExistentes) {
+      // Verificando se os dados da nova reserva são idênticos aos existentes
+      if (
+        existingReserva.data_inicio === nova_data_inicio &&
+        existingReserva.data_fim === nova_data_fim &&
+        existingReserva.hora_inicio === nova_hora_inicio &&
+        existingReserva.hora_fim === nova_hora_fim &&
+        existingReserva.dias_semana === novos_dias_semana.join(",")
+      ) {
+        return {
+          conflito: true,
+          erros: [
+            {
+              error:
+                "Dados idênticos encontrados. Não é possível atualizar para os mesmos dados.",
+            },
+          ],
+        };
+      }
+
+      const existingDiasArr = existingReserva.dias_semana
+        .split(",")
+        .map(Number);
+      const existingDiasSet = new Set(existingDiasArr);
+
+      // Verifica se há sobreposição de dias da semana
+      const hasDayOverlap = novosDiasSet.has([...existingDiasSet][0]);
+
+      if (!hasDayOverlap) {
+        continue;
+      }
+
+      // Convertendo os horários das reservas existentes para minutos desde a meia-noite (local)
+      const existingHoraInicioMinutos = timeToMinutes(
+        existingReserva.hora_inicio
+      );
+      const existingHoraFimMinutos = timeToMinutes(existingReserva.hora_fim);
+
+      // Verifica se há sobreposição de horários
+      const hasTimeOverlap =
+        novaHoraInicioMinutos < existingHoraFimMinutos &&
+        novaHoraFimMinutos > existingHoraInicioMinutos;
+
+      if (hasTimeOverlap) {
+        // Se houver conflito, registramos a reserva
+        conflitosEncontrados.push({
+          tipo:
+            existingReserva.data_inicio === existingReserva.data_fim
+              ? "reservasimples"
+              : "reservaperiodica", // Verificação do tipo de reserva
+          id_reserva: existingReserva.id_reserva, // ID do conflito
+          data_conflito: nova_data_inicio, // Data do conflito
+        });
+      }
+    }
+
+    // Verifica se há conflitos e retorna o resultado
+    if (conflitosEncontrados.length > 0) {
+      return { conflito: true, conflitos: conflitosEncontrados };
+    }
+
+    return { conflito: false };
   },
 };

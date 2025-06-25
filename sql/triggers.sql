@@ -9,9 +9,11 @@ CREATE TABLE IF NOT EXISTS logreservas (
     id_reserva INT NOT NULL,
     fk_id_sala INT NOT NULL,
     fk_id_usuario INT NOT NULL,
-    data_reserva DATE NOT NULL,
-    hora_inicio_reserva TIME NOT NULL,
-    hora_fim_reserva TIME NOT NULL,
+    data_inicio DATE NOT NULL,
+    data_fim DATE NOT NULL,
+    dias_semana SET('1','2','3','4','5','6') NOT NULL,
+    hora_inicio TIME NOT NULL,
+    hora_fim TIME NOT NULL,
     tipo_operacao TINYINT NOT NULL,
     data_hora_log DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -33,25 +35,27 @@ CREATE TABLE IF NOT EXISTS logusuarios (
 DELIMITER //
 
 CREATE TRIGGER logreservacriacao
-
 AFTER INSERT ON reserva
 FOR EACH ROW
-
 BEGIN
     INSERT INTO logreservas (
         id_reserva,
         fk_id_sala,
         fk_id_usuario,
-        data_reserva,
-        hora_inicio_reserva,
-        hora_fim_reserva,
+        data_inicio,
+        data_fim,
+        dias_semana,
+        hora_inicio,
+        hora_fim,
         tipo_operacao
     )
     VALUES (
         NEW.id_reserva,
         NEW.fk_id_sala,
         NEW.fk_id_usuario,
-        NEW.data,
+        NEW.data_inicio,
+        NEW.data_fim,
+        NEW.dias_semana,
         NEW.hora_inicio,
         NEW.hora_fim,
         1
@@ -65,25 +69,27 @@ DELIMITER ;
 DELIMITER //
 
 CREATE TRIGGER logreservadelecao
-
 AFTER DELETE ON reserva
 FOR EACH ROW
-
 BEGIN
     INSERT INTO logreservas (
         id_reserva,
         fk_id_sala,
         fk_id_usuario,
-        data_reserva,
-        hora_inicio_reserva,
-        hora_fim_reserva,
+        data_inicio,
+        data_fim,
+        dias_semana,
+        hora_inicio,
+        hora_fim,
         tipo_operacao
     )
     VALUES (
         OLD.id_reserva,
         OLD.fk_id_sala,
         OLD.fk_id_usuario,
-        OLD.data,
+        OLD.data_inicio,
+        OLD.data_fim,
+        OLD.dias_semana,
         OLD.hora_inicio,
         OLD.hora_fim,
         0
@@ -123,7 +129,7 @@ DELIMITER ;
 DELIMITER //
 
 CREATE TRIGGER logusuariodelecao
-BEFORE DELETE ON usuario
+AFTER DELETE ON usuario
 FOR EACH ROW
 BEGIN
     INSERT INTO logusuarios (

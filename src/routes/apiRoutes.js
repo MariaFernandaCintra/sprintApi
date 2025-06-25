@@ -20,10 +20,15 @@ router.get("/usuario/perfil/:id_usuario/reservas", verifyJWT, usuarioController.
 router.get("/usuario/historico/:id_usuario", verifyJWT, usuarioController.getHistoricoReservas);
 router.get("/usuario/historico/delecao/:id_usuario", verifyJWT, usuarioController.getHistoricoDelecao);
 
-router.post("/reserva", verifyJWT, reservaController.createReservas);
+router.post("/reservasimples", verifyJWT, reservaController.createReservasSimples);
+router.post("/reservaperiodica", verifyJWT, reservaController.createReservasPeriodicas);
 router.get("/reservas", verifyJWT, reservaController.getAllReservas);
-router.put("/reserva/:id_reserva", verifyJWT, reservaController.updateReserva);
+router.put("/reserva/simples/:id_reserva", verifyJWT, reservaController.updateReservasSimples);
+router.put("/reserva/periodica/:id_reserva", verifyJWT, reservaController.updateReservasPeriodicas);
 router.delete("/reserva/:id_reserva/:id_usuario", verifyJWT, reservaController.deleteReserva);
+
+router.get("/reservas/simples", verifyJWT, reservaController.getAllReservasSimples);
+router.get("/reservas/periodicas", verifyJWT, reservaController.getAllReservasPeriodicas);
 
 router.post("/sala", salaController.createSalas);
 router.get("/salas", verifyJWT, salaController.getAllSalasTabela);
