@@ -1,7 +1,6 @@
 const router = require("express").Router(); //importando o módolo express
 
 const reservaController = require("../controllers/reservaController");
-const reservaPeriodicaController = require("../controllers/reservaPeriodicaController");
 const usuarioController = require("../controllers/usuarioController");
 const salaController = require("../controllers/salaController");
 const verifyJWT = require("../middlewares/verifyJWT");
@@ -21,15 +20,15 @@ router.get("/usuario/perfil/:id_usuario/reservas", verifyJWT, usuarioController.
 router.get("/usuario/historico/:id_usuario", verifyJWT, usuarioController.getHistoricoReservas);
 router.get("/usuario/historico/delecao/:id_usuario", verifyJWT, usuarioController.getHistoricoDelecao);
 
-router.post("/reserva", verifyJWT, reservaController.createReservas);
+router.post("/reservasimples", verifyJWT, reservaController.createReservasSimples);
+router.post("/reservaperiodica", verifyJWT, reservaController.createReservasPeriodicas);
 router.get("/reservas", verifyJWT, reservaController.getAllReservas);
-router.put("/reserva/:id_reserva", verifyJWT, reservaController.updateReserva);
+router.put("/reserva/simples/:id_reserva", verifyJWT, reservaController.updateReservasSimples);
+router.put("/reserva/periodica/:id_reserva", verifyJWT, reservaController.updateReservasPeriodicas);
 router.delete("/reserva/:id_reserva/:id_usuario", verifyJWT, reservaController.deleteReserva);
 
-router.post("/reservaperiodica", verifyJWT, reservaPeriodicaController.createReservasPeriodicas);
-router.get("/reservasperiodicas", verifyJWT, reservaPeriodicaController.getAllReservasPeriodicas);
-router.put("/reservaperiodica/:id_reservaperiodica", verifyJWT, reservaPeriodicaController.updateReservaPeriodica);
-router.delete("/reservaperiodica/:id_reservaperiodica/:id_usuario", verifyJWT, reservaPeriodicaController.deleteReservaPeriodica);
+router.get("/reservas/simples", verifyJWT, reservaController.getAllReservasSimples);
+router.get("/reservas/periodicas", verifyJWT, reservaController.getAllReservasPeriodicas);
 
 router.post("/sala", salaController.createSalas);
 router.get("/salas", verifyJWT, salaController.getAllSalasTabela);
