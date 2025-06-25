@@ -77,7 +77,7 @@ module.exports = {
 
     if (inicioHour < 7 || inicioHour > 23 || fimHour < 7 || fimHour > 23) {
       return {
-        error: "Reserva deve ser entre 07:00 e 23:00",
+        error: "As reserva são feitas entre 07:00 e 23:00",
       };
     }
 
