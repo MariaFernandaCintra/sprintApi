@@ -27,7 +27,7 @@ module.exports = {
       return { error: "dias_semana deve ser um array" };
     }
 
-    const diasValidos = ["1", "2", "3", "4", "5", "6", "7"];
+    const diasValidos = ["1", "2", "3", "4", "5", "6"];
     for (const dia of dias_semana.map(String)) {
       if (!diasValidos.includes(dia)) {
         return { error: `Dia da semana inválido: ${dia}` };
@@ -84,7 +84,7 @@ module.exports = {
     // Consulta reservas periódicas que se sobrepõem no período e compartilham dia da semana
     const queryReservasPeriodicas = `
       SELECT data_inicio, data_fim, dias_semana, hora_inicio, hora_fim
-      FROM reservasperiodicas
+      FROM reservaperiodica
       WHERE fk_id_sala = ?
         AND data_fim >= ?
         AND data_inicio <= ?

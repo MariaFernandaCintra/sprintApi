@@ -33,27 +33,25 @@ CREATE TABLE IF NOT EXISTS reserva(
     id_reserva INT PRIMARY KEY AUTO_INCREMENT,
     fk_id_sala INT NOT NULL,
     fk_id_usuario INT NOT NULL,
-    dia_semana SET('1','2','3','4','5','6','7') NOT NULL,
+    dia_semana SET('1','2','3','4','5','6') NOT NULL,
     data DATE NOT NULL,
     hora_inicio TIME NOT NULL,
     hora_fim TIME NOT NULL,
     FOREIGN KEY (fk_id_sala) REFERENCES sala(id_sala),
-    FOREIGN KEY (fk_id_usuario) REFERENCES usuario(id_usuario)
-    ON DELETE CASCADE
+    FOREIGN KEY (fk_id_usuario) REFERENCES usuario(id_usuario) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS reservasperiodicas (
+CREATE TABLE IF NOT EXISTS reservaperiodica (
     id_reservaperiodica INT PRIMARY KEY AUTO_INCREMENT,
     fk_id_usuario INT NOT NULL,
     fk_id_sala INT NOT NULL,
     data_inicio DATE NOT NULL,
     data_fim DATE NOT NULL,
-    dias_semana SET('1','2','3','4','5','6','7') NOT NULL,
+    dias_semana SET('1','2','3','4','5','6') NOT NULL,
     hora_inicio TIME NOT NULL,
     hora_fim TIME NOT NULL,
-    FOREIGN KEY (fk_id_usuario) REFERENCES usuario(id_usuario),
-    FOREIGN KEY (fk_id_sala) REFERENCES sala(id_sala)
-    ON DELETE CASCADE
+    FOREIGN KEY (fk_id_sala) REFERENCES sala(id_sala),
+    FOREIGN KEY (fk_id_usuario) REFERENCES usuario(id_usuario) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_reserva_dia_semana ON reserva(dia_semana);
@@ -118,7 +116,7 @@ INSERT IGNORE INTO reserva (data, hora_inicio, hora_fim, dia_semana, fk_id_usuar
 ('2025-01-01', '10:00:00', '11:00:00', '1', 1, 1),
 ('2025-01-01', '11:00:00', '12:00:00', '1', 1, 1);
 
-INSERT INTO reservasperiodicas (fk_id_usuario, fk_id_sala, data_inicio, data_fim, dias_semana, hora_inicio, hora_fim) VALUES
+INSERT INTO reservaperiodica (fk_id_usuario, fk_id_sala, data_inicio, data_fim, dias_semana, hora_inicio, hora_fim) VALUES
 (1, 1, '2025-01-06', '2025-01-11', '1,2,3,4,5,6', '07:00:00', '12:00:00'),
 (1, 1, '2025-01-13', '2025-01-18', '1,2,3,4,5,6', '07:00:00', '12:00:00'),
 (1, 1, '2025-01-20', '2025-01-25', '1,2,3,4,5,6', '07:00:00', '12:00:00'),
@@ -202,7 +200,7 @@ CREATE PROCEDURE HistoricoReservaUsuario (p_id_usuario INT)
 BEGIN
     SELECT data, hora_inicio, hora_fim, fk_id_sala
     FROM reserva
-    WHERE p_id_usuario = fk_id_usuario AND data < CURDATE();
+    WHERE fk_id_usuario = p_id_usuario AND data < CURDATE();
 END; //
 
 -- PROCEDURE: Filtro de salas pelo nome ou descrição
@@ -230,6 +228,7 @@ CREATE TABLE IF NOT EXISTS logreservas (
     fk_id_sala INT NOT NULL,
     fk_id_usuario INT NOT NULL,
     data_reserva DATE NOT NULL,
+    dia_semana SET('1','2','3','4','5','6') NOT NULL,
     hora_inicio_reserva TIME NOT NULL,
     hora_fim_reserva TIME NOT NULL,
     tipo_operacao TINYINT NOT NULL,
@@ -257,7 +256,7 @@ CREATE TABLE IF NOT EXISTS logreservasperiodicas (
     fk_id_sala INT NOT NULL,
     data_inicio DATE NOT NULL,
     data_fim DATE NOT NULL,
-    dias_semana SET('1','2','3','4','5','6','7') NOT NULL,
+    dias_semana SET('1','2','3','4','5','6') NOT NULL,
     hora_inicio TIME NOT NULL,
     hora_fim TIME NOT NULL,
     tipo_operacao TINYINT NOT NULL,
@@ -279,6 +278,7 @@ BEGIN
         fk_id_sala,
         fk_id_usuario,
         data_reserva,
+        dia_semana,
         hora_inicio_reserva,
         hora_fim_reserva,
         tipo_operacao
@@ -288,6 +288,7 @@ BEGIN
         NEW.fk_id_sala,
         NEW.fk_id_usuario,
         NEW.data,
+        NEW.dia_semana,
         NEW.hora_inicio,
         NEW.hora_fim,
         1
@@ -311,6 +312,7 @@ BEGIN
         fk_id_sala,
         fk_id_usuario,
         data_reserva,
+        dia_semana,
         hora_inicio_reserva,
         hora_fim_reserva,
         tipo_operacao
@@ -320,6 +322,7 @@ BEGIN
         OLD.fk_id_sala,
         OLD.fk_id_usuario,
         OLD.data,
+        OLD.dia_semana,
         OLD.hora_inicio,
         OLD.hora_fim,
         0
@@ -386,7 +389,7 @@ DELIMITER //
 
 CREATE TRIGGER logreservaperiodicacriacao
 
-AFTER INSERT ON reservasperiodicas
+AFTER INSERT ON reservaperiodica
 FOR EACH ROW
 
 BEGIN
@@ -422,7 +425,7 @@ DELIMITER //
 
 CREATE TRIGGER logreservaperiodicadelecao
 
-AFTER DELETE ON reservasperiodicas
+AFTER DELETE ON reservaperiodica
 FOR EACH ROW
 
 BEGIN
@@ -453,7 +456,7 @@ END; //
 DELIMITER ;
 
 -- ==========================================================================
---    Retro­população de logreservas e logusuarios e logreservasperiodicas
+--    Retro­população de logreservas e logusuarios e logreservaperiodica
 -- ==========================================================================
 
 INSERT INTO logreservas (
@@ -461,6 +464,7 @@ INSERT INTO logreservas (
     fk_id_sala,
     fk_id_usuario,
     data_reserva,
+    dia_semana,
     hora_inicio_reserva,
     hora_fim_reserva,
     tipo_operacao,
@@ -471,6 +475,7 @@ SELECT
     fk_id_sala,
     fk_id_usuario,
     data        AS data_reserva,
+    dia_semana,
     hora_inicio AS hora_inicio_reserva,
     hora_fim    AS hora_fim_reserva,
     1           AS tipo_operacao,
@@ -518,7 +523,7 @@ SELECT
     hora_fim,
     1,
     NOW()
-FROM reservasperiodicas;
+FROM reservaperiodica;
 
 -- ==================================
 --   Events

@@ -9,7 +9,6 @@ const diasSemanaTexto = {
   4: "Quinta-feira",
   5: "Sexta-feira",
   6: "Sábado",
-  7: "Domingo",
 };
 
 function formatarDiasSemanaEmTexto(diasSemana) {
@@ -79,7 +78,7 @@ module.exports = class ReservaPeriodicaController {
       }
 
       const insertQuery = `
-        INSERT INTO reservasperiodicas (
+        INSERT INTO reservaperiodica (
           fk_id_usuario, fk_id_sala, data_inicio, data_fim, dias_semana, hora_inicio, hora_fim
         ) VALUES (?, ?, ?, ?, ?, ?, ?)
       `;
