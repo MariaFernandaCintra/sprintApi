@@ -27,15 +27,16 @@ module.exports = class ReservaController {
     const {
       fk_id_usuario,
       fk_id_sala,
-      data, // data única
+      data,
       hora_inicio,
       hora_fim,
     } = req.body;
 
-    // Preenche os campos data_inicio, data_fim e dias_semana
     const data_inicio = data;
     const data_fim = data;
-    const dias_semana = [new Date(data).getDay() + 1]; // Obtém o dia da semana e mapeia para 1-7 (Domingo = 1, Segunda = 2, etc.)
+    const dataLocal = new Date(data + "T00:00:00");
+    const diaSemana = dataLocal.getDay();
+    const dias_semana = [diaSemana];
 
     const erroValidacao = validateReserva.validarCamposCreate({
       fk_id_usuario,
@@ -280,21 +281,26 @@ module.exports = class ReservaController {
     const { id_reserva } = req.params;
     const { fk_id_usuario, fk_id_sala, data, hora_inicio, hora_fim } = req.body;
 
+    const dataLocal = new Date(data + "T00:00:00");
+    const diaSemana = dataLocal.getDay();
+    const dias_semana = [diaSemana];
+
     let reservaAtual;
+
     try {
       const querySelect = `
-      SELECT
-        id_reserva,
-        fk_id_usuario,
-        fk_id_sala,
-        data_inicio,
-        data_fim,
-        dias_semana,
-        hora_inicio,
-        hora_fim
-      FROM reserva
-      WHERE id_reserva = ?
-    `;
+    SELECT
+      id_reserva,
+      fk_id_usuario,
+      fk_id_sala,
+      data_inicio,
+      data_fim,
+      dias_semana,
+      hora_inicio,
+      hora_fim
+    FROM reserva
+    WHERE id_reserva = ?
+  `;
       const resultados = await queryAsync(querySelect, [id_reserva]);
       if (resultados.length === 0) {
         return res
@@ -303,27 +309,30 @@ module.exports = class ReservaController {
       }
       reservaAtual = resultados[0];
     } catch (error) {
-      console.error("Erro ao buscar reserva atual para atualização:", error);
       return res
         .status(500)
         .json({ error: "Erro interno ao buscar reserva para atualização." });
     }
 
+    // Validação dos campos da reserva
     const erroValidacao = validateReserva.validarCamposUpdate(
       {
         fk_id_usuario,
         fk_id_sala,
         data_inicio: data,
         data_fim: data,
-        dias_semana: [new Date(data).getDay()],
+        dias_semana: dias_semana,
         hora_inicio,
         hora_fim,
       },
       reservaAtual
     );
-    if (erroValidacao) return res.status(400).json(erroValidacao);
+    if (erroValidacao) {
+      return res.status(400).json(erroValidacao);
+    }
 
     try {
+      // Verificação de existência de usuário e sala
       const usuarioExiste = await validateReserva.validarUsuario(fk_id_usuario);
       const salaExiste = await validateReserva.validarSala(fk_id_sala);
       if (!usuarioExiste || !salaExiste) {
@@ -332,12 +341,13 @@ module.exports = class ReservaController {
           .json({ error: "Sala ou usuário não encontrado." });
       }
 
+      // Verificando conflitos de reservas
       const conflito = await validateReserva.validarConflitoReservaUpdate(
         id_reserva,
         fk_id_sala,
         data,
         data,
-        [new Date(data).getDay()],
+        dias_semana, // Passando o dia da semana corretamente
         hora_inicio,
         hora_fim
       );
@@ -349,34 +359,35 @@ module.exports = class ReservaController {
         });
       }
 
+      // Atualizando a reserva
       const updateQuery = `
-      UPDATE reserva SET
-        fk_id_usuario = ?,
-        fk_id_sala = ?,
-        data_inicio = ?,
-        data_fim = ?,
-        dias_semana = ?,
-        hora_inicio = ?,
-        hora_fim = ?
-      WHERE id_reserva = ?
-    `;
-
+    UPDATE reserva SET
+      fk_id_usuario = ?,
+      fk_id_sala = ?,
+      data_inicio = ?,
+      data_fim = ?,
+      dias_semana = ?,
+      hora_inicio = ?,
+      hora_fim = ?
+    WHERE id_reserva = ?
+  `;
       await queryAsync(updateQuery, [
         fk_id_usuario,
         fk_id_sala,
         data,
         data,
-        [new Date(data).getDay()].join(","),
+        dias_semana.join(","), // Certifique-se de armazenar o valor correto para os dias
         hora_inicio,
         hora_fim,
         id_reserva,
       ]);
 
-      const mensagem = `Reserva simples atualizada com sucesso. Ela vai acontecer no dia ${data}, às ${hora_inicio} até ${hora_fim}.`;
+      // Convertendo o dia da semana para o nome por extenso
+      const diaSemanaTexto = formatarDiasSemanaEmTexto(dias_semana);
+      const mensagem = `Reserva simples atualizada com sucesso. Ela vai acontecer na ${diaSemanaTexto}, dia ${data}, das ${hora_inicio} até ${hora_fim}.`;
 
       return res.status(200).json({ message: mensagem });
     } catch (error) {
-      console.error("Erro ao atualizar reserva:", error);
       return res
         .status(500)
         .json({ error: "Erro interno ao atualizar reserva." });
@@ -400,6 +411,7 @@ module.exports = class ReservaController {
       : String(dias_semana).split(",").map(Number);
 
     let reservaAtual;
+
     try {
       const querySelect = `
       SELECT
@@ -440,7 +452,9 @@ module.exports = class ReservaController {
       },
       reservaAtual
     );
-    if (erroValidacao) return res.status(400).json(erroValidacao);
+    if (erroValidacao) {
+      return res.status(400).json(erroValidacao);
+    }
 
     try {
       const usuarioExiste = await validateReserva.validarUsuario(fk_id_usuario);
@@ -479,7 +493,6 @@ module.exports = class ReservaController {
         hora_fim = ?
       WHERE id_reserva = ?
     `;
-
       await queryAsync(updateQuery, [
         fk_id_usuario,
         fk_id_sala,
@@ -493,7 +506,6 @@ module.exports = class ReservaController {
 
       const diasTexto = formatarDiasSemanaEmTexto(diasSemanaArray);
       const mensagem = `Reserva periódica atualizada com sucesso. Ela vai acontecer de ${data_inicio} até ${data_fim}, todas as ${diasTexto}, começando sempre às ${hora_inicio} até ${hora_fim}.`;
-
       return res.status(200).json({ message: mensagem });
     } catch (error) {
       console.error("Erro ao atualizar reserva:", error);
