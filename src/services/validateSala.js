@@ -1,5 +1,5 @@
 const connect = require("../db/connect");
-const { timeToMinutes } = require("../utils/functions");
+const { horaParaMinutos } = require("../utils/functions");
 
 module.exports = {
   validateCreateSala: function ({ nome, descricao, bloco, tipo, capacidade }) {
@@ -92,8 +92,8 @@ module.exports = {
     hora_fim,
     dias_semana
   ) {
-    const novaHoraInicioMin = timeToMinutes(hora_inicio);
-    const novaHoraFimMin = timeToMinutes(hora_fim);
+    const novaHoraInicioMin = horaParaMinutos(hora_inicio);
+    const novaHoraFimMin = horaParaMinutos(hora_fim);
     const novosDiasSet = new Set(dias_semana.map(Number));
 
     // Query reservas que coincidem com o período e sala
@@ -123,8 +123,8 @@ module.exports = {
       );
       if (!temDiaSobreposto) continue;
 
-      const horaInicioExistente = timeToMinutes(reserva.hora_inicio);
-      const horaFimExistente = timeToMinutes(reserva.hora_fim);
+      const horaInicioExistente = horaParaMinutos(reserva.hora_inicio);
+      const horaFimExistente = horaParaMinutos(reserva.hora_fim);
 
       const temConflitoHorario =
         novaHoraInicioMin < horaFimExistente &&

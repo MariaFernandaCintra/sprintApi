@@ -1,6 +1,6 @@
 // services/validateReserva.js
 const connect = require("../db/connect");
-const { criarDataHora, timeToMinutes } = require("../utils/functions");
+const { criarDataHora, horaParaMinutos } = require("../utils/functions");
 
 module.exports = {
   validarUsuario: async function (fk_id_usuario) {
@@ -187,8 +187,8 @@ module.exports = {
     nova_hora_fim
   ) {
     // Converte horários da nova reserva para minutos desde a meia-noite (local)
-    const novaHoraInicioMinutos = timeToMinutes(nova_hora_inicio);
-    const novaHoraFimMinutos = timeToMinutes(nova_hora_fim);
+    const novaHoraInicioMinutos = horaParaMinutos(nova_hora_inicio);
+    const novaHoraFimMinutos = horaParaMinutos(nova_hora_fim);
 
     // Criação de um Set com os novos dias da semana para verificar os conflitos
     const novosDiasSet = new Set(novos_dias_semana.map(Number));
@@ -258,10 +258,10 @@ module.exports = {
       }
 
       // Convertendo os horários das reservas existentes para minutos desde a meia-noite (local)
-      const existingHoraInicioMinutos = timeToMinutes(
+      const existingHoraInicioMinutos = horaParaMinutos(
         existingReserva.hora_inicio
       );
-      const existingHoraFimMinutos = timeToMinutes(existingReserva.hora_fim);
+      const existingHoraFimMinutos = horaParaMinutos(existingReserva.hora_fim);
 
       // Verifica se há sobreposição de horários
       const hasTimeOverlap =
@@ -315,8 +315,8 @@ module.exports = {
     }
 
     // Converte horários da nova reserva para minutos desde a meia-noite (local)
-    const novaHoraInicioMinutos = timeToMinutes(nova_hora_inicio);
-    const novaHoraFimMinutos = timeToMinutes(nova_hora_fim);
+    const novaHoraInicioMinutos = horaParaMinutos(nova_hora_inicio);
+    const novaHoraFimMinutos = horaParaMinutos(nova_hora_fim);
     const novosDiasSet = new Set(novos_dias_semana.map(Number));
 
     // Consulta SQL para buscar as reservas existentes para a mesma sala
@@ -388,10 +388,10 @@ module.exports = {
       }
 
       // Convertendo os horários das reservas existentes para minutos desde a meia-noite (local)
-      const existingHoraInicioMinutos = timeToMinutes(
+      const existingHoraInicioMinutos = horaParaMinutos(
         existingReserva.hora_inicio
       );
-      const existingHoraFimMinutos = timeToMinutes(existingReserva.hora_fim);
+      const existingHoraFimMinutos = horaParaMinutos(existingReserva.hora_fim);
 
       // Verifica se há sobreposição de horários
       const hasTimeOverlap =
