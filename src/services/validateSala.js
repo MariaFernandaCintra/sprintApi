@@ -68,7 +68,7 @@ module.exports = {
     const inicioDate = new Date(`${data_inicio}T${hora_inicio}`);
     const fimDate = new Date(`${data_fim}T${hora_fim}`);
 
-    if (inicioDate >= fimDate) {
+    if (inicioDate > fimDate) {
       return { error: "Data/hora início deve ser anterior a data/hora fim" };
     }
 

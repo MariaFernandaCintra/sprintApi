@@ -65,9 +65,6 @@ module.exports = {
     const fim = criarDataHora(data_fim, hora_fim);
     const now = new Date();
 
-    if (inicio.getTime() < now.getTime()) {
-      return { error: "A data e hora de início devem ser no futuro" };
-    }
     if (fim.getTime() <= inicio.getTime()) {
       return { error: "A data e hora de fim devem ser após a de início" };
     }
@@ -87,8 +84,16 @@ module.exports = {
     }
 
     const duracao = horaFim.getTime() - horaIni.getTime();
-    const limite = 30 * 60 * 1000;
-    if (duracao < limite) {
+    const trintaMinutos = 30 * 60 * 1000;
+
+    if (inicio.getTime() - trintaMinutos < now.getTime()) {
+      return {
+        error:
+          "A reserva deve ser feitas no futuro. Com pelo menos 30 minutos de antecedência",
+      };
+    }
+
+    if (duracao < trintaMinutos) {
       return { error: "A duração mínima por reserva é de 30 minutos" };
     }
     return null;
@@ -148,9 +153,6 @@ module.exports = {
     const fim = criarDataHora(data_fim, hora_fim);
     const now = new Date();
 
-    if (inicio.getTime() < now.getTime()) {
-      return { error: "A data e hora de início devem ser no futuro" };
-    }
     if (fim.getTime() <= inicio.getTime()) {
       return { error: "A data e hora de fim devem ser após a de início" };
     }
@@ -170,8 +172,16 @@ module.exports = {
     }
 
     const duracao = horaFim.getTime() - horaIni.getTime();
-    const limite = 30 * 60 * 1000;
-    if (duracao < limite) {
+    const trintaMinutos = 30 * 60 * 1000;
+
+    if (inicio.getTime() - trintaMinutos < now.getTime()) {
+      return {
+        error:
+          "A reserva deve ser feitas no futuro. Com pelo menos 30 minutos de antecedência",
+      };
+    }
+
+    if (duracao < trintaMinutos) {
       return { error: "A duração mínima por reserva é de 30 minutos" };
     }
 

@@ -56,7 +56,7 @@ module.exports = class ReservaController {
 
       if (conflito.conflito) {
         return res.status(409).json({
-          error: "Conflitos encontrados com reservas existentes:",
+          error: "Conflitos encontrados com reservas existentes",
           conflitos: conflito.conflitos,
         });
       }
@@ -147,7 +147,7 @@ module.exports = class ReservaController {
 
       if (conflito.conflito) {
         return res.status(409).json({
-          error: "Conflitos encontrados com reservas existentes:",
+          error: "Conflitos encontrados com reservas existentes",
           conflitos: conflito.conflitos,
         });
       }
