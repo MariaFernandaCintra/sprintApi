@@ -219,7 +219,11 @@ BEGIN
             ELSE 'reservaperiodica'
         END AS tipo,
         lr.id_reserva AS id,
-        s.nome AS nome_sala,
+        s.nome AS sala_nome,
+        s.descricao AS sala_descricao,
+        s.bloco AS sala_bloco,
+        s.tipo AS sala_tipo,
+        s.capacidade AS sala_capacidade,
         lr.data_inicio AS data_inicio,
         lr.data_fim AS data_fim,
         lr.dias_semana,

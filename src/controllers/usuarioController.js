@@ -330,7 +330,10 @@ module.exports = class usuarioController {
 
       const reservas = resultados.map((reserva) => ({
         tipo:
-          reserva.data_inicio === reserva.data_fim ? "simples" : "periodica",
+          formatarData(new Date(reserva.data_inicio)) ===
+          formatarData(new Date(reserva.data_fim))
+            ? "simples"
+            : "periodica",
         id_reserva: reserva.id_reserva,
         sala: reserva.nome,
         data_inicio: formatarData(new Date(reserva.data_inicio)),
@@ -341,63 +344,79 @@ module.exports = class usuarioController {
       }));
 
       if (reservas.length === 0) {
-        return res
-          .status(404)
-          .json({ message: "Nenhuma reserva encontrada para este usuário" });
+        return res.status(404).json({
+          message: "Nenhuma reserva encontrada para este usuário",
+          reservas: [],
+        });
       }
 
-      return res.status(200).json(reservas);
+      return res.status(200).json({ reservas });
     } catch (error) {
       console.error("Erro ao buscar reservas:", error);
       return res.status(500).json({ message: "Erro interno do servidor" });
     }
   }
 
-static async getHistoricoReservas(req, res) {
-  const id_usuario = req.params.id_usuario;
-  const token = req.userId;
-
-  const idValidationError = validateUsuario.validateUsuarioId(id_usuario);
-  if (idValidationError) {
-    return res.status(400).json(idValidationError);
-  }
-
-  if (Number(id_usuario) !== Number(token)) {
-    return res.status(403).json({
-      message: "Você não pode visualizar o histórico de outro usuário",
-    });
-  }
-
-  try {
-    const query = `CALL HistoricoReservaUsuario(?)`;
-
-    const [historicoReservas] = await queryAsync(query, [id_usuario]);
-
-    if (historicoReservas.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "Nenhuma reserva anterior encontrada." });
-    }
-
-    // Retorna o array completo de históricos
-    return res.status(200).json({ historico: historicoReservas });
-  } catch (error) {
-    console.error("Erro ao buscar histórico de reservas:", error);
-    return res.status(500).json({ message: "Erro interno do servidor" });
-  }
-}
-
-  static async getHistoricoDelecao(req, res) {
-    const token = req.userId;
+  static async getHistoricoReservas(req, res) {
     const id_usuario = req.params.id_usuario;
+    const token = req.userId;
 
-    // Validação do ID do usuário
     const idValidationError = validateUsuario.validateUsuarioId(id_usuario);
     if (idValidationError) {
       return res.status(400).json(idValidationError);
     }
 
-    // Verifica se o usuário está tentando acessar seu próprio histórico
+    if (Number(id_usuario) !== Number(token)) {
+      return res.status(403).json({
+        message: "Você não pode visualizar o histórico de outro usuário",
+      });
+    }
+
+    try {
+      const query = `CALL HistoricoReservaUsuario(?)`;
+
+      const [resultadosHistorico] = await queryAsync(query, [id_usuario]);
+
+      const historico = resultadosHistorico.map((reserva) => ({
+        tipo:
+          formatarData(new Date(reserva.data_inicio)) ===
+          formatarData(new Date(reserva.data_fim))
+            ? "simples"
+            : "periodica",
+        id_reserva: reserva.id_reserva,
+        sala: reserva.sala_nome,
+        data_inicio: formatarData(new Date(reserva.data_inicio)),
+        data_fim: formatarData(new Date(reserva.data_fim)),
+        dias_semana: reserva.dias_semana ? reserva.dias_semana.split(",") : [],
+        hora_inicio: reserva.hora_inicio,
+        hora_fim: reserva.hora_fim,
+      }));
+
+      if (historico.length === 0) {
+        return res
+          .status(404)
+          .json({
+            message: "Nenhuma reserva anterior encontrada.",
+            historico: [],
+          });
+      }
+
+      return res.status(200).json({ historico });
+    } catch (error) {
+      console.error("Erro ao buscar histórico de reservas:", error);
+      return res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  }
+
+  static async getHistoricoDelecao(req, res) {
+    const token = req.userId;
+    const id_usuario = req.params.id_usuario;
+
+    const idValidationError = validateUsuario.validateUsuarioId(id_usuario);
+    if (idValidationError) {
+      return res.status(400).json(idValidationError);
+    }
+
     if (Number(id_usuario) !== Number(token)) {
       return res.status(403).json({
         message:
@@ -408,19 +427,33 @@ static async getHistoricoReservas(req, res) {
     const call = "CALL HistoricoDelecaoUsuario(?)";
 
     try {
-      // Chama a procedure para pegar o histórico de deleções
-      const [results] = await queryAsync(call, [id_usuario]);
+      const [resultadosDelecao] = await queryAsync(call, [id_usuario]);
 
-      // Caso não haja resultados, retorna uma mensagem de 'não encontrado'
-      const historicoDelecao = results.length > 0 ? results[0] : [];
+      const reservasDeletadas = resultadosDelecao.map((delecao) => ({
+        tipo:
+          formatarData(new Date(delecao.data_inicio)) ===
+          formatarData(new Date(delecao.data_fim))
+            ? "simples"
+            : "periodica",
+        id_reserva: delecao.id_reserva,
+        sala: delecao.sala_nome,
+        data_inicio: formatarData(new Date(delecao.data_inicio)),
+        data_fim: formatarData(new Date(delecao.data_fim)),
+        dias_semana: delecao.dias_semana ? delecao.dias_semana.split(",") : [],
+        hora_inicio: delecao.hora_inicio,
+        hora_fim: delecao.hora_fim,
+        data_delecao: formatarData(new Date(delecao.data_hora_log)),
+      }));
 
-      if (historicoDelecao.length === 0) {
+      if (reservasDeletadas.length === 0) {
         return res
-          .status(404)
-          .json({ message: "Nenhum histórico de deleção encontrado." });
+          .status(200)
+          .json({
+            reservasDeletadas: [],
+          });
       }
 
-      return res.status(200).json({ historicoDelecao });
+      return res.status(200).json({ reservasDeletadas });
     } catch (error) {
       console.error("Erro ao buscar histórico de deleções:", error);
       return res
