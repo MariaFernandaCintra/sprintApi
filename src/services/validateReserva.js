@@ -96,6 +96,17 @@ module.exports = {
     if (duracao < trintaMinutos) {
       return { error: "A duração mínima por reserva é de 30 minutos" };
     }
+
+    const dataLocal = new Date(data_inicio + "T00:00:00");
+    const diaSemana = dataLocal.getDay();
+
+    if (diaSemana === 0) {
+      return {
+        error:
+          "Reservas não são permitidas no domingo. Por favor, escolha um dia entre segunda e sábado.",
+      };
+    }
+
     return null;
   },
 
@@ -185,6 +196,16 @@ module.exports = {
       return { error: "A duração mínima por reserva é de 30 minutos" };
     }
 
+    const dataLocal = new Date(data_inicio + "T00:00:00");
+    const diaSemana = dataLocal.getDay();
+
+    if (diaSemana === 0) {
+      return {
+        error:
+          "Reservas não são permitidas no domingo. Por favor, escolha um dia entre segunda e sábado.",
+      };
+    }
+
     return null;
   },
 
@@ -202,22 +223,6 @@ module.exports = {
 
     // Criação de um Set com os novos dias da semana para verificar os conflitos
     const novosDiasSet = new Set(novos_dias_semana.map(Number));
-
-    const dataLocal = new Date(nova_data_inicio + "T00:00:00");
-    const diaSemana = dataLocal.getDay();
-
-    // Verificação para garantir que não seja domingo (0)
-    if (diaSemana === 0) {
-      return {
-        conflito: true,
-        conflitos: [
-          {
-            error:
-              "Reservas não são permitidas no domingo. Por favor, escolha um dia entre segunda e sábado.",
-          },
-        ],
-      };
-    }
 
     // Consulta SQL para buscar reservas existentes para a mesma sala
     const queryReservasExistentes = `
@@ -307,22 +312,6 @@ module.exports = {
     nova_hora_inicio,
     nova_hora_fim
   ) {
-    // Converte a data para garantir que seja 00:00:00 (hora local)
-    const dataLocal = new Date(nova_data_inicio + "T00:00:00");
-    const diaSemana = dataLocal.getDay();
-
-    // Verificação para garantir que não seja domingo (0)
-    if (diaSemana === 0) {
-      return {
-        conflito: true,
-        conflitos: [
-          {
-            error:
-              "Reservas não são permitidas no domingo. Por favor, escolha um dia entre segunda e sábado.",
-          },
-        ],
-      };
-    }
 
     // Converte horários da nova reserva para minutos desde a meia-noite (local)
     const novaHoraInicioMinutos = horaParaMinutos(nova_hora_inicio);

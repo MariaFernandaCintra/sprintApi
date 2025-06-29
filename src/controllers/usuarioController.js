@@ -336,6 +336,7 @@ module.exports = class usuarioController {
             : "periodica",
         id_reserva: reserva.id_reserva,
         sala: reserva.nome,
+        fk_id_sala: reserva.fk_id_sala,
         data_inicio: formatarData(new Date(reserva.data_inicio)),
         data_fim: formatarData(new Date(reserva.data_fim)),
         dias_semana: reserva.dias_semana ? reserva.dias_semana.split(",") : [],
