@@ -378,7 +378,7 @@ module.exports = class usuarioController {
 
       const [resultadosHistorico] = await queryAsync(query, [id_usuario]);
 
-      const historico = resultadosHistorico.map((reserva) => ({
+      const reservasHistorico = resultadosHistorico.map((reserva) => ({
         tipo:
           formatarData(new Date(reserva.data_inicio)) ===
           formatarData(new Date(reserva.data_fim))
@@ -393,16 +393,16 @@ module.exports = class usuarioController {
         hora_fim: reserva.hora_fim,
       }));
 
-      if (historico.length === 0) {
+      if (reservasHistorico.length === 0) {
         return res
           .status(404)
           .json({
             message: "Nenhuma reserva anterior encontrada.",
-            historico: [],
+            reservasHistorico: [],
           });
       }
 
-      return res.status(200).json({ historico });
+      return res.status(200).json({ reservasHistorico });
     } catch (error) {
       console.error("Erro ao buscar histórico de reservas:", error);
       return res.status(500).json({ message: "Erro interno do servidor" });
@@ -436,7 +436,7 @@ module.exports = class usuarioController {
           formatarData(new Date(delecao.data_fim))
             ? "simples"
             : "periodica",
-        id_reserva: delecao.id_reserva,
+        id_reserva: delecao.id,
         sala: delecao.sala_nome,
         data_inicio: formatarData(new Date(delecao.data_inicio)),
         data_fim: formatarData(new Date(delecao.data_fim)),
