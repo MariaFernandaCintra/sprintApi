@@ -46,7 +46,7 @@ CREATE INDEX idx_logreservas_usuario ON logreservas(fk_id_usuario, tipo_operacao
 -- ================================
 
 INSERT IGNORE INTO usuario (nome, email, senha, NIF) VALUES
-('João Silva', 'joao.silva@docente.senai.br', '$2b$12$j/zX1Wjtyg.IJkWCYh35P.r4YfngvCyuZOCd4pxjD5eMI1adiFMdm', '3456789');
+('João Silva', 'joao.silva@sp.senai.br', '$2b$12$j/zX1Wjtyg.IJkWCYh35P.r4YfngvCyuZOCd4pxjD5eMI1adiFMdm', '3456789');
 
 INSERT IGNORE INTO sala (nome, descricao, bloco, tipo, capacidade) VALUES
 ('AMA - Automotiva', 'Alta Mogiana Automotiva', 'A', 'Oficina', 16),
@@ -215,7 +215,11 @@ BEGIN
             ELSE 'reservaperiodica'
         END AS tipo,
         lr.id_reserva AS id,
-        s.nome AS nome_sala,
+        s.nome AS sala_nome,
+        s.descricao AS sala_descricao,
+        s.bloco AS sala_bloco,
+        s.tipo AS sala_tipo,
+        s.capacidade AS sala_capacidade,
         lr.data_inicio AS data_inicio,
         lr.data_fim AS data_fim,
         lr.dias_semana,

@@ -5,7 +5,7 @@ module.exports = {
   // Valida os campos obrigatórios para criação do usuário
   validateUsuario: function ({ NIF, email, senha, nome, confirmarSenha }) {
     const senaiDomains = [
-      "@docente.senai.br",
+      "@sp.senai.br",
     ];
 
     if (!NIF || !email || !senha || !nome || !confirmarSenha) {
@@ -59,7 +59,7 @@ module.exports = {
   // Valida os campos para login
   validateLogin: function ({ email, senha }) {
     const senaiDomains = [
-      "@docente.senai.br",
+      "@sp.senai.br",
     ];
     if (!email || !senha) {
       return { error: "Todos os campos devem ser preenchidos" };
@@ -78,7 +78,7 @@ module.exports = {
 
   validateUpdateUsuario: function ({ email, senha, nome }) {
     const senaiDomains = [
-      "@docente.senai.br",
+      "@sp.senai.br",
     ];
 
     if (email === undefined && senha === undefined && nome === undefined) {

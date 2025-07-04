@@ -18,7 +18,7 @@ router.get("/usuario/perfil/:id_usuario", verifyJWT, usuarioController.getUsuari
 router.get("/usuario/perfil/:id_usuario/reservas", verifyJWT, usuarioController.getUsuarioReservas);
 
 router.get("/usuario/historico/:id_usuario", verifyJWT, usuarioController.getHistoricoReservas);
-router.get("/usuario/historico/delecao/:id_usuario", verifyJWT, usuarioController.getHistoricoDelecao);
+router.get("/usuario/deletadas/:id_usuario", verifyJWT, usuarioController.getHistoricoDelecao);
 
 router.post("/reserva/simples", verifyJWT, reservaController.createReservasSimples);
 router.post("/reserva/periodica", verifyJWT, reservaController.createReservasPeriodicas);

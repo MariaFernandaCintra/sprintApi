@@ -1,5 +1,5 @@
 const validateReserva = require("../services/validateReserva");
-const { queryAsync } = require("../utils/functions");
+const { queryAsync, formatarDiasSemanaEmTexto } = require("../utils/functions");
 
 const diasSemanaTexto = {
   1: "Segunda-feira",
@@ -10,27 +10,9 @@ const diasSemanaTexto = {
   6: "Sábado",
 };
 
-function formatarDiasSemanaEmTexto(diasArray) {
-  if (!diasArray || diasArray.length === 0) return "";
-  const nomesDias = diasArray.map(
-    (dia) => diasSemanaTexto[dia] || dia.toString()
-  );
-  if (nomesDias.length === 1) return nomesDias[0];
-  if (nomesDias.length === 2) return `${nomesDias[0]} e ${nomesDias[1]}`;
-  return `${nomesDias.slice(0, -1).join(", ")} e ${
-    nomesDias[nomesDias.length - 1]
-  }`;
-}
-
 module.exports = class ReservaController {
   static async createReservasSimples(req, res) {
-    const {
-      fk_id_usuario,
-      fk_id_sala,
-      data,
-      hora_inicio,
-      hora_fim,
-    } = req.body;
+    const { fk_id_usuario, fk_id_sala, data, hora_inicio, hora_fim } = req.body;
 
     const data_inicio = data;
     const data_fim = data;
@@ -74,7 +56,7 @@ module.exports = class ReservaController {
 
       if (conflito.conflito) {
         return res.status(409).json({
-          error: "Conflitos encontrados com reservas existentes:",
+          error: "Conflitos encontrados com reservas existentes",
           conflitos: conflito.conflitos,
         });
       }
@@ -105,7 +87,7 @@ module.exports = class ReservaController {
   }
 
   static async createReservasPeriodicas(req, res) {
-    const {
+    let {
       fk_id_usuario,
       fk_id_sala,
       data_inicio,
@@ -115,9 +97,20 @@ module.exports = class ReservaController {
       hora_fim,
     } = req.body;
 
-    const diasSemanaArray = Array.isArray(dias_semana)
+    let diasSemanaArray = Array.isArray(dias_semana)
       ? dias_semana
       : String(dias_semana).split(",").map(Number);
+
+    if (data_inicio === data_fim && diasSemanaArray.length === 1) {
+      const dataLocal = new Date(data_inicio + "T00:00:00");
+      const diaSemanaDaData = dataLocal.getDay();
+
+      if (diasSemanaArray[0] !== diaSemanaDaData) {
+        if (diaSemanaDaData >= 1 && diaSemanaDaData <= 6) {
+          diasSemanaArray = [diaSemanaDaData];
+        }
+      }
+    }
 
     const erroValidacao = validateReserva.validarCamposCreate({
       fk_id_usuario,
@@ -143,7 +136,6 @@ module.exports = class ReservaController {
           .json({ error: "Sala ou usuário não encontrado." });
       }
 
-      // Verificação de conflito de reserva
       const conflito = await validateReserva.validarConflitoReserva(
         fk_id_sala,
         data_inicio,
@@ -155,7 +147,7 @@ module.exports = class ReservaController {
 
       if (conflito.conflito) {
         return res.status(409).json({
-          error: "Conflitos encontrados com reservas existentes:",
+          error: "Conflitos encontrados com reservas existentes",
           conflitos: conflito.conflitos,
         });
       }
@@ -176,11 +168,19 @@ module.exports = class ReservaController {
         hora_fim,
       ]);
 
-      const diasTexto = formatarDiasSemanaEmTexto(diasSemanaArray);
-      const mensagem = `Reserva periódica criada com sucesso. Ela vai acontecer de ${data_inicio} até ${data_fim}, todas as ${diasTexto}, começando sempre às ${hora_inicio} até ${hora_fim}.`;
+      let mensagem = "";
+      if (data_inicio === data_fim && diasSemanaArray.length === 1) {
+        const diaTexto =
+          diasSemanaTexto[diasSemanaArray[0]] || diasSemanaArray[0];
+        mensagem = `Reserva simples criada com sucesso. Ela vai acontecer no dia ${data_inicio}, em uma ${diaTexto}, às ${hora_inicio} até ${hora_fim}.`;
+      } else {
+        const diasTexto = formatarDiasSemanaEmTexto(diasSemanaArray);
+        mensagem = `Reserva periódica criada com sucesso. Ela vai acontecer de ${data_inicio} até ${data_fim}, todas as ${diasTexto}, começando sempre às ${hora_inicio} até ${hora_fim}.`;
+      }
 
       return res.status(201).json({ message: mensagem });
     } catch (error) {
+      console.error("Erro ao criar reserva periódica:", error);
       return res.status(500).json({ error: "Erro interno ao criar reserva." });
     }
   }
@@ -396,7 +396,7 @@ module.exports = class ReservaController {
 
   static async updateReservasPeriodicas(req, res) {
     const { id_reserva } = req.params;
-    const {
+    let {
       fk_id_usuario,
       fk_id_sala,
       data_inicio,
@@ -406,9 +406,20 @@ module.exports = class ReservaController {
       hora_fim,
     } = req.body;
 
-    const diasSemanaArray = Array.isArray(dias_semana)
+    let diasSemanaArray = Array.isArray(dias_semana)
       ? dias_semana
       : String(dias_semana).split(",").map(Number);
+
+    if (data_inicio === data_fim && diasSemanaArray.length === 1) {
+      const dataLocal = new Date(data_inicio + "T00:00:00");
+      const diaSemanaDaData = dataLocal.getDay();
+
+      if (diasSemanaArray[0] !== diaSemanaDaData) {
+        if (diaSemanaDaData >= 1 && diaSemanaDaData <= 6) {
+          diasSemanaArray = [diaSemanaDaData];
+        }
+      }
+    }
 
     let reservaAtual;
 
@@ -504,11 +515,18 @@ module.exports = class ReservaController {
         id_reserva,
       ]);
 
-      const diasTexto = formatarDiasSemanaEmTexto(diasSemanaArray);
-      const mensagem = `Reserva periódica atualizada com sucesso. Ela vai acontecer de ${data_inicio} até ${data_fim}, todas as ${diasTexto}, começando sempre às ${hora_inicio} até ${hora_fim}.`;
+      let mensagem = "";
+      if (data_inicio === data_fim && diasSemanaArray.length === 1) {
+        const diaTexto =
+          diasSemanaTexto[diasSemanaArray[0]] || diasSemanaArray[0];
+        mensagem = `Reserva simples atualizada com sucesso. Ela vai acontecer no dia ${data_inicio}, em uma ${diaTexto}, às ${hora_inicio} até ${hora_fim}.`;
+      } else {
+        const diasTexto = formatarDiasSemanaEmTexto(diasSemanaArray);
+        mensagem = `Reserva periódica atualizada com sucesso. Ela vai acontecer de ${data_inicio} até ${data_fim}, todas as ${diasTexto}, começando sempre às ${hora_inicio} até ${hora_fim}.`;
+      }
       return res.status(200).json({ message: mensagem });
     } catch (error) {
-      console.error("Erro ao atualizar reserva:", error);
+      console.error("Erro ao atualizar reserva periódica:", error);
       return res
         .status(500)
         .json({ error: "Erro interno ao atualizar reserva." });

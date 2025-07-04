@@ -1,5 +1,14 @@
 const connect = require("../db/connect");
 
+const diasSemanaTexto = {
+  1: "Segunda-feira",
+  2: "Terça-feira",
+  3: "Quarta-feira",
+  4: "Quinta-feira",
+  5: "Sexta-feira",
+  6: "Sábado",
+};
+
 const queryAsync = (query, values = []) => {
   return new Promise((resolve, reject) => {
     connect.query(query, values, (err, results) => {
@@ -58,9 +67,21 @@ function getDiaSemana(data) {
   return dia === 0 ? 1 : dia + 1;
 }
 
-function timeToMinutes(timeStr) {
+function horaParaMinutos(timeStr) {
   const [hours, minutes] = timeStr.split(":").map(Number);
   return hours * 60 + minutes;
+}
+
+function formatarDiasSemanaEmTexto(diasArray) {
+  if (!diasArray || diasArray.length === 0) return "";
+  const nomesDias = diasArray.map(
+    (dia) => diasSemanaTexto[dia] || dia.toString()
+  );
+  if (nomesDias.length === 1) return nomesDias[0];
+  if (nomesDias.length === 2) return `${nomesDias[0]} e ${nomesDias[1]}`;
+  return `${nomesDias.slice(0, -1).join(", ")} e ${
+    nomesDias[nomesDias.length - 1]
+  }`;
 }
 
 const jwt = require("jsonwebtoken");
@@ -76,4 +97,4 @@ function validarSenha(senha) {
   return regex.test(senha);
 }
 
-module.exports = { queryAsync, criarDataHora, formatarDataHoraAtual, formatarData, getDiaSemana, timeToMinutes, validarSenha, criarToken };
+module.exports = { queryAsync, criarDataHora, formatarDataHoraAtual, formatarData, getDiaSemana, horaParaMinutos, formatarDiasSemanaEmTexto, validarSenha, criarToken };
