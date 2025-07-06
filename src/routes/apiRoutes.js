@@ -7,6 +7,7 @@ const verifyJWT = require("../middlewares/verifyJWT");
 
 router.post("/cadastro", usuarioController.createUsuarios);
 router.post("/login",  usuarioController.loginUsuario);
+router.post("/logout", usuarioController.logoutUsuario);
 
 router.get("/usuarios", verifyJWT, usuarioController.getAllUsuarios);
 router.put("/usuario/:id_usuario", verifyJWT, usuarioController.updateUsuario);
@@ -31,7 +32,7 @@ router.get("/reservas/simples", verifyJWT, reservaController.getAllReservasSimpl
 router.get("/reservas/periodicas", verifyJWT, reservaController.getAllReservasPeriodicas);
 
 router.post("/sala", verifyJWT, salaController.createSalas);
-router.get("/salas", verifyJWT, salaController.getAllSalasTabela);
+router.get("/salas", verifyJWT, salaController.getAllSalas);
 router.put("/sala/:id_sala", verifyJWT, salaController.updateSala);
 router.delete("/sala/:id_sala", verifyJWT, salaController.deleteSala);
 

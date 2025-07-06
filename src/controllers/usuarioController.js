@@ -6,14 +6,12 @@ module.exports = class usuarioController {
   static async createUsuarios(req, res) {
     const { NIF, email, senha, nome } = req.body;
 
-    // Validação dos campos obrigatórios
     const userValidationError = validateUsuario.validateUsuario(req.body);
     if (userValidationError) {
       return res.status(400).json(userValidationError);
     }
 
     try {
-      // Valida se NIF ou email já estão cadastrados
       const nifEmailValidationError = await validateUsuario.validateNifEmail(
         NIF,
         email
@@ -29,27 +27,8 @@ module.exports = class usuarioController {
       const valuesInsert = [nome, email, NIF, hashedPassword];
       await queryAsync(queryInsert, valuesInsert);
 
-      // Busca o usuário recém-cadastrado
-      const querySelect = `SELECT * FROM usuario WHERE email = ?`;
-      const results = await queryAsync(querySelect, [email]);
-
-      if (results.length === 0) {
-        return res.status(404).json({ error: "Usuário não encontrado" });
-      }
-
-      const usuario = results[0];
-
-      // Gera o token
-      const token = criarToken({
-        id: usuario.id_usuario,
-        email: usuario.email,
-      });
-
-      // Retorna usuário e token
-      return res.status(200).json({
-        message: "Cadastro bem-sucedido",
-        usuario,
-        token,
+      return res.status(201).json({
+        message: "Cadastro bem-sucedido. Por favor, faça login.",
       });
     } catch (error) {
       console.error(error);
@@ -60,7 +39,6 @@ module.exports = class usuarioController {
   static async loginUsuario(req, res) {
     const { email, senha } = req.body;
 
-    // Validação dos campos para login
     const loginValidationError = validateUsuario.validateLogin(req.body);
     if (loginValidationError) {
       return res.status(400).json(loginValidationError);
@@ -82,16 +60,28 @@ module.exports = class usuarioController {
         return res.status(401).json({ error: "Senha Incorreta" });
       }
 
-      // Gera o token
-      const token = criarToken({
+      const accessToken = criarToken({
         id: usuario.id_usuario,
         email: usuario.email,
       });
 
+      // Define o token de acesso como um HTTP-only cookie
+      res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "Lax",
+        maxAge: 60 * 60 * 1000, // 1 hora
+        path: "/",
+      });
+
       return res.status(200).json({
         message: "Login Bem-sucedido",
-        usuario,
-        token,
+        usuario: {
+          id_usuario: usuario.id_usuario,
+          email: usuario.email,
+          nome: usuario.nome,
+          NIF: usuario.NIF,
+        },
       });
     } catch (error) {
       console.error(error);
@@ -99,8 +89,19 @@ module.exports = class usuarioController {
     }
   }
 
+  static async logoutUsuario(req, res) {
+    // Limpa o cookie de autenticação
+    res.clearCookie("accessToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Lax",
+      path: "/",
+    });
+    return res.status(200).json({ message: "Logout bem-sucedido!" });
+  }
+
   static async getAllUsuarios(req, res) {
-    const query = `SELECT * FROM usuario`;
+    const query = `SELECT id_usuario, nome, email, NIF FROM usuario`;
     try {
       const results = await queryAsync(query);
       return res
@@ -115,15 +116,16 @@ module.exports = class usuarioController {
   static async verifyUsuarioSenha(req, res) {
     const { senha } = req.body;
     const id_usuario = req.params.id_usuario;
-    const token = req.userId;
+    const authenticatedUserId = req.userId;
 
     const idValidationError = validateUsuario.validateUsuarioId(id_usuario);
     if (idValidationError) {
       return res.status(400).json(idValidationError);
     }
 
-    if (Number(id_usuario) !== Number(token)) {
-      return res.status(403).json({ error: "Acesso Negado" });
+    // Garante que o usuário está verificando a própria senha
+    if (Number(id_usuario) !== Number(authenticatedUserId)) {
+      return res.status(403).json({ error: "Acesso Negado: Não autorizado." });
     }
 
     try {
@@ -135,7 +137,6 @@ module.exports = class usuarioController {
       }
 
       const usuario = results[0];
-
       const senhaOK = bcrypt.compareSync(senha, usuario.senha);
 
       if (senhaOK) {
@@ -154,12 +155,13 @@ module.exports = class usuarioController {
   static async updateUsuario(req, res) {
     const { email, senha, nome } = req.body;
     const usuarioId = req.params.id_usuario;
-    const token = req.userId;
+    const authenticatedUserId = req.userId;
 
-    if (Number(usuarioId) !== Number(token)) {
+    // Garante que o usuário está atualizando o próprio perfil
+    if (Number(usuarioId) !== Number(authenticatedUserId)) {
       return res
-        .status(400)
-        .json({ message: "Você não pode atualizar outro usuário" });
+        .status(403)
+        .json({ message: "Acesso Negado: Você não pode atualizar outro usuário." });
     }
 
     const idValidationError = validateUsuario.validateUsuarioId(usuarioId);
@@ -175,7 +177,6 @@ module.exports = class usuarioController {
         return res.status(404).json({ error: "Usuário não encontrado" });
       }
 
-      // Substitui campos vazios pelos valores atuais
       const novoEmail =
         email && email.trim() !== "" ? email.trim() : usuarioAtual.email;
       const novoNome =
@@ -184,7 +185,7 @@ module.exports = class usuarioController {
 
       const dataFinalParaValidar = {
         email: novoEmail,
-        nome: novoNome,
+        nome: novoName,
       };
 
       if (novaSenha) {
@@ -197,24 +198,21 @@ module.exports = class usuarioController {
         return res.status(400).json(updateValidationError);
       }
 
-      // Define se houve alteração
       const houveAlteracao =
         usuarioAtual.email !== novoEmail ||
         usuarioAtual.nome !== novoNome ||
-        novaSenha;
+        (novaSenha && !bcrypt.compareSync(novaSenha, usuarioAtual.senha));
 
       if (!houveAlteracao) {
         return res
           .status(400)
-          .json({ error: "Nenhuma alteração detectada nos dados enviados" });
+          .json({ error: "Nenhuma alteração detectada nos dados enviados." });
       }
 
-      // Hash da nova senha, se houver
       const senhaFinal = novaSenha
         ? bcrypt.hashSync(novaSenha, Number(process.env.SALT_ROUNDS))
         : usuarioAtual.senha;
 
-      // Atualiza no banco
       const updateQuery = `UPDATE usuario SET email = ?, senha = ?, nome = ? WHERE id_usuario = ?`;
       const results = await queryAsync(updateQuery, [
         novoEmail,
@@ -224,68 +222,75 @@ module.exports = class usuarioController {
       ]);
 
       if (results.affectedRows === 0) {
-        return res.status(404).json({ error: "Usuário não encontrado" });
+        return res.status(404).json({ error: "Usuário não encontrado para atualização." });
       }
 
       return res
         .status(200)
-        .json({ message: "Usuário atualizado com sucesso" });
+        .json({ message: "Usuário atualizado com sucesso." });
     } catch (error) {
       if (error.code === "ER_DUP_ENTRY") {
         return res
           .status(400)
-          .json({ error: "O email já está vinculado a outro usuário" });
+          .json({ error: "O email já está vinculado a outro usuário." });
       }
-      return res.status(500).json({ error: "Erro interno no servidor" });
+      return res.status(500).json({ error: "Erro interno no servidor ao atualizar usuário." });
     }
   }
 
   static async deleteUsuario(req, res) {
     const usuarioId = req.params.id_usuario;
-    const token = req.userId;
+    const authenticatedUserId = req.userId;
 
-    // Valida se o ID do usuário foi fornecido
     const idValidationError = validateUsuario.validateUsuarioId(usuarioId);
     if (idValidationError) {
       return res.status(400).json(idValidationError);
     }
-    if (Number(usuarioId) !== Number(token)) {
+    // Garante que o usuário está deletando o próprio perfil
+    if (Number(usuarioId) !== Number(authenticatedUserId)) {
       return res
-        .status(400)
-        .json({ message: "Você não pode deletar outro usuário" });
+        .status(403)
+        .json({ message: "Acesso Negado: Você não pode deletar outro usuário." });
     }
     const query = `DELETE FROM usuario WHERE id_usuario = ?`;
     try {
       const results = await queryAsync(query, [usuarioId]);
       if (results.affectedRows === 0) {
-        return res.status(404).json({ error: "Usuário não encontrado" });
+        return res.status(404).json({ error: "Usuário não encontrado." });
       }
-      return res.status(200).json({ message: "Usuário excluído com sucesso" });
+      // Após a exclusão, é recomendável limpar o cookie do usuário
+      res.clearCookie("accessToken", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "Lax",
+        path: "/",
+      });
+      return res.status(200).json({ message: "Usuário excluído com sucesso." });
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ error: "Erro interno do servidor" });
+      return res.status(500).json({ error: "Erro interno do servidor ao deletar usuário." });
     }
   }
 
   static async getUsuarioById(req, res) {
     const id_usuario = req.params.id_usuario;
-    const token = req.userId;
+    const authenticatedUserId = req.userId;
 
-    // Valida se o ID foi fornecido
     const idValidationError = validateUsuario.validateUsuarioId(id_usuario);
     if (idValidationError) {
       return res.status(400).json(idValidationError);
     }
-    if (Number(id_usuario) !== Number(token)) {
-      return res.status(400).json({
-        message: "Você não pode visualizar as informações de outro usuário",
+    // Garante que o usuário está visualizando o próprio perfil
+    if (Number(id_usuario) !== Number(authenticatedUserId)) {
+      return res.status(403).json({
+        message: "Acesso Negado: Você não pode visualizar as informações de outro usuário.",
       });
     }
-    const query = `SELECT * FROM usuario WHERE id_usuario = ?`;
+    const query = `SELECT id_usuario, nome, email, NIF FROM usuario WHERE id_usuario = ?`;
     try {
       const results = await queryAsync(query, [id_usuario]);
       if (results.length === 0) {
-        return res.status(404).json({ error: "Usuário não encontrado" });
+        return res.status(404).json({ error: "Usuário não encontrado." });
       }
       const usuario = results[0];
       return res.status(200).json({
@@ -294,36 +299,36 @@ module.exports = class usuarioController {
           nome: usuario.nome,
           email: usuario.email,
           NIF: usuario.NIF,
-          senha: usuario.senha,
         },
       });
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ error: "Erro interno do servidor" });
+      return res.status(500).json({ error: "Erro interno do servidor ao buscar usuário." });
     }
   }
 
   static async getUsuarioReservas(req, res) {
     const id_usuario = req.params.id_usuario;
-    const token = req.userId;
+    const authenticatedUserId = req.userId;
 
     const idValidationError = validateUsuario.validateUsuarioId(id_usuario);
     if (idValidationError) {
       return res.status(400).json(idValidationError);
     }
 
-    if (Number(id_usuario) !== Number(token)) {
+    // Garante que o usuário está visualizando as próprias reservas
+    if (Number(id_usuario) !== Number(authenticatedUserId)) {
       return res.status(403).json({
-        message: "Você não pode visualizar as reservas de outro usuário",
+        message: "Acesso Negado: Você não pode visualizar as reservas de outro usuário.",
       });
     }
 
     const queryReservas = `
-    SELECT r.id_reserva, r.fk_id_usuario, r.fk_id_sala, r.data_inicio, r.data_fim, r.dias_semana, r.hora_inicio, r.hora_fim, s.nome
-    FROM reserva r
-    JOIN sala s ON r.fk_id_sala = s.id_sala
-    WHERE r.fk_id_usuario = ?
-  `;
+      SELECT r.id_reserva, r.fk_id_usuario, r.fk_id_sala, r.data_inicio, r.data_fim, r.dias_semana, r.hora_inicio, r.hora_fim, s.nome
+      FROM reserva r
+      JOIN sala s ON r.fk_id_sala = s.id_sala
+      WHERE r.fk_id_usuario = ?
+    `;
 
     try {
       const resultados = await queryAsync(queryReservas, [id_usuario]);
@@ -346,7 +351,7 @@ module.exports = class usuarioController {
 
       if (reservas.length === 0) {
         return res.status(404).json({
-          message: "Nenhuma reserva encontrada para este usuário",
+          message: "Nenhuma reserva encontrada para este usuário.",
           reservas: [],
         });
       }
@@ -354,22 +359,23 @@ module.exports = class usuarioController {
       return res.status(200).json({ reservas });
     } catch (error) {
       console.error("Erro ao buscar reservas:", error);
-      return res.status(500).json({ message: "Erro interno do servidor" });
+      return res.status(500).json({ message: "Erro interno do servidor ao buscar reservas." });
     }
   }
 
   static async getHistoricoReservas(req, res) {
     const id_usuario = req.params.id_usuario;
-    const token = req.userId;
+    const authenticatedUserId = req.userId;
 
     const idValidationError = validateUsuario.validateUsuarioId(id_usuario);
     if (idValidationError) {
       return res.status(400).json(idValidationError);
     }
 
-    if (Number(id_usuario) !== Number(token)) {
+    // Garante que o usuário está visualizando o próprio histórico de reservas
+    if (Number(id_usuario) !== Number(authenticatedUserId)) {
       return res.status(403).json({
-        message: "Você não pode visualizar o histórico de outro usuário",
+        message: "Acesso Negado: Você não pode visualizar o histórico de outro usuário.",
       });
     }
 
@@ -394,23 +400,21 @@ module.exports = class usuarioController {
       }));
 
       if (reservasHistorico.length === 0) {
-        return res
-          .status(404)
-          .json({
-            message: "Nenhuma reserva anterior encontrada.",
-            reservasHistorico: [],
-          });
+        return res.status(404).json({
+          message: "Nenhuma reserva anterior encontrada.",
+          reservasHistorico: [],
+        });
       }
 
       return res.status(200).json({ reservasHistorico });
     } catch (error) {
       console.error("Erro ao buscar histórico de reservas:", error);
-      return res.status(500).json({ message: "Erro interno do servidor" });
+      return res.status(500).json({ message: "Erro interno do servidor ao buscar histórico de reservas." });
     }
   }
 
   static async getHistoricoDelecao(req, res) {
-    const token = req.userId;
+    const authenticatedUserId = req.userId;
     const id_usuario = req.params.id_usuario;
 
     const idValidationError = validateUsuario.validateUsuarioId(id_usuario);
@@ -418,10 +422,10 @@ module.exports = class usuarioController {
       return res.status(400).json(idValidationError);
     }
 
-    if (Number(id_usuario) !== Number(token)) {
+    // Garante que o usuário está visualizando o próprio histórico de deleções
+    if (Number(id_usuario) !== Number(authenticatedUserId)) {
       return res.status(403).json({
-        message:
-          "Você não pode visualizar o histórico de deleções de outro usuário",
+        message: "Acesso Negado: Você não pode visualizar o histórico de deleções de outro usuário.",
       });
     }
 
@@ -447,11 +451,9 @@ module.exports = class usuarioController {
       }));
 
       if (reservasDeletadas.length === 0) {
-        return res
-          .status(200)
-          .json({
-            reservasDeletadas: [],
-          });
+        return res.status(200).json({
+          reservasDeletadas: [],
+        });
       }
 
       return res.status(200).json({ reservasDeletadas });
@@ -459,7 +461,7 @@ module.exports = class usuarioController {
       console.error("Erro ao buscar histórico de deleções:", error);
       return res
         .status(500)
-        .json({ message: "Erro interno ao buscar histórico de deleções" });
+        .json({ message: "Erro interno ao buscar histórico de deleções." });
     }
   }
 };

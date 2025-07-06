@@ -13,6 +13,12 @@ const diasSemanaTexto = {
 module.exports = class ReservaController {
   static async createReservasSimples(req, res) {
     const { fk_id_usuario, fk_id_sala, data, hora_inicio, hora_fim } = req.body;
+    const authenticatedUserId = req.userId; // ID do usuário autenticado via token do cookie
+
+    // Garante que o usuário está criando uma reserva para si mesmo
+    if (Number(fk_id_usuario) !== Number(authenticatedUserId)) {
+      return res.status(403).json({ error: "Acesso Negado: Você não pode criar reservas para outro usuário." });
+    }
 
     const data_inicio = data;
     const data_fim = data;
@@ -39,12 +45,9 @@ module.exports = class ReservaController {
       const salaExiste = await validateReserva.validarSala(fk_id_sala);
 
       if (!usuarioExiste || !salaExiste) {
-        return res
-          .status(404)
-          .json({ error: "Sala ou usuário não encontrado." });
+        return res.status(404).json({ error: "Sala ou usuário não encontrado." });
       }
 
-      // Verificação de conflito de reserva
       const conflito = await validateReserva.validarConflitoReserva(
         fk_id_sala,
         data_inicio,
@@ -62,10 +65,10 @@ module.exports = class ReservaController {
       }
 
       const insertQuery = `
-      INSERT INTO reserva (
-        fk_id_usuario, fk_id_sala, data_inicio, data_fim, dias_semana, hora_inicio, hora_fim
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)
-    `;
+        INSERT INTO reserva (
+          fk_id_usuario, fk_id_sala, data_inicio, data_fim, dias_semana, hora_inicio, hora_fim
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      `;
 
       await queryAsync(insertQuery, [
         fk_id_usuario,
@@ -82,6 +85,7 @@ module.exports = class ReservaController {
 
       return res.status(201).json({ message: mensagem });
     } catch (error) {
+      console.error(error);
       return res.status(500).json({ error: "Erro interno ao criar reserva." });
     }
   }
@@ -96,6 +100,12 @@ module.exports = class ReservaController {
       hora_inicio,
       hora_fim,
     } = req.body;
+    const authenticatedUserId = req.userId; // ID do usuário autenticado via token do cookie
+
+    // Garante que o usuário está criando uma reserva para si mesmo
+    if (Number(fk_id_usuario) !== Number(authenticatedUserId)) {
+      return res.status(403).json({ error: "Acesso Negado: Você não pode criar reservas para outro usuário." });
+    }
 
     let diasSemanaArray = Array.isArray(dias_semana)
       ? dias_semana
@@ -131,9 +141,7 @@ module.exports = class ReservaController {
       const salaExiste = await validateReserva.validarSala(fk_id_sala);
 
       if (!usuarioExiste || !salaExiste) {
-        return res
-          .status(404)
-          .json({ error: "Sala ou usuário não encontrado." });
+        return res.status(404).json({ error: "Sala ou usuário não encontrado." });
       }
 
       const conflito = await validateReserva.validarConflitoReserva(
@@ -153,10 +161,10 @@ module.exports = class ReservaController {
       }
 
       const insertQuery = `
-      INSERT INTO reserva (
-        fk_id_usuario, fk_id_sala, data_inicio, data_fim, dias_semana, hora_inicio, hora_fim
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)
-    `;
+        INSERT INTO reserva (
+          fk_id_usuario, fk_id_sala, data_inicio, data_fim, dias_semana, hora_inicio, hora_fim
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      `;
 
       await queryAsync(insertQuery, [
         fk_id_usuario,
@@ -170,8 +178,7 @@ module.exports = class ReservaController {
 
       let mensagem = "";
       if (data_inicio === data_fim && diasSemanaArray.length === 1) {
-        const diaTexto =
-          diasSemanaTexto[diasSemanaArray[0]] || diasSemanaArray[0];
+        const diaTexto = diasSemanaTexto[diasSemanaArray[0]] || diasSemanaArray[0];
         mensagem = `Reserva simples criada com sucesso. Ela vai acontecer no dia ${data_inicio}, em uma ${diaTexto}, às ${hora_inicio} até ${hora_fim}.`;
       } else {
         const diasTexto = formatarDiasSemanaEmTexto(diasSemanaArray);
@@ -280,6 +287,13 @@ module.exports = class ReservaController {
   static async updateReservasSimples(req, res) {
     const { id_reserva } = req.params;
     const { fk_id_usuario, fk_id_sala, data, hora_inicio, hora_fim } = req.body;
+    const authenticatedUserId = req.userId; // ID do usuário autenticado via token do cookie
+
+    // Verifique se a reserva pertence ao usuário logado ANTES de buscar no DB
+    // Para evitar que um usuário tente atualizar a reserva de outro
+    if (Number(fk_id_usuario) !== Number(authenticatedUserId)) {
+        return res.status(403).json({ error: "Acesso Negado: Você não tem permissão para atualizar esta reserva." });
+    }
 
     const dataLocal = new Date(data + "T00:00:00");
     const diaSemana = dataLocal.getDay();
@@ -289,32 +303,28 @@ module.exports = class ReservaController {
 
     try {
       const querySelect = `
-    SELECT
-      id_reserva,
-      fk_id_usuario,
-      fk_id_sala,
-      data_inicio,
-      data_fim,
-      dias_semana,
-      hora_inicio,
-      hora_fim
-    FROM reserva
-    WHERE id_reserva = ?
-  `;
-      const resultados = await queryAsync(querySelect, [id_reserva]);
+        SELECT
+          id_reserva,
+          fk_id_usuario,
+          fk_id_sala,
+          data_inicio,
+          data_fim,
+          dias_semana,
+          hora_inicio,
+          hora_fim
+        FROM reserva
+        WHERE id_reserva = ? AND fk_id_usuario = ?
+      `;
+      const resultados = await queryAsync(querySelect, [id_reserva, authenticatedUserId]); // Adicionado fk_id_usuario na query
       if (resultados.length === 0) {
-        return res
-          .status(404)
-          .json({ error: "Reserva não encontrada para atualização." });
+        return res.status(404).json({ error: "Reserva não encontrada ou você não tem permissão para editá-la." });
       }
       reservaAtual = resultados[0];
     } catch (error) {
-      return res
-        .status(500)
-        .json({ error: "Erro interno ao buscar reserva para atualização." });
+      console.error(error);
+      return res.status(500).json({ error: "Erro interno ao buscar reserva para atualização." });
     }
 
-    // Validação dos campos da reserva
     const erroValidacao = validateReserva.validarCamposUpdate(
       {
         fk_id_usuario,
@@ -332,22 +342,18 @@ module.exports = class ReservaController {
     }
 
     try {
-      // Verificação de existência de usuário e sala
       const usuarioExiste = await validateReserva.validarUsuario(fk_id_usuario);
       const salaExiste = await validateReserva.validarSala(fk_id_sala);
       if (!usuarioExiste || !salaExiste) {
-        return res
-          .status(404)
-          .json({ error: "Sala ou usuário não encontrado." });
+        return res.status(404).json({ error: "Sala ou usuário não encontrado." });
       }
 
-      // Verificando conflitos de reservas
       const conflito = await validateReserva.validarConflitoReservaUpdate(
         id_reserva,
         fk_id_sala,
         data,
         data,
-        dias_semana, // Passando o dia da semana corretamente
+        dias_semana,
         hora_inicio,
         hora_fim
       );
@@ -359,38 +365,35 @@ module.exports = class ReservaController {
         });
       }
 
-      // Atualizando a reserva
       const updateQuery = `
-    UPDATE reserva SET
-      fk_id_usuario = ?,
-      fk_id_sala = ?,
-      data_inicio = ?,
-      data_fim = ?,
-      dias_semana = ?,
-      hora_inicio = ?,
-      hora_fim = ?
-    WHERE id_reserva = ?
-  `;
+        UPDATE reserva SET
+          fk_id_usuario = ?,
+          fk_id_sala = ?,
+          data_inicio = ?,
+          data_fim = ?,
+          dias_semana = ?,
+          hora_inicio = ?,
+          hora_fim = ?
+        WHERE id_reserva = ?
+      `;
       await queryAsync(updateQuery, [
         fk_id_usuario,
         fk_id_sala,
         data,
         data,
-        dias_semana.join(","), // Certifique-se de armazenar o valor correto para os dias
+        dias_semana.join(","),
         hora_inicio,
         hora_fim,
         id_reserva,
       ]);
 
-      // Convertendo o dia da semana para o nome por extenso
       const diaSemanaTexto = formatarDiasSemanaEmTexto(dias_semana);
       const mensagem = `Reserva simples atualizada com sucesso. Ela vai acontecer na ${diaSemanaTexto}, dia ${data}, das ${hora_inicio} até ${hora_fim}.`;
 
       return res.status(200).json({ message: mensagem });
     } catch (error) {
-      return res
-        .status(500)
-        .json({ error: "Erro interno ao atualizar reserva." });
+      console.error(error);
+      return res.status(500).json({ error: "Erro interno ao atualizar reserva." });
     }
   }
 
@@ -405,6 +408,12 @@ module.exports = class ReservaController {
       hora_inicio,
       hora_fim,
     } = req.body;
+    const authenticatedUserId = req.userId; // ID do usuário autenticado via token do cookie
+
+    // Verifique se a reserva pertence ao usuário logado ANTES de buscar no DB
+    if (Number(fk_id_usuario) !== Number(authenticatedUserId)) {
+        return res.status(403).json({ error: "Acesso Negado: Você não tem permissão para atualizar esta reserva." });
+    }
 
     let diasSemanaArray = Array.isArray(dias_semana)
       ? dias_semana
@@ -425,30 +434,26 @@ module.exports = class ReservaController {
 
     try {
       const querySelect = `
-      SELECT
-        id_reserva,
-        fk_id_usuario,
-        fk_id_sala,
-        data_inicio,
-        data_fim,
-        dias_semana,
-        hora_inicio,
-        hora_fim
-      FROM reserva
-      WHERE id_reserva = ?
-    `;
-      const resultados = await queryAsync(querySelect, [id_reserva]);
+        SELECT
+          id_reserva,
+          fk_id_usuario,
+          fk_id_sala,
+          data_inicio,
+          data_fim,
+          dias_semana,
+          hora_inicio,
+          hora_fim
+        FROM reserva
+        WHERE id_reserva = ? AND fk_id_usuario = ?
+      `;
+      const resultados = await queryAsync(querySelect, [id_reserva, authenticatedUserId]); // Adicionado fk_id_usuario na query
       if (resultados.length === 0) {
-        return res
-          .status(404)
-          .json({ error: "Reserva não encontrada para atualização." });
+        return res.status(404).json({ error: "Reserva não encontrada ou você não tem permissão para editá-la." });
       }
       reservaAtual = resultados[0];
     } catch (error) {
       console.error("Erro ao buscar reserva atual para atualização:", error);
-      return res
-        .status(500)
-        .json({ error: "Erro interno ao buscar reserva para atualização." });
+      return res.status(500).json({ error: "Erro interno ao buscar reserva para atualização." });
     }
 
     const erroValidacao = validateReserva.validarCamposUpdate(
@@ -471,9 +476,7 @@ module.exports = class ReservaController {
       const usuarioExiste = await validateReserva.validarUsuario(fk_id_usuario);
       const salaExiste = await validateReserva.validarSala(fk_id_sala);
       if (!usuarioExiste || !salaExiste) {
-        return res
-          .status(404)
-          .json({ error: "Sala ou usuário não encontrado." });
+        return res.status(404).json({ error: "Sala ou usuário não encontrado." });
       }
 
       const conflito = await validateReserva.validarConflitoReservaUpdate(
@@ -494,16 +497,16 @@ module.exports = class ReservaController {
       }
 
       const updateQuery = `
-      UPDATE reserva SET
-        fk_id_usuario = ?,
-        fk_id_sala = ?,
-        data_inicio = ?,
-        data_fim = ?,
-        dias_semana = ?,
-        hora_inicio = ?,
-        hora_fim = ?
-      WHERE id_reserva = ?
-    `;
+        UPDATE reserva SET
+          fk_id_usuario = ?,
+          fk_id_sala = ?,
+          data_inicio = ?,
+          data_fim = ?,
+          dias_semana = ?,
+          hora_inicio = ?,
+          hora_fim = ?
+        WHERE id_reserva = ?
+      `;
       await queryAsync(updateQuery, [
         fk_id_usuario,
         fk_id_sala,
@@ -517,8 +520,7 @@ module.exports = class ReservaController {
 
       let mensagem = "";
       if (data_inicio === data_fim && diasSemanaArray.length === 1) {
-        const diaTexto =
-          diasSemanaTexto[diasSemanaArray[0]] || diasSemanaArray[0];
+        const diaTexto = diasSemanaTexto[diasSemanaArray[0]] || diasSemanaArray[0];
         mensagem = `Reserva simples atualizada com sucesso. Ela vai acontecer no dia ${data_inicio}, em uma ${diaTexto}, às ${hora_inicio} até ${hora_fim}.`;
       } else {
         const diasTexto = formatarDiasSemanaEmTexto(diasSemanaArray);
@@ -527,21 +529,19 @@ module.exports = class ReservaController {
       return res.status(200).json({ message: mensagem });
     } catch (error) {
       console.error("Erro ao atualizar reserva periódica:", error);
-      return res
-        .status(500)
-        .json({ error: "Erro interno ao atualizar reserva." });
+      return res.status(500).json({ error: "Erro interno ao atualizar reserva." });
     }
   }
 
   static async deleteReserva(req, res) {
     const { id_reserva } = req.params;
-    const usuarioId = req.params.id_usuario;
-    const token = req.userId;
+    const usuarioId = req.params.id_usuario; // Este `usuarioId` vem da URL, não do token
+    const authenticatedUserId = req.userId; // ID do usuário autenticado via token do cookie
 
-    if (Number(usuarioId) !== Number(token)) {
+    // Garante que o usuário logado corresponde ao usuário na URL
+    if (Number(usuarioId) !== Number(authenticatedUserId)) {
       return res.status(403).json({
-        message:
-          "Você não tem permissão para deletar as reservas de outro usuário.",
+        message: "Acesso Negado: Você não tem permissão para deletar as reservas de outro usuário.",
       });
     }
 
@@ -549,22 +549,17 @@ module.exports = class ReservaController {
     try {
       const rows = await queryAsync(selectQuery, [id_reserva]);
       if (rows.length === 0) {
-        return res
-          .status(404)
-          .json({ error: "Reserva não encontrada para deleção." });
+        return res.status(404).json({ error: "Reserva não encontrada para deleção." });
       }
-      if (rows[0].fk_id_usuario !== Number(usuarioId)) {
-        return res
-          .status(403)
-          .json({ error: "Você não tem permissão para deletar esta reserva." });
+      // Garante que a reserva pertence ao usuário logado
+      if (rows[0].fk_id_usuario !== Number(authenticatedUserId)) {
+        return res.status(403).json({ error: "Acesso Negado: Você não tem permissão para deletar esta reserva." });
       }
 
       const deleteQuery = `DELETE FROM reserva WHERE id_reserva = ?`;
       const results = await queryAsync(deleteQuery, [id_reserva]);
       if (results.affectedRows === 0) {
-        return res
-          .status(404)
-          .json({ error: "Reserva não encontrada ou já deletada." });
+        return res.status(404).json({ error: "Reserva não encontrada ou já deletada." });
       }
 
       return res.status(200).json({ message: "Reserva excluída com sucesso" });

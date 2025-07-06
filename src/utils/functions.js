@@ -86,10 +86,8 @@ function formatarDiasSemanaEmTexto(diasArray) {
 
 const jwt = require("jsonwebtoken");
 
-const tokenSecret = process.env.SECRET;
-
-function criarToken(payload, tempoExpiracao = "1h") {
-  return jwt.sign(payload, tokenSecret, { expiresIn: tempoExpiracao });
+function criarToken(payload) {
+    return jwt.sign(payload, process.env.SECRET, { expiresIn: '1h' });
 }
 
 function validarSenha(senha) {

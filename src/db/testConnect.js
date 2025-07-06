@@ -5,12 +5,12 @@ module.exports = function testConnect() {
     const query = `SELECT 'Conexão bem-sucedida' AS Mensagem`;
     connect.query(query, function (err) {
       if (err) {
-        console.log("Conexão não realizada", err);
+        console.log("- Conexão não realizada\n", err);
         return;
       }
-      console.log("Conexão realizada com MySQL \n");
+      console.log("- Conexão realizada com MySQL\n");
     });
-  } catch(error) {
-    console.error('Erro ao executar a query/consulta:', error)
+  } catch (error) {
+    console.error("- Erro ao executar a query/consulta:\n", error);
   }
 };

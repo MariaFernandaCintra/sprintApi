@@ -39,7 +39,7 @@ module.exports = class salaController {
     }
   }
 
-  static async getAllSalasTabela(req, res) {
+  static async getAllSalas(req, res) {
     const query = `SELECT * FROM sala`;
     try {
       const results = await queryAsync(query);
@@ -56,7 +56,6 @@ module.exports = class salaController {
     const { data_inicio, data_fim, hora_inicio, hora_fim, dias_semana } =
       req.body;
 
-    // Valida os dados enviados
     const validationError = validateSala.validateHorario({
       data_inicio,
       data_fim,
@@ -66,11 +65,10 @@ module.exports = class salaController {
     });
     if (validationError) return res.status(400).json(validationError);
 
-    // Busca todas as salas
     const querySalas = `
-    SELECT id_sala, nome, descricao, bloco, tipo, capacidade
-    FROM sala
-  `;
+      SELECT id_sala, nome, descricao, bloco, tipo, capacidade
+      FROM sala
+    `;
 
     try {
       const todasSalas = await queryAsync(querySalas);
